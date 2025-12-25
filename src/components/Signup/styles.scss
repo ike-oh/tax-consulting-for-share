@@ -1,0 +1,425 @@
+@import '../../styles/variables';
+@import '../../styles/auth-common';
+
+// Step Indicator
+.signup-step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 48px;
+}
+
+.signup-step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.3;
+
+  &.is-active,
+  &.is-completed {
+    opacity: 1;
+  }
+}
+
+.signup-step-circle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.3);
+  transition: all $transition-normal;
+
+  .is-active &,
+  .is-completed & {
+    background-color: $white;
+  }
+}
+
+.signup-step-number {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-semibold;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+
+  .is-active &,
+  .is-completed & {
+    color: $white;
+  }
+}
+
+.signup-step-label {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-regular;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+
+  .is-active &,
+  .is-completed & {
+    color: $white;
+  }
+}
+
+.signup-step-divider {
+  width: 80px;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin: 0 16px;
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
+// Terms
+.signup-terms-container {
+  width: 100%;
+  max-width: 361px;
+  margin: 0 auto;
+}
+
+.signup-all-agree-wrapper {
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 16px;
+}
+
+.signup-terms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.signup-term-item-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.signup-view-detail-button {
+  background: transparent;
+  border: none;
+  font-family: $font-pretendard;
+  font-weight: $font-weight-regular;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover {
+    color: $white;
+  }
+}
+
+// Member Type
+.signup-member-type-group {
+  display: flex;
+  gap: 12px;
+}
+
+.signup-member-type-button {
+  flex: 1;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: $font-pretendard;
+  font-weight: $font-weight-regular;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all $transition-normal;
+
+  &.is-selected {
+    border-color: $white;
+    color: $white;
+  }
+}
+
+.signup-member-type-radio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  position: relative;
+
+  &.is-selected {
+    border-color: $white;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: $white;
+    }
+  }
+}
+
+// Email
+.signup-email-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.signup-email-input-wrapper {
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+
+  &:focus-within {
+    border-bottom-color: $white;
+  }
+}
+
+.signup-at-sign {
+  font-family: $font-pretendard;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.signup-email-domain-wrapper {
+  min-width: 80px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 12px 0;
+}
+
+.signup-email-domain-text {
+  font-family: $font-pretendard;
+  font-size: 15px;
+  color: $white;
+}
+
+.signup-domain-select-wrapper {
+  position: relative;
+}
+
+.signup-domain-select {
+  padding: 12px 32px 12px 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  font-family: $font-pretendard;
+  font-size: 14px;
+  color: $white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.signup-select-arrow {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid $white;
+  transition: transform $transition-normal;
+
+  &.is-open {
+    transform: rotate(180deg);
+  }
+}
+
+.signup-domain-dropdown,
+.signup-carrier-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #2d2d2d;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  margin-top: 4px;
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.signup-domain-option {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  font-family: $font-pretendard;
+  font-size: 14px;
+  color: $white;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color $transition-normal;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.signup-newsletter-wrapper {
+  margin-top: 16px;
+}
+
+// Phone
+.signup-phone-input-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.signup-carrier-select-wrapper {
+  position: relative;
+}
+
+.signup-carrier-select {
+  padding: 12px 32px 12px 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  font-family: $font-pretendard;
+  font-size: 14px;
+  color: $white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.signup-phone-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+
+  &:focus-within {
+    border-bottom-color: $white;
+  }
+}
+
+// Step 2 Buttons
+.signup-step2-button-group {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.signup-prev-button {
+  width: 160px;
+  height: 56px;
+  padding: 0 20px;
+  background: transparent;
+  border: 1px solid $white;
+  border-radius: $radius-pill;
+  font-family: $font-pretendard;
+  font-weight: $font-weight-medium;
+  font-size: 17px;
+  color: $white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all $transition-normal;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.signup-prev-arrow-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border-left: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: translate(-30%, -50%) rotate(45deg);
+  }
+}
+
+.signup-next-button {
+  width: 200px;
+  height: 56px;
+  padding: 0 20px;
+  background-color: $white;
+  border: none;
+  border-radius: $radius-pill;
+  font-family: $font-pretendard;
+  font-weight: $font-weight-medium;
+  font-size: 17px;
+  color: #151515;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all $transition-normal;
+
+  &.is-disabled {
+    background-color: $gray-70;
+    color: $gray-50;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(.is-disabled) {
+    opacity: 0.9;
+  }
+}
+
+// Completion
+.signup-completion-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  max-width: 400px;
+  text-align: center;
+}
+
+.signup-completion-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: $success;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &::after {
+    content: '';
+    width: 32px;
+    height: 20px;
+    border-left: 4px solid $white;
+    border-bottom: 4px solid $white;
+    transform: rotate(-45deg) translateY(-4px);
+  }
+}
+
+.signup-completion-title {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-bold;
+  font-size: 28px;
+  color: $white;
+  margin: 0;
+}
+
+.signup-completion-message {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-regular;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+}

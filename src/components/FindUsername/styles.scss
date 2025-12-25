@@ -1,0 +1,89 @@
+@import '../../styles/variables';
+@import '../../styles/auth-common';
+
+// Result Section
+.find-result-section {
+  width: 100%;
+  max-width: 512px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.find-result-message {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-regular;
+  font-size: 17px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+}
+
+.find-result-username {
+  padding: 24px 48px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+}
+
+.find-username-label {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-regular;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 8px;
+}
+
+.find-username-value {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-semibold;
+  font-size: 24px;
+  line-height: 1.5;
+  color: $white;
+}
+
+// Button group for result
+.find-button-group {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  max-width: 361px;
+}
+
+.find-secondary-button {
+  flex: 1;
+  height: 56px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: $radius-pill;
+  font-family: $font-pretendard;
+  font-weight: $font-weight-semibold;
+  font-size: 17px;
+  color: $white;
+  cursor: pointer;
+  transition: all $transition-normal;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+}
+
+.find-primary-button {
+  flex: 1;
+  height: 56px;
+  background: $white;
+  border: none;
+  border-radius: $radius-pill;
+  font-family: $font-pretendard;
+  font-weight: $font-weight-semibold;
+  font-size: 17px;
+  color: #151515;
+  cursor: pointer;
+  transition: opacity $transition-normal;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
