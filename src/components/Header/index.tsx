@@ -12,7 +12,7 @@ const Header: React.FC<HeaderProps> = ({ variant = 'white', onMenuClick }) => {
       <div className="header-inner">
         <Link href="/" className="logo">
           <img
-            src="/images/logo.png"
+            src="/images/common/logos/logo.png"
             alt="MODOO CONSULTING"
             className={`logo-image ${variant === 'transparent' ? 'variant-transparent' : ''}`}
           />

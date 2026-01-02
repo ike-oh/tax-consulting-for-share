@@ -1,28 +1,6 @@
 @import '../../styles/variables';
 @import '../../styles/auth-common';
+@import '../FindUsername/styles';
 
-// FindPassword specific styles
-.find-password-email-subtitle {
-  font-family: $font-pretendard;
-  font-weight: $font-weight-regular;
-  font-size: 17px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.8);
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-// Verification code wrapper with active state
-.auth-verification-code-wrapper-active {
-  display: flex;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  padding: 16px;
-  gap: 8px;
-
-  &.is-active {
-    border-color: $white;
-  }
-}
+// FindPassword는 FindUsername과 동일한 스타일을 사용
+// FindUsername의 스타일을 재사용

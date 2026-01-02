@@ -1,0 +1,465 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import Header from '@/components/common/Header';
+import Menu from '@/components/Menu';
+import Footer from '@/components/common/Footer';
+import PageHeader from '@/components/common/PageHeader';
+import Checkbox from '@/components/common/Checkbox';
+import Button from '@/components/common/Button';
+import styles from './apply.module.scss';
+
+interface ConsultationFormData {
+  consultationField: string;
+  taxAccountant: string;
+  name: string;
+  phone: string;
+  additionalRequest: string;
+  privacyAgreement: boolean;
+  termsAgreement: boolean;
+}
+
+const ConsultationApplyPage: React.FC = () => {
+  const router = useRouter();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isFieldDropdownOpen, setIsFieldDropdownOpen] = useState(false);
+  const [isAccountantDropdownOpen, setIsAccountantDropdownOpen] = useState(false);
+  const [searchFieldQuery, setSearchFieldQuery] = useState('');
+  const [searchAccountantQuery, setSearchAccountantQuery] = useState('');
+  
+  const [formData, setFormData] = useState<ConsultationFormData>({
+    consultationField: '',
+    taxAccountant: '',
+    name: '',
+    phone: '',
+    additionalRequest: '',
+    privacyAgreement: false,
+    termsAgreement: false,
+  });
+
+  const fieldDropdownRef = useRef<HTMLDivElement>(null);
+  const accountantDropdownRef = useRef<HTMLDivElement>(null);
+
+  // 상담 분야 옵션
+  interface SelectOption {
+    value: string;
+    label: string;
+  }
+
+  const consultationFields: SelectOption[] = [
+    { value: '', label: '선택안함' },
+    { value: 'manufacturing', label: '제조업' },
+    { value: 'construction', label: '건설·부동산업' },
+    { value: 'retail', label: '도·소매업' },
+    { value: 'service', label: '서비스업' },
+  ];
+
+  // 담당 세무사 옵션
+  const taxAccountants: SelectOption[] = [
+    { value: '', label: '선택안함' },
+    { value: 'kang', label: '강민수' },
+    { value: 'kim', label: '김다희' },
+    { value: 'song', label: '송하준' },
+    { value: 'lim', label: '임지은' },
+  ];
+
+  // 필터링된 옵션
+  const filteredFields = consultationFields.filter(field =>
+    field.label.toLowerCase().includes(searchFieldQuery.toLowerCase())
+  );
+
+  const filteredAccountants = taxAccountants.filter(accountant =>
+    accountant.label.toLowerCase().includes(searchAccountantQuery.toLowerCase())
+  );
+
+  // 외부 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (fieldDropdownRef.current && !fieldDropdownRef.current.contains(event.target as Node)) {
+        setIsFieldDropdownOpen(false);
+      }
+      if (accountantDropdownRef.current && !accountantDropdownRef.current.contains(event.target as Node)) {
+        setIsAccountantDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleFieldChange = (value: string) => {
+    setFormData(prev => ({ ...prev, consultationField: value }));
+    setIsFieldDropdownOpen(false);
+  };
+
+  const handleAccountantChange = (value: string) => {
+    setFormData(prev => ({ ...prev, taxAccountant: value }));
+    setIsAccountantDropdownOpen(false);
+  };
+
+  const handleInputChange = (field: keyof ConsultationFormData) => (value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCheckboxChange = (field: 'privacyAgreement' | 'termsAgreement') => (checked: boolean) => {
+    setFormData(prev => ({ ...prev, [field]: checked }));
+  };
+
+  const isFormValid = () => {
+    return (
+      formData.consultationField &&
+      formData.taxAccountant &&
+      formData.name &&
+      formData.phone &&
+      formData.additionalRequest &&
+      formData.privacyAgreement &&
+      formData.termsAgreement
+    );
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isFormValid()) {
+      // TODO: API 호출
+      console.log('Form submitted:', formData);
+      setIsSuccessModalOpen(true);
+    }
+  };
+
+  const handleSuccessModalClose = () => {
+    setIsSuccessModalOpen(false);
+    router.push('/');
+  };
+
+  const selectedFieldLabel = consultationFields.find(f => f.value === formData.consultationField)?.label || '상담 분야를 선택해주세요';
+  const selectedAccountantLabel = taxAccountants.find(a => a.value === formData.taxAccountant)?.label || '담당 세무사를 선택해주세요';
+
+  return (
+    <div className={styles.consultationPage}>
+      <Header
+        variant="transparent"
+        size="web"
+        onMenuClick={() => setIsMenuOpen(true)}
+        onLogoClick={() => router.push('/')}
+      />
+      <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+
+      <div className={styles.pageContent}>
+        {/* Page Header */}
+        <div className={styles.pageHeaderSection}>
+          <PageHeader
+            title="상담 신청"
+            breadcrumbs={[
+              { label: '상담 신청' }
+            ]}
+            size="web"
+          />
+        </div>
+
+        {/* Form Section */}
+        <div className={styles.formSection}>
+          <div className={styles.formContainer}>
+            <div className={styles.formHeader}>
+              <div className={styles.formTitleBackground}>
+                <p className={styles.formTitleText}>
+                  CONTACT <span className={styles.formTitleItalic}>US</span>
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className={styles.form}>
+              <div className={styles.formFields}>
+                {/* 상담 분야 & 담당 세무사 */}
+                <div className={styles.formRow}>
+                  <div className={styles.formField} ref={fieldDropdownRef}>
+                    <label className={styles.fieldLabel}>
+                      상담 분야
+                      <span className={styles.required}>*</span>
+                    </label>
+                    <div className={styles.selectWrapper}>
+                      <div
+                        className={`${styles.selectTrigger} ${isFieldDropdownOpen ? styles.selectTriggerOpen : ''}`}
+                        onClick={() => setIsFieldDropdownOpen(!isFieldDropdownOpen)}
+                      >
+                        <span className={formData.consultationField ? styles.selectValue : styles.selectPlaceholder}>
+                          {selectedFieldLabel}
+                        </span>
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          className={`${styles.selectArrow} ${isFieldDropdownOpen ? styles.selectArrowOpen : ''}`}
+                        >
+                          <path
+                            d="M5 7.5L10 12.5L15 7.5"
+                            stroke="#717171"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+                      {isFieldDropdownOpen && (
+                        <div className={styles.selectDropdown}>
+                          <div className={styles.selectSearch}>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                              <path
+                                d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z"
+                                stroke="#717171"
+                                strokeWidth="1.5"
+                              />
+                              <path
+                                d="M21 21L16.65 16.65"
+                                stroke="#717171"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                            <input
+                              type="text"
+                              placeholder="검색해보세요"
+                              value={searchFieldQuery}
+                              onChange={(e) => setSearchFieldQuery(e.target.value)}
+                              className={styles.selectSearchInput}
+                            />
+                          </div>
+                          <div className={styles.selectOptions}>
+                            {filteredFields.map((field) => (
+                              <div
+                                key={field.value}
+                                className={`${styles.selectOption} ${formData.consultationField === field.value ? styles.selectOptionActive : ''}`}
+                                onClick={() => handleFieldChange(field.value)}
+                              >
+                                {field.label}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className={styles.formField} ref={accountantDropdownRef}>
+                    <label className={styles.fieldLabel}>
+                      담당 세무사
+                      <span className={styles.required}>*</span>
+                    </label>
+                    <div className={styles.selectWrapper}>
+                      <div
+                        className={`${styles.selectTrigger} ${isAccountantDropdownOpen ? styles.selectTriggerOpen : ''}`}
+                        onClick={() => setIsAccountantDropdownOpen(!isAccountantDropdownOpen)}
+                      >
+                        <span className={formData.taxAccountant ? styles.selectValue : styles.selectPlaceholder}>
+                          {selectedAccountantLabel}
+                        </span>
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          className={`${styles.selectArrow} ${isAccountantDropdownOpen ? styles.selectArrowOpen : ''}`}
+                        >
+                          <path
+                            d="M5 7.5L10 12.5L15 7.5"
+                            stroke="#717171"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+                      {isAccountantDropdownOpen && (
+                        <div className={styles.selectDropdown}>
+                          <div className={styles.selectSearch}>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                              <path
+                                d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z"
+                                stroke="#717171"
+                                strokeWidth="1.5"
+                              />
+                              <path
+                                d="M21 21L16.65 16.65"
+                                stroke="#717171"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                            <input
+                              type="text"
+                              placeholder="검색해보세요"
+                              value={searchAccountantQuery}
+                              onChange={(e) => setSearchAccountantQuery(e.target.value)}
+                              className={styles.selectSearchInput}
+                            />
+                          </div>
+                          <div className={styles.selectOptions}>
+                            {filteredAccountants.map((accountant) => (
+                              <div
+                                key={accountant.value}
+                                className={`${styles.selectOption} ${formData.taxAccountant === accountant.value ? styles.selectOptionActive : ''}`}
+                                onClick={() => handleAccountantChange(accountant.value)}
+                              >
+                                {accountant.label}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 이름 & 휴대폰 번호 */}
+                <div className={styles.formRow}>
+                  <div className={styles.formField}>
+                    <label className={styles.fieldLabel}>
+                      이름
+                      <span className={styles.required}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className={styles.textInput}
+                      placeholder="이름을 입력해주세요"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange('name')(e.target.value)}
+                    />
+                  </div>
+
+                  <div className={styles.formField}>
+                    <label className={styles.fieldLabel}>
+                      휴대폰 번호
+                      <span className={styles.required}>*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      className={styles.textInput}
+                      placeholder="휴대폰 번호를 입력해주세요"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone')(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* 추가 요청사항 */}
+                <div className={styles.formField}>
+                  <label className={styles.fieldLabel}>
+                    추가 요청사항
+                    <span className={styles.required}>*</span>
+                  </label>
+                  <textarea
+                    className={styles.textarea}
+                    placeholder="상담 내용을 입력해주세요"
+                    value={formData.additionalRequest}
+                    onChange={(e) => handleInputChange('additionalRequest')(e.target.value)}
+                    rows={8}
+                  />
+                </div>
+
+                {/* 동의 체크박스 */}
+                <div className={styles.agreements}>
+                  <div className={styles.agreementItem}>
+                    <Checkbox
+                      variant="square"
+                      checked={formData.privacyAgreement}
+                      onChange={handleCheckboxChange('privacyAgreement')}
+                      label="[필수] 개인정보 처리 방침 이용 동의"
+                    />
+                    <button type="button" className={styles.viewLink}>
+                      보기
+                    </button>
+                  </div>
+                  <div className={styles.agreementItem}>
+                    <Checkbox
+                      variant="square"
+                      checked={formData.termsAgreement}
+                      onChange={handleCheckboxChange('termsAgreement')}
+                      label="[필수] OO OOOOO 이용 동의"
+                    />
+                    <button type="button" className={styles.viewLink}>
+                      보기
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.submitButtonWrapper}>
+                <Button
+                  type="primary"
+                  size="large"
+                  disabled={!isFormValid()}
+                  onClick={handleSubmit}
+                  htmlType="submit"
+                  className={styles.submitButton}
+                >
+                  신청하기
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <Footer variant="web" />
+      </div>
+
+      {/* Success Modal */}
+      {isSuccessModalOpen && (
+        <div className={styles.modalOverlay} onClick={handleSuccessModalClose}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <button
+                type="button"
+                className={styles.modalCloseButton}
+                onClick={handleSuccessModalClose}
+                aria-label="닫기"
+              >
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                  <path
+                    d="M10 10L30 30M30 10L10 30"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.successIcon}>
+                <svg width="35" height="35" viewBox="0 0 35 35" fill="none">
+                  <path
+                    d="M2.5 17.5L12.5 27.5L32.5 7.5"
+                    stroke="#94B9E3"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <div className={styles.successMessage}>
+                <h2 className={styles.successTitle}>
+                  상담 신청이<br />
+                  정상적으로 접수되었습니다.
+                </h2>
+                <p className={styles.successDescription}>
+                  접수 내용을 확인한 후, 순차적으로 연락드리겠습니다.<br />
+                  신뢰할 수 있는 파트너, 세무법인 함께를 찾아주셔서 감사합니다.
+                </p>
+              </div>
+              <Button
+                type="primary"
+                size="large"
+                onClick={handleSuccessModalClose}
+                className={styles.modalButton}
+              >
+                확인
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ConsultationApplyPage;
+

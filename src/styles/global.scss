@@ -24,6 +24,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+// Next.js 루트 요소
+#__next {
+  width: 100%;
+  position: relative;
+}
+
 a {
   text-decoration: none;
   color: inherit;

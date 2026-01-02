@@ -99,8 +99,12 @@
   width: 100%;
   max-width: 800px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 88px 80px 120px;
-  margin-bottom: 48px;
+  border-radius: 0;
+  padding: 88px 120px 120px;
+  margin-bottom: 0; // 버튼과의 간격은 버튼 wrapper에서 관리
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
   @media (max-width: $breakpoint-tablet) {
     padding: 48px 24px 60px;
@@ -110,7 +114,7 @@
 // Form
 .auth-form {
   width: 100%;
-  max-width: 361px;
+  max-width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -315,34 +319,27 @@
 
 // Messages
 .auth-error-message {
-  font-family: $font-pretendard;
-  font-weight: $font-weight-regular;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #FF4444;
+  @include pretendard-13-regular;
+  color: $error; // #F35064
   display: flex;
   align-items: center;
-  gap: 6px;
-
-  &::before {
-    content: '!';
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 1px solid #FF4444;
-    font-size: 12px;
+  gap: 4px;
+  letter-spacing: -0.065px;
+  margin-top: 6px; // Figma 디자인: input과 메시지 사이 간격
+  
+  // Icon 컴포넌트가 포함되어 있으므로 ::before 제거
+  svg {
+    flex-shrink: 0;
   }
 }
 
 .auth-success-message {
   font-family: $font-pretendard;
-  font-weight: $font-weight-regular;
-  font-size: 14px;
-  line-height: 1.5;
-  color: $success;
+  font-weight: $font-weight-regular; // 400
+  font-size: 13px;
+  line-height: 150%; // 19.5px
+  letter-spacing: -0.065px;
+  color: #929299; // Grayscale-400
   display: flex;
   align-items: center;
   gap: 6px;

@@ -1,0 +1,676 @@
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import Header from '@/components/common/Header';
+import Menu from '@/components/Menu';
+import Footer from '@/components/common/Footer';
+import PageHeader from '@/components/common/PageHeader';
+import Pagination from '@/components/common/Pagination';
+import { SearchField } from '@/components/common/TextField';
+import FloatingButton from '@/components/common/FloatingButton';
+import Card from '@/components/common/Card';
+import Icon from '@/components/common/Icon';
+import { get } from '@/lib/api';
+import { API_ENDPOINTS } from '@/config/api';
+import styles from './insights.module.scss';
+
+interface InsightThumbnail {
+  url: string;
+}
+
+interface InsightCategory {
+  id: number;
+  name: string;
+  type: string;
+}
+
+interface InsightSubcategory {
+  id: number;
+  name: string;
+  sections: string[];
+}
+
+interface InsightItem {
+  id: number;
+  title: string;
+  content: string;
+  thumbnail?: InsightThumbnail;
+  category: InsightCategory;
+  subcategory?: InsightSubcategory;
+  enableComments: boolean;
+  isExposed: boolean;
+  isMainExposed: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface InsightResponse {
+  items: InsightItem[];
+  total: number;
+  page: number;
+  limit: number;
+  displayType?: 'gallery' | 'snippet' | 'list'; // 자료실 노출 방식
+}
+
+type InsightTab = 'column' | 'library';
+type CategoryFilter = 'all' | 'industry' | 'consulting';
+type LibraryDisplayType = 'gallery' | 'snippet' | 'list';
+type SortField = 'category' | 'author' | null;
+type SortOrder = 'asc' | 'desc';
+
+const InsightsPage: React.FC = () => {
+  const router = useRouter();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<InsightTab>('column');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [insights, setInsights] = useState<InsightItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  // B 타입(스니펫형) 테스트: 'snippet'으로 변경
+  // A 타입(갤러리형): 'gallery'
+  // C 타입(리스트형): 'list'
+  // localStorage에서 설정값을 읽어오거나 기본값 사용
+  const [libraryDisplayType, setLibraryDisplayType] = useState<LibraryDisplayType>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('libraryDisplayType') as LibraryDisplayType;
+      if (saved && ['gallery', 'snippet', 'list'].includes(saved)) {
+        return saved;
+      }
+    }
+    return 'gallery'; // 기본값: 갤러리형
+  });
+
+  // API에서 데이터 가져오기
+  const fetchInsights = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const params = new URLSearchParams();
+      params.append('page', currentPage.toString());
+      params.append('limit', '20');
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+      if (categoryFilter !== 'all') {
+        params.append('category', categoryFilter);
+      }
+      if (activeTab === 'column') {
+        params.append('type', 'column');
+      } else {
+        params.append('type', 'library');
+      }
+
+      const response = await get<InsightResponse>(
+        `${API_ENDPOINTS.INSIGHTS}?${params.toString()}`
+      );
+
+      if (response.data) {
+        const data = response.data;
+        let filteredItems = data.items || [];
+        
+        // 클라이언트 사이드 검색 필터링 (API가 검색을 지원하지 않는 경우를 대비)
+        if (searchQuery && searchQuery.trim()) {
+          const query = searchQuery.trim().toLowerCase();
+          filteredItems = filteredItems.filter((item) =>
+            item.title.toLowerCase().includes(query)
+          );
+        }
+        
+        setInsights(filteredItems);
+        setTotal(filteredItems.length);
+        // totalPages 계산
+        const limit = data.limit || 20;
+        const calculatedTotalPages = Math.ceil(filteredItems.length / limit);
+        setTotalPages(calculatedTotalPages);
+        
+        // 자료실 노출 방식 설정 (API에서 받아오거나 localStorage 또는 기본값 사용)
+        if (activeTab === 'library') {
+          if (data.displayType) {
+            setLibraryDisplayType(data.displayType);
+            // localStorage에도 저장
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('libraryDisplayType', data.displayType);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch insights:', err);
+      setError('데이터를 불러오는데 실패했습니다.');
+      setInsights([]);
+      setTotal(0);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInsights();
+  }, [activeTab, categoryFilter, currentPage, searchQuery]);
+
+  // 검색 핸들러 (Enter 키 또는 검색 버튼 클릭 시)
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1); // 검색 시 첫 페이지로
+  };
+
+  // 검색어 변경 핸들러 (실시간 입력)
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    // 검색어가 비어있으면 즉시 검색 (필터 초기화)
+    if (value === '') {
+      setCurrentPage(1);
+    }
+  };
+
+  // 정렬 핸들러
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      // 같은 필드를 클릭하면 정렬 순서 변경
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // 다른 필드를 클릭하면 해당 필드로 오름차순 정렬
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  // 정렬된 insights 가져오기
+  const getSortedInsights = () => {
+    if (!sortField) return insights;
+
+    return [...insights].sort((a, b) => {
+      let aValue: string = '';
+      let bValue: string = '';
+
+      if (sortField === 'category') {
+        aValue = typeof a.subcategory?.name === 'string' 
+          ? a.subcategory.name 
+          : (typeof a.category?.name === 'string' ? a.category.name : '');
+        bValue = typeof b.subcategory?.name === 'string' 
+          ? b.subcategory.name 
+          : (typeof b.category?.name === 'string' ? b.category.name : '');
+      } else if (sortField === 'author') {
+        // 현재 작성자명이 하드코딩되어 있어서 실제로는 정렬이 안되지만,
+        // API에서 author 정보가 오면 여기서 처리
+        aValue = '작성자명';
+        bValue = '작성자명';
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue.localeCompare(bValue);
+      } else {
+        return bValue.localeCompare(aValue);
+      }
+    });
+  };
+
+  // 탭 변경 핸들러
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId as InsightTab);
+    setCurrentPage(1);
+    setCategoryFilter('all');
+    setSearchQuery('');
+  };
+
+  // 카테고리 필터 변경 핸들러
+  const handleCategoryChange = (category: CategoryFilter) => {
+    setCategoryFilter(category);
+    setCurrentPage(1);
+  };
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 게시물 클릭 핸들러
+  const handleItemClick = (id: number) => {
+    router.push(`/insights/${id}`);
+  };
+
+  // 날짜 포맷팅
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}.${month}.${day}`;
+  };
+
+  // 브레드크럼 아이템
+  const breadcrumbs = [
+    { label: '인사이트' }
+  ];
+
+  // 탭 아이템
+  const tabItems = [
+    { id: 'column', label: '칼럼' },
+    { id: 'library', label: '자료실' }
+  ];
+
+  return (
+    <div className={styles.insightsPage}>
+      <Header
+        variant="transparent"
+        size="web"
+        onMenuClick={() => setIsMenuOpen(true)}
+      />
+      <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+
+      <div className={styles.content}>
+        <div className={styles.container}>
+          <div className={styles.pageHeaderWrapper}>
+            <PageHeader
+              title="인사이트"
+              breadcrumbs={breadcrumbs}
+              tabs={tabItems}
+              activeTabId={activeTab}
+              onTabChange={handleTabChange}
+              size="web"
+            />
+          </div>
+
+          <div className={styles.mainContent}>
+          {activeTab === 'column' && (
+            <>
+              <div className={styles.columnTitleSection}>
+                <h2 className={styles.columnTitle}>COLUMN</h2>
+              </div>
+              <div className={styles.columnContent}>
+                <div className={styles.sidebar}>
+                <h2 className={styles.sidebarTitle}>칼럼</h2>
+                <nav className={styles.categoryNav}>
+                  <button
+                    className={`${styles.categoryItem} ${categoryFilter === 'all' ? styles.categoryItemActive : ''}`}
+                    onClick={() => handleCategoryChange('all')}
+                  >
+                    {categoryFilter === 'all' && <span className={styles.activeDot} />}
+                    <span>전체</span>
+                  </button>
+                  <button
+                    className={`${styles.categoryItem} ${categoryFilter === 'industry' ? styles.categoryItemActive : ''}`}
+                    onClick={() => handleCategoryChange('industry')}
+                  >
+                    {categoryFilter === 'industry' && <span className={styles.activeDot} />}
+                    <span>업종별</span>
+                  </button>
+                  <button
+                    className={`${styles.categoryItem} ${categoryFilter === 'consulting' ? styles.categoryItemActive : ''}`}
+                    onClick={() => handleCategoryChange('consulting')}
+                  >
+                    {categoryFilter === 'consulting' && <span className={styles.activeDot} />}
+                    <span>컨설팅</span>
+                  </button>
+                </nav>
+              </div>
+
+              <div className={styles.mainSection}>
+                <div className={styles.toolbar}>
+                  <div className={styles.count}>
+                    <span>총 </span>
+                    <span className={styles.countNumber}>{total}</span>
+                    <span> 개의 게시물이 있습니다</span>
+                  </div>
+                  <div className={styles.searchWrapper}>
+                    <SearchField
+                      placeholder="제목을 입력해주세요"
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      onSearch={handleSearch}
+                      fullWidth
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.divider} />
+
+                {loading ? (
+                  <div className={styles.loading}>로딩 중...</div>
+                ) : error ? (
+                  <div className={styles.error}>
+                    <div className={styles.errorIcon}>⚠️</div>
+                    <p>{error}</p>
+                  </div>
+                ) : insights.length === 0 ? (
+                  <div className={styles.empty}>
+                    <img 
+                      src="/images/insights/empty-icon.svg" 
+                      alt="빈 상태" 
+                      className={styles.emptyIcon}
+                    />
+                    <p>등록된 게시글이 없습니다.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className={styles.insightsGrid}>
+                      {insights.map((item) => {
+                        // content에서 마크다운 제거하고 텍스트만 추출
+                        const plainContent = item.content
+                          .replace(/```[\s\S]*?```/g, '') // 코드 블록 제거
+                          .replace(/#{1,6}\s+/g, '') // 헤더 제거
+                          .replace(/\*\*([^*]+)\*\*/g, '$1') // 볼드 제거
+                          .replace(/\*([^*]+)\*/g, '$1') // 이탤릭 제거
+                          .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // 링크 제거
+                          .trim();
+                        
+                        return (
+                          <Card
+                            key={item.id}
+                            variant="column3"
+                            size="web"
+                            title={item.title}
+                            imageUrl={item.thumbnail?.url}
+                            category={typeof item.subcategory?.name === 'string' ? item.subcategory.name : (typeof item.category?.name === 'string' ? item.category.name : '카테고리명')}
+                            description={plainContent.length > 150
+                              ? `${plainContent.substring(0, 150)}...`
+                              : plainContent}
+                            author="작성자명"
+                            date={item.createdAt ? formatDate(item.createdAt) : ''}
+                            onClick={() => handleItemClick(item.id)}
+                            className={item.isMainExposed ? styles.featuredCard : ''}
+                          />
+                        );
+                      })}
+                    </div>
+
+                    <div className={styles.paginationWrapper}>
+                      <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                        visiblePages={4}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'library' && (
+            <div className={styles.libraryContent}>
+              {/* 임시: 노출 방식 전환 버튼 */}
+              <div className={styles.libraryDisplayTypeSelector}>
+                <button
+                  className={`${styles.displayTypeButton} ${libraryDisplayType === 'gallery' ? styles.displayTypeButtonActive : ''}`}
+                  onClick={() => {
+                    setLibraryDisplayType('gallery');
+                    if (typeof window !== 'undefined') {
+                      localStorage.setItem('libraryDisplayType', 'gallery');
+                    }
+                  }}
+                >
+                  A (갤러리형)
+                </button>
+                <button
+                  className={`${styles.displayTypeButton} ${libraryDisplayType === 'snippet' ? styles.displayTypeButtonActive : ''}`}
+                  onClick={() => {
+                    setLibraryDisplayType('snippet');
+                    if (typeof window !== 'undefined') {
+                      localStorage.setItem('libraryDisplayType', 'snippet');
+                    }
+                  }}
+                >
+                  B (스니펫형)
+                </button>
+                <button
+                  className={`${styles.displayTypeButton} ${libraryDisplayType === 'list' ? styles.displayTypeButtonActive : ''}`}
+                  onClick={() => {
+                    setLibraryDisplayType('list');
+                    if (typeof window !== 'undefined') {
+                      localStorage.setItem('libraryDisplayType', 'list');
+                    }
+                  }}
+                >
+                  C (리스트형)
+                </button>
+              </div>
+
+              <div className={styles.libraryTitleSection}>
+                <h2 className={styles.libraryTitle}>
+                  {libraryDisplayType === 'gallery' && 'Archives A'}
+                  {libraryDisplayType === 'snippet' && 'Archives B'}
+                  {libraryDisplayType === 'list' && 'Archives C'}
+                </h2>
+              </div>
+              <div className={styles.libraryMainContent}>
+                <div className={styles.librarySidebar}>
+                  <h2 className={styles.librarySidebarTitle}>
+                    {libraryDisplayType === 'gallery' && '자료실A'}
+                    {libraryDisplayType === 'snippet' && '자료실B'}
+                    {libraryDisplayType === 'list' && '자료실C'}
+                  </h2>
+                  <nav className={styles.libraryCategoryNav}>
+                    <button
+                      className={`${styles.libraryCategoryItem} ${categoryFilter === 'all' ? styles.libraryCategoryItemActive : ''}`}
+                      onClick={() => handleCategoryChange('all')}
+                    >
+                      {categoryFilter === 'all' && <span className={styles.activeDot} />}
+                      <span>전체</span>
+                    </button>
+                    <button
+                      className={`${styles.libraryCategoryItem} ${categoryFilter === 'industry' ? styles.libraryCategoryItemActive : ''}`}
+                      onClick={() => handleCategoryChange('industry')}
+                    >
+                      {categoryFilter === 'industry' && <span className={styles.activeDot} />}
+                      <span>업종별</span>
+                    </button>
+                    <button
+                      className={`${styles.libraryCategoryItem} ${categoryFilter === 'consulting' ? styles.libraryCategoryItemActive : ''}`}
+                      onClick={() => handleCategoryChange('consulting')}
+                    >
+                      {categoryFilter === 'consulting' && <span className={styles.activeDot} />}
+                      <span>컨설팅</span>
+                    </button>
+                  </nav>
+                </div>
+
+                <div className={styles.libraryMainSection}>
+                  <div className={styles.libraryToolbar}>
+                    <div className={styles.count}>
+                      <span>총 </span>
+                      <span className={styles.countNumber}>{total}</span>
+                      <span> 개의 게시물이 있습니다</span>
+                    </div>
+                    <div className={styles.searchWrapper}>
+                      <SearchField
+                        placeholder="제목을 입력해주세요"
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        onSearch={handleSearch}
+                        fullWidth
+                      />
+                    </div>
+                  </div>
+
+                  {libraryDisplayType !== 'list' && <div className={styles.divider} />}
+
+                  {loading ? (
+                    <div className={styles.loading}>로딩 중...</div>
+                  ) : error ? (
+                    <div className={styles.error}>
+                      <div className={styles.errorIcon}>⚠️</div>
+                      <p>{error}</p>
+                    </div>
+                  ) : insights.length === 0 ? (
+                    <div className={styles.empty}>
+                      <p>등록된 게시글이 없습니다.</p>
+                    </div>
+                  ) : (
+                    <>
+                      {libraryDisplayType === 'gallery' && (
+                        <div className={styles.libraryGallery}>
+                          {insights.map((item) => (
+                            <div
+                              key={item.id}
+                              className={`${styles.libraryCard} ${item.isMainExposed ? styles.libraryCardFeatured : ''}`}
+                              onClick={() => handleItemClick(item.id)}
+                            >
+                              <div className={styles.libraryCardImage}>
+                                {item.thumbnail?.url ? (
+                                  <img src={item.thumbnail.url} alt={item.title} />
+                                ) : (
+                                  <div className={styles.placeholderImage} />
+                                )}
+                              </div>
+                              <div className={styles.libraryCardContent}>
+                                <div className={styles.libraryCardHeader}>
+                                  <p className={styles.libraryCardCategory}>
+                                    {typeof item.subcategory?.name === 'string' ? item.subcategory.name : (typeof item.category?.name === 'string' ? item.category.name : '카테고리명')}
+                                  </p>
+                                  <h3 className={styles.libraryCardTitle}>{item.title}</h3>
+                                </div>
+                                <div className={styles.libraryCardFooter}>
+                                  <span className={styles.libraryCardAuthor}>작성자명</span>
+                                  <span className={styles.cardDivider} />
+                                  <span className={styles.libraryCardDate}>
+                                    {item.createdAt ? formatDate(item.createdAt) : '2026.01.28'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {libraryDisplayType === 'snippet' && (
+                        <div className={styles.librarySnippet}>
+                          {insights.map((item) => {
+                            // content에서 마크다운 제거하고 텍스트만 추출
+                            const plainContent = item.content
+                              .replace(/```[\s\S]*?```/g, '') // 코드 블록 제거
+                              .replace(/#{1,6}\s+/g, '') // 헤더 제거
+                              .replace(/\*\*([^*]+)\*\*/g, '$1') // 볼드 제거
+                              .replace(/\*([^*]+)\*/g, '$1') // 이탤릭 제거
+                              .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // 링크 제거
+                              .trim();
+
+                            return (
+                              <Card
+                                key={item.id}
+                                variant="horizontal"
+                                size="web"
+                                title={item.title}
+                                imageUrl={item.thumbnail?.url}
+                                category={typeof item.subcategory?.name === 'string' ? item.subcategory.name : (typeof item.category?.name === 'string' ? item.category.name : '카테고리명')}
+                                description={plainContent.length > 200
+                                  ? `${plainContent.substring(0, 200)}...`
+                                  : plainContent}
+                                author="작성자명"
+                                date={item.createdAt ? formatDate(item.createdAt) : '2023.11.08'}
+                                onClick={() => handleItemClick(item.id)}
+                              />
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {libraryDisplayType === 'list' && (
+                        <div className={styles.libraryList}>
+                          <div className={styles.libraryListHeader}>
+                            <div className={styles.libraryListHeaderRow}>
+                              <div className={styles.libraryListHeaderCell}>No.</div>
+                              <div 
+                                className={`${styles.libraryListHeaderCell} ${styles.sortable}`}
+                                onClick={() => handleSort('category')}
+                              >
+                                카테고리
+                                <Icon 
+                                  type={sortField === 'category' && sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'} 
+                                  size={16} 
+                                  className={styles.sortIcon}
+                                />
+                              </div>
+                              <div className={styles.libraryListHeaderCell}>제목</div>
+                              <div 
+                                className={`${styles.libraryListHeaderCell} ${styles.sortable}`}
+                                onClick={() => handleSort('author')}
+                              >
+                                작성자
+                                <Icon 
+                                  type={sortField === 'author' && sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'} 
+                                  size={16} 
+                                  className={styles.sortIcon}
+                                />
+                              </div>
+                              <div className={styles.libraryListHeaderCell}>작성 일</div>
+                              <div className={styles.libraryListHeaderCell}>조회수</div>
+                            </div>
+                          </div>
+                          <div className={styles.libraryListBody}>
+                            {getSortedInsights().map((item, index) => (
+                              <div
+                                key={item.id}
+                                className={styles.libraryListRow}
+                                onClick={() => handleItemClick(item.id)}
+                              >
+                                <div className={styles.libraryListCell}>
+                                  {(currentPage - 1) * 20 + index + 1}
+                                </div>
+                                <div className={`${styles.libraryListCell} ${styles.categoryCell}`}>
+                                  {typeof item.subcategory?.name === 'string' ? item.subcategory.name : (typeof item.category?.name === 'string' ? item.category.name : '카테고리 명')}
+                                </div>
+                                <div className={`${styles.libraryListCell} ${styles.titleCell}`}>
+                                  <span className={styles.libraryListTitle}>{item.title}</span>
+                                  {item.thumbnail && (
+                                    <Icon type="document" size={20} className={styles.libraryListDocumentIcon} />
+                                  )}
+                                </div>
+                                <div className={styles.libraryListCell}>작성자명</div>
+                                <div className={styles.libraryListCell}>
+                                  {item.createdAt ? formatDate(item.createdAt) : '2025.10.14 13:05'}
+                                </div>
+                                <div className={styles.libraryListCell}>0</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className={styles.paginationWrapper}>
+                        <Pagination
+                          currentPage={currentPage}
+                          totalPages={totalPages}
+                          onPageChange={handlePageChange}
+                          visiblePages={4}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.floatingButtons}>
+        <FloatingButton
+          variant="consult"
+          label="상담 신청하기"
+          onClick={() => router.push('/consultation/apply')}
+        />
+        <FloatingButton
+          variant="top"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        />
+      </div>
+
+      <Footer variant="web" />
+    </div>
+  );
+};
+
+export default InsightsPage;
+

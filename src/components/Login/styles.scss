@@ -7,7 +7,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 120px 24px 80px;
+  padding: 160px 240px 200px;
 
   @media (max-width: $breakpoint-tablet) {
     padding: 100px 20px 60px;
@@ -17,28 +17,42 @@
 .login-title {
   font-family: $font-montserrat;
   font-weight: $font-weight-light;
-  font-size: clamp(40px, 5vw, 72px);
+  font-size: 72px;
   line-height: 1.5;
   letter-spacing: -3px;
   color: $white;
-  margin-bottom: 48px;
+  margin-bottom: 80px;
 
   @media (max-width: $breakpoint-tablet) {
+    font-size: clamp(40px, 5vw, 72px);
     letter-spacing: -1.5px;
-    margin-bottom: 32px;
+    margin-bottom: 48px;
   }
 }
 
 .login-form {
   width: 100%;
-  max-width: 361px;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 
   @media (max-width: $breakpoint-tablet) {
     max-width: 100%;
-    gap: 20px;
+    gap: 24px;
+  }
+  
+  // 에러 메시지 스타일 (Figma 디자인에 맞게)
+  .auth-error-message {
+    @include pretendard-13-regular;
+    color: $error; // #F35064
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 0;
+    margin-bottom: 0;
+    
+    // 에러 아이콘은 TextField 컴포넌트에서 처리하거나 별도로 추가
   }
 }
 
@@ -46,6 +60,55 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  
+  // 로그인 페이지의 체크박스는 Figma 디자인에 맞게 파란색 배경에 검정색 체크
+  .checkbox {
+    gap: 6px;
+    padding: 6px;
+    
+    .checkbox__box {
+      border-color: $gray-40; // #C6C6C6
+      
+      &--checked {
+        background-color: $navy-30 !important; // #94B9E3 (파란색 배경)
+        border-color: $navy-30 !important;
+        color: $gray-90 !important; // #151515 (검정색 체크마크)
+        
+        .checkbox__icon {
+          color: $gray-90 !important; // 검정색 체크마크
+        }
+      }
+    }
+    
+    .checkbox__label {
+      @include pretendard-13-regular;
+      color: $gray-30; // #D8D8D8
+      letter-spacing: -0.065px;
+    }
+  }
+  
+  // 아이디 찾기 / 비밀번호 찾기 링크
+  .login-links-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    
+    .button {
+      padding: 6px;
+      
+      .button__text {
+        @include pretendard-13-regular;
+        color: $gray-50; // #8E8E8E
+        letter-spacing: -0.065px;
+      }
+    }
+  }
+  
+  .login-link-divider {
+    @include pretendard-13-regular;
+    color: $gray-50; // #8E8E8E
+    letter-spacing: -0.065px;
+  }
 }
 
 .login-checkbox-wrapper {
@@ -137,18 +200,25 @@
 }
 
 .login-signup-link {
-  margin-top: 24px;
+  margin-top: 40px;
   font-family: $font-pretendard;
   font-weight: $font-weight-regular;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: -0.065px;
+  color: $gray-30; // #D8D8D8
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .login-signup-link-text {
-  color: $white;
+  @include pretendard-14-semibold;
+  color: $navy-30; // #94B9E3
   text-decoration: underline;
-  margin-left: 4px;
+  text-underline-offset: 2px;
 
   &:hover {
     opacity: 0.8;
@@ -165,21 +235,19 @@
 }
 
 .social-divider {
-  width: 360px;
+  width: 351px;
   height: 1px;
   background-color: rgba(255, 255, 255, 0.2);
 
   @media (max-width: $breakpoint-tablet) {
     width: 100%;
-    max-width: 360px;
+    max-width: 351px;
   }
 }
 
 .social-divider-text {
-  font-family: $font-pretendard;
-  font-weight: $font-weight-regular;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.6);
+  @include pretendard-15-regular;
+  color: $gray-30; // #D8D8D8
 }
 
 .social-buttons {

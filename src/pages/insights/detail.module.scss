@@ -1,0 +1,447 @@
+@import '../../styles/variables';
+
+.page {
+  min-height: 100vh;
+  background-color: #151515;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  flex: 1;
+  padding: 0 400px;
+  max-width: 1920px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: $breakpoint-desktop) {
+    padding: 0 240px;
+  }
+
+  @media (max-width: $breakpoint-tablet) {
+    padding: 0 24px;
+  }
+}
+
+.content {
+  padding: 80px 0 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 120px;
+  width: 100%;
+
+  @media (max-width: $breakpoint-desktop) {
+    padding: 60px 0 120px;
+    gap: 80px;
+  }
+
+  @media (max-width: $breakpoint-tablet) {
+    padding: 40px 0 80px;
+    gap: 60px;
+  }
+}
+
+.floatingButtons {
+  position: fixed;
+  bottom: 60px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 1000;
+
+  @media (max-width: $breakpoint-tablet) {
+    bottom: 20px;
+    right: 16px;
+    gap: 16px;
+  }
+}
+
+.loading,
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  gap: 24px;
+  font-size: 18px;
+  color: white;
+}
+
+// Header Section
+.headerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  align-items: center;
+  text-align: center;
+
+  @media (max-width: $breakpoint-tablet) {
+    gap: 32px;
+  }
+}
+
+.category {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-semibold;
+  font-size: 19px;
+  line-height: 1.5;
+  letter-spacing: -0.095px;
+  color: #94b9e3;
+}
+
+.title {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-semibold;
+  font-size: 40px;
+  line-height: 1.5;
+  letter-spacing: -0.2px;
+  color: #f0f0f0;
+  margin: 0;
+  text-align: center;
+  max-width: 1120px;
+
+  @media (max-width: $breakpoint-tablet) {
+    font-size: 28px;
+  }
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 24px 24px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.5);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  @media (max-width: $breakpoint-tablet) {
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px 0;
+  }
+}
+
+.metaLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  
+  // 구분선이 하나만 보이도록 명확히 설정
+  .divider {
+    width: 1px;
+    height: 12px;
+    background-color: #8e8e8e;
+    flex-shrink: 0;
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    border: none;
+    line-height: 1;
+  }
+}
+
+.author {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-semibold;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.075px;
+  color: #d8d8d8;
+}
+
+.metaRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon {
+  cursor: pointer;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+  
+  &:first-of-type {
+    width: 20px;
+    height: 20px;
+  }
+  
+  &:last-of-type {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.viewCount {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-regular;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #d8d8d8;
+}
+
+.divider {
+  width: 1px;
+  height: 12px;
+  background-color: #8e8e8e;
+  flex-shrink: 0;
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.dividerLine {
+  width: 100%;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin: 0;
+}
+
+.date {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-semibold;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.075px;
+  color: #8e8e8e;
+}
+
+// Body Section
+.bodySection {
+  display: flex;
+  flex-direction: column;
+  gap: 72px;
+  width: 100%;
+
+  @media (max-width: $breakpoint-tablet) {
+    gap: 48px;
+  }
+}
+
+.imageSection {
+  width: 100%;
+  aspect-ratio: 257 / 180;
+  border-radius: 12px;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.bodyContent {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-regular;
+  font-size: 17px;
+  line-height: 1.45;
+  letter-spacing: -0.085px;
+  color: white;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+
+  // Toast UI Viewer 스타일 오버라이드
+  :global(.toastui-editor-contents) {
+    font-family: $font-pretendard;
+    font-size: 17px;
+    line-height: 1.45;
+    letter-spacing: -0.085px;
+    color: white;
+
+    p {
+      margin: 0 0 16px 0;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    strong {
+      font-weight: $font-weight-semibold;
+      color: white;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      color: white;
+      font-family: $font-pretendard;
+      font-weight: $font-weight-semibold;
+    }
+
+    a {
+      color: #94b9e3;
+    }
+
+    code {
+      background: rgba(255, 255, 255, 0.1);
+      color: #d8d8d8;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    pre {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 16px;
+      border-radius: 8px;
+    }
+
+    blockquote {
+      border-left: 4px solid #94b9e3;
+      color: #d8d8d8;
+      padding-left: 16px;
+      margin: 16px 0;
+    }
+
+    table {
+      border-color: rgba(255, 255, 255, 0.2);
+      
+      th, td {
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+}
+
+// Navigation Section
+.navigationSection {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  align-items: center;
+
+  @media (max-width: $breakpoint-tablet) {
+    gap: 40px;
+  }
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  gap: 24px;
+
+  @media (max-width: $breakpoint-tablet) {
+    flex-direction: column;
+    gap: 24px;
+  }
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:first-child {
+    flex: 0 0 auto;
+  }
+
+  &:last-child {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  @media (max-width: $breakpoint-tablet) {
+    width: 100%;
+    justify-content: center;
+    
+    &:last-child {
+      margin-left: 0;
+    }
+  }
+}
+
+.navIcon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.navContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.navLabel {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-medium;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.075px;
+  color: #94b9e3;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.navTitle {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-regular;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #d8d8d8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.navEmpty {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-regular;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #8e8e8e;
+  text-align: center;
+  width: 100%;
+}
+
+.backButton {
+  border: 1px solid white;
+  border-radius: 100px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  :global(.button__icon--left) {
+    margin-top: 6px;
+  }
+}
+

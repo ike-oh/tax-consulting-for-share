@@ -14,6 +14,11 @@ export default function Document() {
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
           rel="stylesheet"
         />
+        <script
+          type="text/javascript"
+          src={`https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID || ''}&callback=initNaverMap`}
+          defer
+        />
       </Head>
       <body>
         <Main />

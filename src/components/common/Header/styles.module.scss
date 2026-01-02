@@ -1,0 +1,123 @@
+// Header 디자인 시스템
+// Figma: 보험단 스타일가이드 - Header 컴포넌트
+
+// 색상 변수
+$color-white: #ffffff;
+$color-black: #151515;
+$color-gray-80: #2d2d2d;
+
+.header {
+  position: relative;
+  width: 100%;
+  font-family: 'Pretendard', sans-serif;
+  z-index: 1000;
+
+  &--fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+  }
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    height: 100%;
+  }
+
+  &__logo {
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+  }
+
+  &__logo--web {
+    height: 58px;  // Figma 디자인에 맞게
+    width: 168px;  // Figma 디자인에 맞게
+  }
+
+  &__logo--mobile {
+    height: 38px;  // Figma 디자인에 맞게
+    width: 110px;  // Figma 디자인에 맞게
+  }
+
+  &__logo-image {
+    display: block;
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  &__menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  &__menu--web {
+    width: 48px;
+    height: 48px;
+  }
+
+  &__menu--mobile {
+    width: 40px;
+    height: 40px;
+
+    svg {
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  // ========================================
+  // Size: Web
+  // ========================================
+  &--web {
+    height: 80px;
+    padding: 0 40px;
+  }
+
+  // ========================================
+  // Size: Mobile
+  // ========================================
+  &--mobile {
+    height: 60px;
+    padding: 0 20px;
+  }
+
+  // ========================================
+  // Variant: Transparent
+  // ========================================
+  &--transparent {
+    background-color: transparent;
+  }
+
+  // ========================================
+  // Variant: White
+  // ========================================
+  &--white {
+    background-color: $color-white;
+  }
+
+  // ========================================
+  // Variant: Black
+  // ========================================
+  &--black {
+    background-color: $color-black;
+  }
+}

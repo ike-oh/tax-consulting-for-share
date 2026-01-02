@@ -1,13 +1,33 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
-import Header from '@/components/Header';
+import Header from '@/components/common/Header';
 import Menu from '@/components/Menu';
-import Footer from '@/components/Footer';
+import Footer from '@/components/common/Footer';
+import { TextField } from '@/components/common/TextField';
+import Select from '@/components/common/Select';
+import Checkbox from '@/components/common/Checkbox';
+import StepIndicator from '@/components/common/StepIndicator';
+import Button from '@/components/common/Button';
+import Icon from '@/components/common/Icon';
 
 type StepType = 1 | 2 | 3;
 type MemberType = 'general' | 'taxAccountant' | 'other';
 
-const CARRIER_OPTIONS = ['통신사 선택', 'SKT', 'KT', 'LG U+', '알뜰폰'];
+const CARRIER_OPTIONS = [
+  { value: '', label: '통신사 선택' },
+  { value: 'skt', label: 'SKT' },
+  { value: 'kt', label: 'KT' },
+  { value: 'lgu', label: 'LG U+' },
+  { value: 'mvno', label: '알뜰폰' },
+];
+
+const DOMAIN_OPTIONS = [
+  { value: 'naver.com', label: 'naver.com' },
+  { value: 'google.com', label: 'google.com' },
+  { value: 'daum.net', label: 'daum.net' },
+  { value: 'nate.com', label: 'nate.com' },
+  { value: '', label: '직접 입력' },
+];
 
 interface TermsState {
   all: boolean;
@@ -16,12 +36,10 @@ interface TermsState {
   marketing: boolean;
 }
 
-const DOMAIN_OPTIONS = [
-  'naver.com',
-  'google.com',
-  'daum.net',
-  'nate.com',
-  '직접 입력',
+const STEP_ITEMS = [
+  { number: 'STEP 01', label: '약관동의' },
+  { number: 'STEP 02', label: '정보입력' },
+  { number: 'STEP 03', label: '가입완료' },
 ];
 
 const Signup: React.FC = () => {
@@ -41,10 +59,9 @@ const Signup: React.FC = () => {
   const [name, setName] = useState('');
   const [emailLocal, setEmailLocal] = useState('');
   const [emailDomain, setEmailDomain] = useState('');
-  const [isDomainDropdownOpen, setIsDomainDropdownOpen] = useState(false);
+  const [selectedDomainOption, setSelectedDomainOption] = useState('');
   const [newsletter, setNewsletter] = useState(false);
   const [carrier, setCarrier] = useState('');
-  const [isCarrierDropdownOpen, setIsCarrierDropdownOpen] = useState(false);
   const [phone, setPhone] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
@@ -53,6 +70,14 @@ const Signup: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [error, setError] = useState('');
+  // Field-specific error states
+  const [userIdError, setUserIdError] = useState('');
+  const [nameError, setNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [verificationCodeError, setVerificationCodeError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordConfirmError, setPasswordConfirmError] = useState('');
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -67,11 +92,29 @@ const Signup: React.FC = () => {
     return () => clearInterval(interval);
   }, [isTimerActive, timeLeft]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  // 비밀번호 확인 검증 (입력 중에는 오류를 표시하지 않음)
+  useEffect(() => {
+    if (!passwordConfirm) {
+      setPasswordConfirmError('');
+      return;
+    }
+    // 비밀번호가 입력되어 있고, 확인 비밀번호가 비밀번호와 같은 길이이거나 더 길 때만 검증
+    if (password && passwordConfirm) {
+      // 비밀번호와 확인 비밀번호의 길이가 같을 때만 검증 (입력 중이 아닐 때)
+      if (passwordConfirm.length === password.length) {
+        if (password !== passwordConfirm) {
+          setPasswordConfirmError('비밀번호가 일치하지 않습니다.');
+        } else {
+          setPasswordConfirmError('');
+        }
+      } else {
+        // 입력 중에는 오류를 표시하지 않음
+        setPasswordConfirmError('');
+      }
+    } else {
+      setPasswordConfirmError('');
+    }
+  }, [password, passwordConfirm]);
 
   const handleAllAgree = () => {
     const newValue = !terms.all;
@@ -97,63 +140,196 @@ const Signup: React.FC = () => {
 
   const handleCheckUserId = useCallback(() => {
     if (!userId) {
-      setError('아이디를 입력해주세요.');
+      setUserIdError('아이디를 입력해주세요.');
+      setIsUserIdChecked(false);
       return;
     }
     setIsUserIdChecked(true);
-    setIsUserIdAvailable(true);
-    setError('');
+    
+    // 테스트: 특정 아이디는 중복으로 처리
+    if (userId === 'test' || userId === 'admin' || userId === 'user' || userId === 'qwe123') {
+      setIsUserIdAvailable(false);
+      setUserIdError('이미 사용중인 아이디 입니다');
+    } else {
+      setIsUserIdAvailable(true);
+      setUserIdError('');
+    }
   }, [userId]);
 
   const handleRequestVerification = useCallback(() => {
-    if (!phone) {
-      setError('휴대폰 번호를 입력해주세요.');
+    if (!carrier || !phone) {
+      setPhoneError('휴대폰번호를 입력해주세요');
       return;
     }
+    setPhoneError('');
     setTimeLeft(300);
     setIsTimerActive(true);
     setError('');
-  }, [phone]);
+  }, [phone, carrier]);
 
   const handleVerifyCode = useCallback(() => {
     if (!verificationCode) {
-      setError('인증번호를 입력해주세요.');
+      setVerificationCodeError('인증번호를 입력해주세요.');
+      return;
+    }
+    // 테스트: 특정 번호는 이미 가입된 번호로 처리
+    if (phone === '0101' || phone === '010-1234-5678') {
+      setVerificationCodeError('이미 가입 완료된 휴대폰 번호 입니다');
       return;
     }
     if (verificationCode === '123456') {
       setIsPhoneVerified(true);
       setIsTimerActive(false);
-      setError('');
+      setVerificationCodeError('');
     } else {
-      setError('인증번호가 올바르지 않습니다.');
+      setVerificationCodeError('인증번호가 올바르지 않습니다');
     }
-  }, [verificationCode]);
+  }, [verificationCode, phone]);
 
-  const handleDomainSelect = (domain: string) => {
-    if (domain === '직접 입력') {
+  const handleDomainSelect = (value: string) => {
+    setSelectedDomainOption(value);
+    if (value === '') {
       setEmailDomain('');
     } else {
-      setEmailDomain(domain);
+      setEmailDomain(value);
     }
-    setIsDomainDropdownOpen(false);
   };
 
-  const passwordRequirements = {
-    length: password.length >= 8 && password.length <= 16,
-    uppercase: /[A-Z]/.test(password),
-    lowercase: /[a-z]/.test(password),
-    number: /[0-9]/.test(password),
-    special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-  };
+  const validateEmail = useCallback((showError: boolean = false) => {
+    // 입력 중에는 오류를 표시하지 않음
+    if (!showError) {
+      // 둘 다 입력되어 있을 때만 검증
+      if (emailLocal && emailDomain) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const fullEmail = `${emailLocal}@${emailDomain}`;
+        if (!emailRegex.test(fullEmail)) {
+          setEmailError('올바르지 않은 이메일 형식입니다');
+        } else {
+          setEmailError('');
+        }
+      } else {
+        setEmailError('');
+      }
+      return;
+    }
+    
+    // 검증 모드: 오류 표시
+    if (!emailLocal || !emailDomain) {
+      setEmailError('이메일을 작성해주세요');
+      return;
+    }
+    // 이메일 형식 검증 (간단한 검증)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const fullEmail = `${emailLocal}@${emailDomain}`;
+    if (!emailRegex.test(fullEmail)) {
+      setEmailError('올바르지 않은 이메일 형식입니다');
+      return;
+    }
+    setEmailError('');
+  }, [emailLocal, emailDomain]);
 
-  const isPasswordValid = Object.values(passwordRequirements).every(Boolean);
+  const validatePassword = useCallback((pwd: string, showError: boolean = false) => {
+    if (!pwd) {
+      setPasswordError('');
+      return;
+    }
+    // 입력 중에는 오류를 표시하지 않음 (6자 이상 입력 후에만 검증)
+    if (!showError && pwd.length < 6) {
+      setPasswordError('');
+      return;
+    }
+    const hasUppercase = /[A-Z]/.test(pwd);
+    const hasLowercase = /[a-z]/.test(pwd);
+    const hasNumber = /[0-9]/.test(pwd);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(pwd);
+    const typeCount = [hasUppercase, hasLowercase, hasNumber, hasSpecial].filter(Boolean).length;
+    
+    if (pwd.length < 6 || pwd.length > 12) {
+      setPasswordError('영문자, 숫자, 특수문자 중 2가지 이상 조합, 6~12자');
+    } else if (typeCount < 2) {
+      setPasswordError('영문자, 숫자, 특수문자 중 2가지 이상 조합, 6~12자');
+    } else {
+      setPasswordError('');
+    }
+  }, []);
+
+  const validatePasswordConfirm = useCallback((pwd: string, confirm: string, showError: boolean = false) => {
+    if (!confirm) {
+      setPasswordConfirmError('');
+      return;
+    }
+    // 입력 중에는 오류를 표시하지 않음 (비밀번호가 입력된 후에만 검증)
+    if (!showError && !pwd) {
+      setPasswordConfirmError('');
+      return;
+    }
+    if (pwd !== confirm) {
+      setPasswordConfirmError('비밀번호가 일치하지 않습니다.');
+    } else {
+      setPasswordConfirmError('');
+    }
+  }, []);
+
+  // 비밀번호 유효성 검사 (6-12자, 영문자/숫자/특수문자 중 2가지 이상)
+  const isPasswordValid = useMemo(() => {
+    if (!password || password.length < 6 || password.length > 12) {
+      return false;
+    }
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    const typeCount = [hasUppercase, hasLowercase, hasNumber, hasSpecial].filter(Boolean).length;
+    return typeCount >= 2;
+  }, [password]);
+
   const isPasswordMatch = password === passwordConfirm && passwordConfirm !== '';
   const fullEmail = emailLocal && emailDomain ? `${emailLocal}@${emailDomain}` : '';
 
   const isStep2Valid = isUserIdChecked && isUserIdAvailable && name && fullEmail && isPhoneVerified && isPasswordValid && isPasswordMatch;
 
-  const handleStep2Submit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateAllFields = useCallback(() => {
+    let hasError = false;
+    
+    // 이름 검증
+    if (!name) {
+      setNameError('이름을 작성해주세요');
+      hasError = true;
+    }
+    
+    // 이메일 검증
+    validateEmail(true);
+    if (!emailLocal || !emailDomain) {
+      hasError = true;
+    }
+    
+    // 휴대폰 번호 검증
+    if (!carrier || !phone) {
+      setPhoneError('휴대폰번호를 입력해주세요');
+      hasError = true;
+    }
+    
+    // 비밀번호 검증
+    if (password) {
+      validatePassword(password, true);
+    }
+    
+    // 비밀번호 확인 검증
+    if (passwordConfirm) {
+      validatePasswordConfirm(password, passwordConfirm, true);
+    }
+    
+    return !hasError;
+  }, [name, emailLocal, emailDomain, carrier, phone, password, passwordConfirm, validateEmail, validatePassword, validatePasswordConfirm]);
+
+  const handleStep2Submit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
+    // 모든 필드 검증
+    if (!validateAllFields()) {
+      return;
+    }
+    
     if (!isStep2Valid) {
       setError('모든 필드를 올바르게 입력해주세요.');
       return;
@@ -162,72 +338,63 @@ const Signup: React.FC = () => {
     setStep(3);
   };
 
-  const renderStepIndicator = () => (
-    <div className="signup-step-indicator">
-      <div className={`signup-step-item ${step === 1 ? 'is-active' : ''} ${step > 1 ? 'is-completed' : ''}`}>
-        <div className="signup-step-circle" />
-        <span className="signup-step-number">STEP 01</span>
-        <span className="signup-step-label">약관동의</span>
-      </div>
-      <div className="signup-step-divider" />
-      <div className={`signup-step-item ${step === 2 ? 'is-active' : ''} ${step > 2 ? 'is-completed' : ''}`}>
-        <div className="signup-step-circle" />
-        <span className="signup-step-number">STEP 02</span>
-        <span className="signup-step-label">정보입력</span>
-      </div>
-      <div className="signup-step-divider" />
-      <div className={`signup-step-item ${step === 3 ? 'is-active' : ''}`}>
-        <div className="signup-step-circle" />
-        <span className="signup-step-number">STEP 03</span>
-        <span className="signup-step-label">가입완료</span>
-      </div>
-    </div>
-  );
-
   const renderStep1 = () => (
     <>
       <div className="auth-form-container">
         <div className="signup-terms-container">
-          <div className="signup-all-agree-wrapper">
-            <label className="auth-checkbox-label is-all-agree" onClick={handleAllAgree}>
-              <input type="checkbox" className="auth-checkbox-input" checked={terms.all} readOnly />
-              <span className={`auth-checkbox-icon ${terms.all ? 'is-checked' : ''}`} />
-              모두 동의 (선택 정보 포함)
-            </label>
+          <div className={`signup-all-agree-wrapper ${terms.all ? 'is-checked' : ''}`}>
+            <Checkbox
+              variant="square"
+              checked={terms.all}
+              label="모두 동의 (선택 정보 포함)"
+              onChange={handleAllAgree}
+              className="signup-all-agree-checkbox"
+            />
           </div>
           <div className="signup-terms-list">
             <div className="signup-term-item-wrapper">
-              <label className="auth-checkbox-label" onClick={() => handleTermChange('privacy')}>
-                <input type="checkbox" className="auth-checkbox-input" checked={terms.privacy} readOnly />
-                <span className={`auth-checkbox-icon ${terms.privacy ? 'is-checked' : ''}`} />
-                [필수] 개인정보 처리 방침 이용 동의
-              </label>
-              <button type="button" className="signup-view-detail-button">보기</button>
+              <Checkbox
+                variant="square"
+                checked={terms.privacy}
+                label="[필수] 개인정보 처리 방침 이용 동의"
+                onChange={() => handleTermChange('privacy')}
+              />
+              <button type="button" className="signup-view-link">보기</button>
             </div>
             <div className="signup-term-item-wrapper">
-              <label className="auth-checkbox-label" onClick={() => handleTermChange('terms')}>
-                <input type="checkbox" className="auth-checkbox-input" checked={terms.terms} readOnly />
-                <span className={`auth-checkbox-icon ${terms.terms ? 'is-checked' : ''}`} />
-                [필수] OO OOOOO 이용 동의
-              </label>
-              <button type="button" className="signup-view-detail-button">보기</button>
+              <Checkbox
+                variant="square"
+                checked={terms.terms}
+                label="[필수] OO OOOOO 이용 동의"
+                onChange={() => handleTermChange('terms')}
+              />
+              <button type="button" className="signup-view-link">보기</button>
             </div>
             <div className="signup-term-item-wrapper">
-              <label className="auth-checkbox-label" onClick={() => handleTermChange('marketing')}>
-                <input type="checkbox" className="auth-checkbox-input" checked={terms.marketing} readOnly />
-                <span className={`auth-checkbox-icon ${terms.marketing ? 'is-checked' : ''}`} />
-                [선택] OO OOOOO 이용 동의
-              </label>
-              <button type="button" className="signup-view-detail-button">보기</button>
+              <Checkbox
+                variant="square"
+                checked={terms.marketing}
+                label="[선택] OO OOOOO 이용 동의"
+                onChange={() => handleTermChange('marketing')}
+              />
+              <button type="button" className="signup-view-link">보기</button>
             </div>
           </div>
           {error && <p className="auth-error-message">{error}</p>}
         </div>
       </div>
-      <button type="button" className={`auth-submit-button ${!isRequiredTermsAgreed ? 'is-disabled' : ''}`} onClick={handleStep1Submit}>
-        다음
-        <span className="auth-arrow-icon" />
-      </button>
+
+      <div className="signup-step1-button-wrapper">
+        <Button
+          type={isRequiredTermsAgreed ? "primary" : "secondary"}
+          size="large"
+          disabled={!isRequiredTermsAgreed}
+          onClick={handleStep1Submit}
+          rightIcon="arrow-right2-gray"
+        >
+          다음
+        </Button>
+      </div>
     </>
   );
 
@@ -239,8 +406,19 @@ const Signup: React.FC = () => {
             <label className="auth-input-label">회원 유형 <span className="auth-required-mark">*</span></label>
             <div className="signup-member-type-group">
               {(['general', 'taxAccountant', 'other'] as MemberType[]).map((type) => (
-                <button key={type} type="button" className={`signup-member-type-button ${memberType === type ? 'is-selected' : ''}`} onClick={() => setMemberType(type)}>
-                  <span className={`signup-member-type-radio ${memberType === type ? 'is-selected' : ''}`} />
+                <button
+                  key={type}
+                  type="button"
+                  className={`signup-member-type-button ${memberType === type ? 'is-selected' : ''}`}
+                  onClick={() => setMemberType(type)}
+                >
+                  <span className={`signup-member-type-radio ${memberType === type ? 'is-selected' : ''}`}>
+                    {memberType === type && (
+                      <svg width="7" height="7" viewBox="0 0 7 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="3.5" cy="3.5" r="3.5" fill="#94B9E3"/>
+                      </svg>
+                    )}
+                  </span>
                   {type === 'general' ? '일반 회원' : type === 'taxAccountant' ? '세무사' : '기타'}
                 </button>
               ))}
@@ -248,115 +426,280 @@ const Signup: React.FC = () => {
           </div>
 
           <div className="auth-input-group">
-            <label className="auth-input-label">아이디<span className="auth-required-mark">*</span></label>
-            <div className="auth-input-with-button">
-              <div className="auth-input-flex">
-                <div className="auth-input-wrapper">
-                  <input type="text" className="auth-input" placeholder="아이디를 입력해주세요" value={userId} onChange={(e) => { setUserId(e.target.value); setIsUserIdChecked(false); }} />
-                  {userId && <button type="button" className="auth-clear-button" onClick={() => setUserId('')}><span className="auth-clear-icon" /></button>}
-                </div>
-              </div>
-              <button type="button" className="auth-verification-button" onClick={handleCheckUserId}>중복 확인</button>
+            <label className="auth-input-label">아이디 <span className="auth-required-mark">*</span></label>
+            <div className="signup-id-input-group">
+              <TextField
+                variant="line"
+                placeholder="아이디를 입력해주세요"
+                value={userId}
+                onChange={(val) => { setUserId(val); setIsUserIdChecked(false); }}
+                className="signup-id-input"
+              />
+              <Button
+                type="line-white"
+                size="medium"
+                disabled={!userId}
+                onClick={handleCheckUserId}
+                className="signup-check-duplicate-button"
+              >
+                중복 확인
+              </Button>
             </div>
-            {isUserIdChecked && isUserIdAvailable && <p className="auth-success-message">사용 가능한 아이디입니다.</p>}
+            {isUserIdChecked && isUserIdAvailable && (
+              <p className="auth-success-message">
+                <Icon type="info-gray" size={16} />
+                사용 가능한 아이디입니다.
+              </p>
+            )}
+            {userIdError && (
+              <p className="auth-error-message">
+                <Icon type="error" size={16} />
+                {userIdError}
+              </p>
+            )}
           </div>
 
           <div className="auth-input-group">
-            <label className="auth-input-label">이름<span className="auth-required-mark">*</span></label>
-            <div className="auth-input-wrapper">
-              <input type="text" className="auth-input" placeholder="이름을 입력해주세요" value={name} onChange={(e) => setName(e.target.value)} />
-              {name && <button type="button" className="auth-clear-button" onClick={() => setName('')}><span className="auth-clear-icon" /></button>}
-            </div>
+            <label className="auth-input-label">이름 <span className="auth-required-mark">*</span></label>
+            <TextField
+              variant="line"
+              placeholder="이름을 입력해주세요"
+              value={name}
+              onChange={(val) => {
+                setName(val);
+                if (val) {
+                  setNameError('');
+                }
+              }}
+              error={!!nameError}
+              fullWidth
+            />
+            {nameError && (
+              <p className="auth-error-message">
+                <Icon type="error" size={16} />
+                {nameError}
+              </p>
+            )}
           </div>
 
           <div className="auth-input-group">
             <label className="auth-input-label">이메일<span className="auth-required-mark">*</span></label>
             <div className="signup-email-input-group">
               <div className="signup-email-input-wrapper">
-                <input type="text" className="auth-input" style={{ padding: '12px 0' }} placeholder="이메일" value={emailLocal} onChange={(e) => setEmailLocal(e.target.value)} />
+                <TextField
+                  variant="line"
+                  placeholder="이메일"
+                  value={emailLocal}
+                  onChange={(val) => {
+                    setEmailLocal(val);
+                    // 입력 중에는 오류를 표시하지 않음
+                    if (val && emailDomain) {
+                      validateEmail(false);
+                    } else {
+                      setEmailError('');
+                    }
+                  }}
+                  error={!!emailError && !emailLocal}
+                />
               </div>
               <span className="signup-at-sign">@</span>
               <div className="signup-email-domain-wrapper">
-                <span className="signup-email-domain-text">{emailDomain}</span>
-              </div>
-              <div className="signup-domain-select-wrapper">
-                <button type="button" className="signup-domain-select" onClick={() => setIsDomainDropdownOpen(!isDomainDropdownOpen)}>
-                  직접 입력
-                  <span className={`signup-select-arrow ${isDomainDropdownOpen ? 'is-open' : ''}`} />
-                </button>
-                {isDomainDropdownOpen && (
-                  <div className="signup-domain-dropdown">
-                    {DOMAIN_OPTIONS.map((domain) => (
-                      <button key={domain} type="button" className="signup-domain-option" onClick={() => handleDomainSelect(domain)}>{domain}</button>
-                    ))}
-                  </div>
+                {selectedDomainOption === '' ? (
+                  <TextField
+                    variant="line"
+                    placeholder="직접 입력"
+                    value={emailDomain}
+                    onChange={(val) => {
+                      setEmailDomain(val);
+                      // 입력 중에는 오류를 표시하지 않음
+                      if (val && emailLocal) {
+                        validateEmail(false);
+                      } else {
+                        setEmailError('');
+                      }
+                    }}
+                    error={!!emailError && !emailDomain}
+                  />
+                ) : (
+                  <span className="signup-email-domain-text">{emailDomain}</span>
                 )}
               </div>
+              <Select
+                options={DOMAIN_OPTIONS}
+                value={selectedDomainOption}
+                onChange={(val) => {
+                  handleDomainSelect(val);
+                  // 도메인 선택 시 이메일 검증
+                  if (val && emailLocal) {
+                    validateEmail(false);
+                  } else {
+                    setEmailError('');
+                  }
+                }}
+                placeholder="이메일 선택"
+                className="signup-domain-select"
+              />
             </div>
+            {emailError && (
+              <p className="auth-error-message">
+                <Icon type="error" size={16} />
+                {emailError}
+              </p>
+            )}
             <div className="signup-newsletter-wrapper">
-              <label className="auth-checkbox-label" onClick={() => setNewsletter(!newsletter)}>
-                <input type="checkbox" className="auth-checkbox-input" checked={newsletter} readOnly />
-                <span className={`auth-checkbox-icon ${newsletter ? 'is-checked' : ''}`} />
-                뉴스레터 신청
-              </label>
+              <Checkbox
+                variant="square"
+                checked={newsletter}
+                label="뉴스레터 신청"
+                onChange={setNewsletter}
+              />
             </div>
           </div>
 
           <div className="auth-input-group">
             <label className="auth-input-label">휴대폰 번호<span className="auth-required-mark">*</span></label>
             <div className="signup-phone-input-group">
-              <div className="signup-carrier-select-wrapper">
-                <button type="button" className="signup-carrier-select" onClick={() => setIsCarrierDropdownOpen(!isCarrierDropdownOpen)}>
-                  {carrier || '통신사 선택'}
-                  <span className={`signup-select-arrow ${isCarrierDropdownOpen ? 'is-open' : ''}`} />
-                </button>
-                {isCarrierDropdownOpen && (
-                  <div className="signup-carrier-dropdown">
-                    {CARRIER_OPTIONS.filter(c => c !== '통신사 선택').map((c) => (
-                      <button key={c} type="button" className="signup-domain-option" onClick={() => { setCarrier(c); setIsCarrierDropdownOpen(false); }}>{c}</button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="signup-phone-input-wrapper">
-                <input type="tel" className="auth-input" placeholder="휴대폰 번호를 입력해주세요" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={isPhoneVerified} />
-                {phone && !isPhoneVerified && <button type="button" className="auth-clear-button" onClick={() => setPhone('')}><span className="auth-clear-icon" /></button>}
-              </div>
-              <button type="button" className={`auth-verification-button ${isPhoneVerified ? 'is-disabled' : ''}`} onClick={handleRequestVerification}>{isTimerActive ? '재요청' : '인증 요청'}</button>
+              <Select
+                options={CARRIER_OPTIONS}
+                value={carrier}
+                onChange={(val) => {
+                  setCarrier(val);
+                  if (val && phone) {
+                    setPhoneError('');
+                  }
+                }}
+                placeholder="통신사 선택"
+                className="signup-carrier-select"
+              />
+              <TextField
+                variant="line"
+                type="tel"
+                placeholder="휴대폰 번호를 입력해주세요"
+                value={phone}
+                onChange={(val) => {
+                  setPhone(val);
+                  if (val && carrier) {
+                    setPhoneError('');
+                  }
+                }}
+                readOnly={isPhoneVerified}
+                className="signup-phone-input"
+                error={!!phoneError}
+              />
+              <Button
+                type="line-white"
+                size="medium"
+                disabled={!carrier || !phone || isPhoneVerified}
+                onClick={handleRequestVerification}
+                className="signup-request-verification-button"
+              >
+                인증 요청
+              </Button>
             </div>
+            {phoneError && (
+              <p className="auth-error-message">
+                <Icon type="error" size={16} />
+                {phoneError}
+              </p>
+            )}
           </div>
 
           {isTimerActive && !isPhoneVerified && (
             <div className="auth-input-group">
-              <label className="auth-verification-label">인증번호</label>
-              <div className="auth-input-with-button">
-                <div className="auth-input-flex">
-                  <div className={`auth-verification-code-wrapper ${verificationCode ? 'is-active' : ''}`}>
-                    <input type="text" className="auth-verification-code-input" placeholder="인증번호를 입력해주세요" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} maxLength={6} />
-                    <div className="auth-input-actions">
-                      {verificationCode && <button type="button" className="auth-clear-button" onClick={() => setVerificationCode('')}><span className="auth-clear-icon" /></button>}
-                      {isTimerActive && timeLeft > 0 && <span className="auth-timer">{formatTime(timeLeft)}</span>}
-                    </div>
-                  </div>
-                </div>
-                <button type="button" className="auth-verification-button" onClick={handleVerifyCode}>확인</button>
+              <label className="auth-input-label">인증번호 <span className="auth-required-mark">*</span></label>
+              <div className="signup-verification-code-group">
+                <TextField
+                  variant="line"
+                  placeholder="인증번호를 입력해주세요"
+                  value={verificationCode}
+                  onChange={(val) => {
+                    setVerificationCode(val);
+                    if (val) {
+                      setVerificationCodeError('');
+                    }
+                  }}
+                  maxLength={6}
+                  timer={isTimerActive ? timeLeft : undefined}
+                  className="signup-verification-code-input"
+                  error={!!verificationCodeError}
+                />
+                <Button
+                  type="line-white"
+                  size="medium"
+                  disabled={!verificationCode}
+                  onClick={handleVerifyCode}
+                  className="signup-verify-code-button"
+                >
+                  확인
+                </Button>
               </div>
+              {verificationCodeError && (
+                <p className="auth-error-message">
+                  <Icon type="error" size={16} />
+                  {verificationCodeError}
+                </p>
+              )}
             </div>
           )}
-          {isPhoneVerified && <p className="auth-success-message">휴대폰 인증이 완료되었습니다.</p>}
+          {isPhoneVerified && (
+            <p className="auth-success-message">
+              <Icon type="info-gray" size={16} />
+              휴대폰 인증이 완료되었습니다.
+            </p>
+          )}
 
           <div className="auth-input-group">
-            <label className="auth-input-label">비밀번호<span className="auth-required-mark">*</span></label>
-            <div className="auth-input-wrapper">
-              <input type="password" className="auth-input" placeholder="비밀번호를 입력해주세요" value={password} onChange={(e) => setPassword(e.target.value)} />
-            </div>
+            <label className="auth-input-label">비밀번호 <span className="auth-required-mark">*</span></label>
+            <TextField
+              variant="line"
+              type="password"
+              placeholder="비밀번호를 입력해주세요"
+              value={password}
+              onChange={(val) => {
+                setPassword(val);
+                // 입력 중에는 오류를 표시하지 않음 (6자 이상 입력 후에만 검증)
+                if (val.length >= 6) {
+                  validatePassword(val, true);
+                } else {
+                  setPasswordError('');
+                }
+                // 비밀번호가 변경되면 비밀번호 확인도 다시 검증
+                if (passwordConfirm) {
+                  validatePasswordConfirm(val, passwordConfirm, true);
+                }
+              }}
+              showPasswordToggle
+              error={!!passwordError}
+              fullWidth
+            />
+            {passwordError && (
+              <p className="auth-error-message">
+                <Icon type="error" size={16} />
+                {passwordError}
+              </p>
+            )}
           </div>
 
           <div className="auth-input-group">
-            <label className="auth-input-label">비밀번호 확인<span className="auth-required-mark">*</span></label>
-            <div className="auth-input-wrapper">
-              <input type="password" className="auth-input" placeholder="비밀번호를 다시 입력해주세요" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} />
-            </div>
+            <label className="auth-input-label">비밀번호 확인 <span className="auth-required-mark">*</span></label>
+            <TextField
+              variant="line"
+              type="password"
+              placeholder="비밀번호를 다시 입력해주세요"
+              value={passwordConfirm}
+              onChange={(val) => {
+                setPasswordConfirm(val);
+              }}
+              showPasswordToggle
+              error={!!passwordConfirmError}
+              fullWidth
+            />
+            {passwordConfirmError && (
+              <p className="auth-error-message">
+                <Icon type="error" size={16} />
+                {passwordConfirmError}
+              </p>
+            )}
           </div>
 
           {error && <p className="auth-error-message">{error}</p>}
@@ -364,28 +707,44 @@ const Signup: React.FC = () => {
       </div>
 
       <div className="signup-step2-button-group">
-        <button type="button" className="signup-prev-button" onClick={() => setStep(1)}>
-          <span className="signup-prev-arrow-icon" />
+        <Button
+          type="line-white"
+          size="large"
+          leftIcon="arrow-left2-gray"
+          onClick={() => setStep(1)}
+        >
           이전
-        </button>
-        <button type="submit" className={`signup-next-button ${!isStep2Valid ? 'is-disabled' : ''}`} onClick={handleStep2Submit}>
+        </Button>
+        <Button
+          type={isStep2Valid ? "primary" : "secondary"}
+          size="large"
+          rightIcon="arrow-right2-gray"
+          disabled={!isStep2Valid}
+          onClick={handleStep2Submit}
+        >
           다음
-          <span className="auth-arrow-icon" />
-        </button>
+        </Button>
       </div>
     </>
   );
 
   const renderStep3 = () => (
-    <div className="signup-completion-section">
-      <div className="signup-completion-icon" />
-      <h2 className="signup-completion-title">회원가입이 완료되었습니다!</h2>
-      <p className="signup-completion-message">{name}님, 환영합니다.<br />이제 모든 서비스를 이용하실 수 있습니다.</p>
-      <div className="auth-button-group">
-        <button type="button" className="auth-secondary-button" onClick={() => router.push('/')}>홈으로</button>
-        <button type="button" className="auth-primary-button" onClick={() => router.push('/login')}>로그인</button>
+    <>
+      <div className="auth-form-container">
+        <div className="signup-completion-section">
+          <div className="signup-completion-icon-wrapper">
+            <Icon type="check-blue" size={20} className="signup-completion-icon" />
+          </div>
+          <h2 className="signup-completion-title">회원가입이 완료되었습니다</h2>
+          <p className="signup-completion-message">회원이 되신 것을 진심으로 환영합니다</p>
+        </div>
       </div>
-    </div>
+      <div className="signup-completion-button-wrapper">
+        <Button type="primary" size="large" onClick={() => router.push('/login')}>
+          로그인
+        </Button>
+      </div>
+    </>
   );
 
   return (
@@ -394,7 +753,7 @@ const Signup: React.FC = () => {
       <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       <section className="auth-content-section">
         <h1 className="auth-page-title">SIGN UP</h1>
-        {renderStepIndicator()}
+        <StepIndicator steps={STEP_ITEMS} currentStep={step} />
         {step === 1 && renderStep1()}
         {step === 2 && renderStep2()}
         {step === 3 && renderStep3()}

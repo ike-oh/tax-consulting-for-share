@@ -33,10 +33,16 @@ $primary-80: #00162F;
 $primary-90: #000B17;
 $primary-100: #000000;
 
+// Navy (from Figma)
+$navy-0: #FFFFFF;
+$navy-10: #E2E9F1;
+$navy-20: #BFD8F3;
+$navy-30: #94B9E3;
+
 // Semantic Colors
 $white: #FFFFFF;
 $black: #000000;
-$error: #FF0000;
+$error: #F35064;
 $success: #00C853;
 $warning: #FFB300;
 $info: #2196F3;
@@ -333,6 +339,14 @@ $checkbox-size-48: 48px;
   letter-spacing: -0.075px;
 }
 
+@mixin pretendard-14-semibold {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-semibold;
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: -0.07px;
+}
+
 @mixin pretendard-13-semibold {
   font-family: $font-pretendard;
   font-weight: $font-weight-semibold;
@@ -366,6 +380,22 @@ $checkbox-size-48: 48px;
   letter-spacing: -0.075px;
 }
 
+@mixin pretendard-14-medium {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-medium;
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: -0.07px;
+}
+
+@mixin pretendard-12-medium {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-medium;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: -0.06px;
+}
+
 // Typography Mixins - Pretendard Regular
 @mixin pretendard-19-regular {
   font-family: $font-pretendard;
@@ -397,6 +427,14 @@ $checkbox-size-48: 48px;
   font-size: 13px;
   line-height: 1.5;
   letter-spacing: -0.065px;
+}
+
+@mixin pretendard-12-regular {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-regular;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: -0.06px;
 }
 
 // Typography Mixins - Pretendard Light

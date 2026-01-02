@@ -5,7 +5,7 @@ const Footer: React.FC = () => {
   return (
     <footer className="footer-container">
       <div className="footer-top">
-        <img src="/images/logo.png" alt="MODOO CONSULTING" className="footer-logo" />
+        <img src="/images/common/logos/logo.png" alt="MODOO CONSULTING" className="footer-logo" />
         <button className="family-site-button">
           패밀리 사이트
           <span className="arrow-icon" />

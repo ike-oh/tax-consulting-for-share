@@ -1,11 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import Header from '@/components/Header';
+import Header from '@/components/common/Header';
 import Menu from '@/components/Menu';
-import Footer from '@/components/Footer';
+import Footer from '@/components/common/Footer';
+import { TextField } from '@/components/common/TextField';
+import Tab from '@/components/common/Tab';
+import Button from '@/components/common/Button';
 
 type TabType = 'sms' | 'email';
 type StepType = 'input' | 'verification' | 'result';
+
+const tabItems = [
+  { id: 'sms', label: '문자 / 카카오 인증' },
+  { id: 'email', label: '이메일 인증' },
+];
 
 const FindUsername: React.FC = () => {
   const router = useRouter();
@@ -34,17 +42,6 @@ const FindUsername: React.FC = () => {
     return () => clearInterval(interval);
   }, [isTimerActive, timeLeft]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const clearName = () => setName('');
-  const clearPhone = () => setPhone('');
-  const clearEmail = () => setEmail('');
-  const clearVerificationCode = () => setVerificationCode('');
-
   const handleRequestVerification = useCallback(() => {
     setError('');
     if (activeTab === 'sms') {
@@ -57,30 +54,49 @@ const FindUsername: React.FC = () => {
         setError('이름과 이메일을 입력해주세요.');
         return;
       }
+      // 테스트용: 특정 이름으로 이름 불일치 에러 테스트
+      // 에러를 설정하고 인증번호 입력 단계로 넘어가서 에러를 표시
+      if (name === '테스트이름불일치') {
+        setTimeLeft(180);
+        setIsTimerActive(true);
+        setStep('verification');
+        setError('가입시 입력한 이름과 일치하지 않습니다');
+        return;
+      }
+      // 테스트용: 특정 이메일로 이메일 계정 없음 에러 테스트
+      // 에러를 설정하고 인증번호 입력 단계로 넘어가서 에러를 표시
+      if (email === 'notfound@test.com') {
+        setTimeLeft(180);
+        setIsTimerActive(true);
+        setStep('verification');
+        setError('등록된 이메일 계정이 아닙니다');
+        return;
+      }
     }
     setTimeLeft(180);
     setIsTimerActive(true);
     setStep('verification');
   }, [activeTab, name, phone, email]);
 
-  const handleVerifyCode = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
+  const handleVerifyCode = useCallback((e?: React.FormEvent) => {
+    e?.preventDefault();
     setError('');
     if (!verificationCode) {
       setError('인증번호를 입력해주세요.');
       return;
     }
     if (verificationCode !== '123456') {
-      setError('인증번호가 올바르지 않습니다.');
+      setError('인증번호가 올바르지 않습니다');
       return;
     }
-    setFoundUsername('user_id_example');
+    // 테스트용: 실제 API 연동 시 서버에서 받은 아이디로 교체
+    setFoundUsername('qddwe22123');
     setStep('result');
     setIsTimerActive(false);
   }, [verificationCode]);
 
-  const handleTabChange = (tab: TabType) => {
-    setActiveTab(tab);
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId as TabType);
     setStep('input');
     setName('');
     setPhone('');
@@ -96,121 +112,182 @@ const FindUsername: React.FC = () => {
 
   const renderInputForm = () => (
     <>
-      <div className="auth-form-container">
-        <form className="auth-form" onSubmit={(e) => { e.preventDefault(); handleRequestVerification(); }}>
-          <div className="auth-input-group">
-            <label className="auth-input-label">이름</label>
-            <div className="auth-input-wrapper">
-              <input type="text" className="auth-input" placeholder="이름을 입력해주세요" value={name} onChange={(e) => setName(e.target.value)} />
-              {name && (<button type="button" className="auth-clear-button" onClick={clearName}><span className="auth-clear-icon" /></button>)}
-            </div>
+      <div className="find-username-form-container">
+        <form className="find-username-form" onSubmit={(e) => { e.preventDefault(); handleRequestVerification(); }}>
+          <div className="find-username-form-fields">
+            <TextField
+              variant="line"
+              label="이름"
+              placeholder="이름을 입력해주세요"
+              value={name}
+              onChange={setName}
+              fullWidth
+            />
+
+            {activeTab === 'sms' ? (
+              <div className="find-username-field-with-button">
+                <TextField
+                  variant="line"
+                  label="휴대폰 번호"
+                  type="tel"
+                  placeholder="휴대폰 번호를 입력해주세요"
+                  value={phone}
+                  onChange={setPhone}
+                  fullWidth
+                />
+                <Button
+                  type="line-white"
+                  size="medium"
+                  onClick={handleRequestVerification}
+                  disabled={!name || !phone}
+                >
+                  인증 요청
+                </Button>
+              </div>
+            ) : (
+              <TextField
+                variant="line"
+                label="이메일"
+                type="email"
+                placeholder="이메일을 입력해주세요"
+                value={email}
+                onChange={setEmail}
+                fullWidth
+              />
+            )}
+
+            {error && <p className="auth-error-message">{error}</p>}
           </div>
-          {activeTab === 'sms' ? (
-            <div className="auth-input-group">
-              <label className="auth-input-label">휴대폰 번호</label>
-              <div className="auth-input-with-button">
-                <div className="auth-input-flex">
-                  <div className="auth-input-wrapper">
-                    <input type="tel" className="auth-input" placeholder="휴대폰 번호를 입력해주세요" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                    {phone && (<button type="button" className="auth-clear-button" onClick={clearPhone}><span className="auth-clear-icon" /></button>)}
-                  </div>
-                </div>
-                <button type="button" className="auth-verification-button" onClick={handleRequestVerification}>인증 요청</button>
-              </div>
-            </div>
-          ) : (
-            <div className="auth-input-group">
-              <label className="auth-input-label">이메일</label>
-              <div className="auth-input-with-button">
-                <div className="auth-input-flex">
-                  <div className="auth-input-wrapper">
-                    <input type="email" className="auth-input" placeholder="이메일을 입력해주세요" value={email} onChange={(e) => setEmail(e.target.value)} />
-                    {email && (<button type="button" className="auth-clear-button" onClick={clearEmail}><span className="auth-clear-icon" /></button>)}
-                  </div>
-                </div>
-                <button type="button" className="auth-verification-button" onClick={handleRequestVerification}>인증 요청</button>
-              </div>
-            </div>
-          )}
-          {error && <p className="auth-error-message">{error}</p>}
         </form>
       </div>
-      <button type="button" className="auth-submit-button is-disabled">확인</button>
-      <div className="auth-bottom-links">
-        <button type="button" className="auth-bottom-link" onClick={handleFindPassword}>비밀번호 찾기</button>
-        <button type="button" className="auth-bottom-link" onClick={() => router.push('/signup')}>회원가입</button>
+
+      <div className="find-username-button-wrapper">
+        <Button
+          type="primary"
+          size="large"
+          disabled={!name || (activeTab === 'sms' ? !phone : !email)}
+          onClick={handleRequestVerification}
+        >
+          확인
+        </Button>
+      </div>
+
+      <div className="find-username-bottom-links">
+        <Button type="text-link-gray" size="small" onClick={handleFindPassword}>
+          비밀번호 찾기
+        </Button>
+        <span className="find-username-link-divider">|</span>
+        <Button type="text-link-gray" size="small" onClick={() => router.push('/signup')}>
+          회원가입
+        </Button>
       </div>
     </>
   );
 
   const renderVerificationForm = () => (
     <>
-      <div className="auth-form-container">
-        <form className="auth-form" onSubmit={handleVerifyCode}>
-          <div className="auth-input-group">
-            <label className="auth-input-label">이름</label>
-            <div className="auth-input-wrapper">
-              <input type="text" className="auth-input" value={name} disabled />
+      {activeTab === 'email' && (
+        <p className="auth-verification-subtitle">
+          "{email}"(으)로 전달된<br />
+          인증번호를 입력해주세요.
+        </p>
+      )}
+      <div className="find-username-form-container">
+        <form className="find-username-form" onSubmit={handleVerifyCode}>
+          <div className="find-username-form-fields">
+            {activeTab === 'sms' ? (
+              <>
+                <TextField
+                  variant="line"
+                  label="이름"
+                  value={name}
+                  readOnly
+                  fullWidth
+                />
+                <div className="find-username-field-with-button">
+                  <TextField
+                    variant="line"
+                    label="휴대폰 번호"
+                    type="tel"
+                    value={phone}
+                    readOnly
+                    fullWidth
+                  />
+                  <Button
+                    type="line-white"
+                    size="medium"
+                    onClick={handleRequestVerification}
+                    disabled={!isTimerActive}
+                  >
+                    인증 재요청
+                  </Button>
+                </div>
+              </>
+            ) : null}
+
+            <div className="find-username-verification-code-wrapper">
+              <TextField
+                variant="line"
+                placeholder="인증번호를 입력해주세요"
+                value={verificationCode}
+                onChange={setVerificationCode}
+                maxLength={6}
+                timer={isTimerActive ? timeLeft : undefined}
+                fullWidth
+              />
+              {activeTab === 'email' && (
+                <button
+                  type="button"
+                  className="find-username-resend-link"
+                  onClick={handleRequestVerification}
+                  disabled={!isTimerActive}
+                >
+                  인증번호 재요청
+                </button>
+              )}
             </div>
           </div>
-          {activeTab === 'sms' ? (
-            <div className="auth-input-group">
-              <label className="auth-input-label">휴대폰 번호</label>
-              <div className="auth-input-with-button">
-                <div className="auth-input-flex">
-                  <div className="auth-input-wrapper">
-                    <input type="tel" className="auth-input" value={phone} disabled />
-                  </div>
-                </div>
-                <button type="button" className="auth-verification-button" onClick={handleRequestVerification}>인증 재요청</button>
-              </div>
-            </div>
-          ) : (
-            <div className="auth-input-group">
-              <label className="auth-input-label">이메일</label>
-              <div className="auth-input-with-button">
-                <div className="auth-input-flex">
-                  <div className="auth-input-wrapper">
-                    <input type="email" className="auth-input" value={email} disabled />
-                  </div>
-                </div>
-                <button type="button" className="auth-verification-button" onClick={handleRequestVerification}>인증 재요청</button>
-              </div>
-            </div>
-          )}
-          <div className="auth-input-group">
-            <label className="auth-verification-label">인증번호</label>
-            <div className="auth-verification-code-wrapper">
-              <input type="text" className="auth-verification-code-input" placeholder="인증번호를 입력해주세요" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} maxLength={6} />
-              <div className="auth-input-actions">
-                {verificationCode && (<button type="button" className="auth-clear-button" onClick={clearVerificationCode}><span className="auth-clear-icon" /></button>)}
-                {isTimerActive && timeLeft > 0 && (<span className="auth-timer">{formatTime(timeLeft)}</span>)}
-              </div>
-            </div>
-          </div>
-          {error && <p className="auth-error-message">{error}</p>}
         </form>
       </div>
-      <button type="submit" className={`auth-submit-button ${(!verificationCode || !isTimerActive) ? 'is-disabled' : ''}`} onClick={handleVerifyCode}>확인</button>
-      <div className="auth-bottom-links">
-        <button type="button" className="auth-bottom-link" onClick={handleFindPassword}>비밀번호 찾기</button>
-        <button type="button" className="auth-bottom-link" onClick={() => router.push('/signup')}>회원가입</button>
+
+      {error && (
+        <div className="find-username-error-wrapper">
+          <p className="auth-error-message">{error}</p>
+        </div>
+      )}
+
+      <div className="find-username-button-wrapper">
+        <Button
+          type={verificationCode && isTimerActive && !error ? "primary" : "secondary"}
+          size="large"
+          disabled={!verificationCode || !isTimerActive || !!error}
+          onClick={handleVerifyCode}
+        >
+          확인
+        </Button>
       </div>
     </>
   );
 
   const renderResult = () => (
-    <div className="find-result-section">
-      <p className="find-result-message">입력하신 정보와 일치하는 아이디입니다.</p>
-      <div className="find-result-username">
-        <p className="find-username-label">아이디</p>
-        <p className="find-username-value">{foundUsername}</p>
+    <>
+      <div className="find-username-form-container">
+        <div className="find-result-message-container">
+          <p className="find-result-message">
+            {name}님의 아이디는<br />
+            "{foundUsername}"입니다.
+          </p>
+        </div>
       </div>
-      <div className="find-button-group">
-        <button className="find-secondary-button" onClick={handleFindPassword}>비밀번호 찾기</button>
-        <button className="find-primary-button" onClick={handleGoToLogin}>로그인</button>
+      <div className="find-result-button-group">
+        <Button type="primary" size="large" onClick={handleGoToLogin}>
+          로그인
+        </Button>
+        <Button type="line-white" size="large" onClick={handleFindPassword}>
+          비밀번호 찾기
+        </Button>
       </div>
-    </div>
+    </>
   );
 
   return (
@@ -219,12 +296,19 @@ const FindUsername: React.FC = () => {
       <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       <section className="auth-content-section">
         <h1 className="auth-page-title">FIND USERNAME</h1>
-        {step !== 'result' && (
+        {step === 'input' && (
           <>
             <p className="auth-page-subtitle">이름 및 인증번호 인증 완료 시<br />아이디를 찾을 수 있습니다.</p>
-            <div className="auth-tab-container">
-              <button className={`auth-tab-button ${activeTab === 'sms' ? 'is-active' : ''}`} onClick={() => handleTabChange('sms')}>문자 / 카카오 인증</button>
-              <button className={`auth-tab-button ${activeTab === 'email' ? 'is-active' : ''}`} onClick={() => handleTabChange('email')}>이메일 인증</button>
+            <div className="find-username-tab-wrapper">
+              <Tab
+                items={tabItems}
+                activeId={activeTab}
+                onChange={handleTabChange}
+                style="box"
+                size="medium"
+                showActiveDot={true}
+                fullWidth
+              />
             </div>
           </>
         )}
@@ -238,3 +322,4 @@ const FindUsername: React.FC = () => {
 };
 
 export default FindUsername;
+

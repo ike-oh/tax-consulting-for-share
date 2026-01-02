@@ -1,11 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import Header from '@/components/Header';
+import Header from '@/components/common/Header';
 import Menu from '@/components/Menu';
-import Footer from '@/components/Footer';
+import Footer from '@/components/common/Footer';
+import { TextField } from '@/components/common/TextField';
+import Tab from '@/components/common/Tab';
+import Button from '@/components/common/Button';
+// styles는 _app.tsx에서 import됨 (FindUsername과 동일한 스타일 사용)
 
 type TabType = 'sms' | 'email';
-type StepType = 'input' | 'smsVerification' | 'emailVerification';
+type StepType = 'input' | 'verification';
+
+const tabItems = [
+  { id: 'sms', label: '문자 / 카카오 인증' },
+  { id: 'email', label: '이메일 인증' },
+];
 
 const FindPassword: React.FC = () => {
   const router = useRouter();
@@ -33,46 +42,54 @@ const FindPassword: React.FC = () => {
     return () => clearInterval(interval);
   }, [isTimerActive, timeLeft]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const clearUserId = () => setUserId('');
-  const clearPhone = () => setPhone('');
-  const clearEmail = () => setEmail('');
-  const clearVerificationCode = () => setVerificationCode('');
-
-  const handleRequestSmsVerification = useCallback(() => {
+  const handleRequestVerification = useCallback(() => {
     setError('');
-    if (!userId) { setError('아이디를 입력해주세요.'); return; }
-    if (!phone) { setError('휴대폰 번호를 입력해주세요.'); return; }
-    setTimeLeft(300);
+    if (!userId) {
+      setError('아이디를 입력해주세요.');
+      return;
+    }
+    if (activeTab === 'sms') {
+      if (!phone) {
+        setError('휴대폰 번호를 입력해주세요.');
+        return;
+      }
+    } else {
+      if (!email) {
+        setError('이메일을 입력해주세요.');
+        return;
+      }
+      // 테스트용: 특정 이메일로 이메일 계정 없음 에러 테스트
+      // 에러를 설정하고 인증번호 입력 단계로 넘어가서 에러를 표시
+      if (email === 'notfound@test.com') {
+        setTimeLeft(180);
+        setIsTimerActive(true);
+        setStep('verification');
+        setError('등록된 이메일 계정이 아닙니다');
+        return;
+      }
+    }
+    setTimeLeft(180);
     setIsTimerActive(true);
-    setStep('smsVerification');
-  }, [userId, phone]);
+    setStep('verification');
+  }, [activeTab, userId, phone, email]);
 
-  const handleRequestEmailVerification = useCallback(() => {
+  const handleVerifyCode = useCallback((e?: React.FormEvent) => {
+    e?.preventDefault();
     setError('');
-    if (!userId) { setError('아이디를 입력해주세요.'); return; }
-    if (!email) { setError('이메일을 입력해주세요.'); return; }
-    setTimeLeft(300);
-    setIsTimerActive(true);
-    setStep('emailVerification');
-  }, [userId, email]);
-
-  const handleVerifyCode = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    if (!verificationCode) { setError('인증번호를 입력해주세요.'); return; }
-    if (verificationCode !== '123456') { setError('인증번호가 올바르지 않습니다.'); return; }
+    if (!verificationCode) {
+      setError('인증번호를 입력해주세요.');
+      return;
+    }
+    if (verificationCode !== '123456') {
+      setError('인증번호가 올바르지 않습니다');
+      return;
+    }
     setIsTimerActive(false);
     router.push('/reset-password');
   }, [verificationCode, router]);
 
-  const handleTabChange = (tab: TabType) => {
-    setActiveTab(tab);
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId as TabType);
     setStep('input');
     setUserId('');
     setPhone('');
@@ -84,133 +101,163 @@ const FindPassword: React.FC = () => {
   };
 
   const handleFindUsername = () => router.push('/find-username');
-  const isEmailFormValid = userId && email;
-  const isVerificationFormValid = verificationCode && isTimerActive;
 
-  const renderSmsInputForm = () => (
+  const renderInputForm = () => (
     <>
-      <div className="auth-form-container">
-        <form className="auth-form" onSubmit={(e) => { e.preventDefault(); handleRequestSmsVerification(); }}>
-          <div className="auth-input-group">
-            <label className="auth-input-label">아이디</label>
-            <div className="auth-input-wrapper">
-              <input type="text" className="auth-input" placeholder="아이디를 입력해주세요" value={userId} onChange={(e) => setUserId(e.target.value)} />
-              {userId && (<button type="button" className="auth-clear-button" onClick={clearUserId}><span className="auth-clear-icon" /></button>)}
-            </div>
+      <div className="find-username-form-container">
+        <form className="find-username-form" onSubmit={(e) => { e.preventDefault(); handleRequestVerification(); }}>
+          <div className="find-username-form-fields">
+            <TextField
+              variant="line"
+              label="아이디"
+              placeholder="아이디를 입력해주세요"
+              value={userId}
+              onChange={setUserId}
+              fullWidth
+            />
+
+            {activeTab === 'sms' ? (
+              <div className="find-username-field-with-button">
+                <TextField
+                  variant="line"
+                  label="휴대폰 번호"
+                  type="tel"
+                  placeholder="휴대폰 번호를 입력해주세요"
+                  value={phone}
+                  onChange={setPhone}
+                  fullWidth
+                />
+                <Button
+                  type="line-white"
+                  size="medium"
+                  onClick={handleRequestVerification}
+                  disabled={!userId || !phone}
+                >
+                  인증 요청
+                </Button>
+              </div>
+            ) : (
+              <TextField
+                variant="line"
+                label="이메일"
+                type="email"
+                placeholder="이메일을 입력해주세요"
+                value={email}
+                onChange={setEmail}
+                fullWidth
+              />
+            )}
+
+            {error && <p className="auth-error-message">{error}</p>}
           </div>
-          <div className="auth-input-group">
-            <label className="auth-input-label">휴대폰 번호</label>
-            <div className="auth-input-with-button">
-              <div className="auth-input-flex">
-                <div className="auth-input-wrapper">
-                  <input type="tel" className="auth-input" placeholder="휴대폰 번호를 입력해주세요" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                  {phone && (<button type="button" className="auth-clear-button" onClick={clearPhone}><span className="auth-clear-icon" /></button>)}
+        </form>
+      </div>
+
+      <div className="find-username-button-wrapper">
+        <Button
+          type="primary"
+          size="large"
+          disabled={!userId || (activeTab === 'sms' ? !phone : !email)}
+          onClick={handleRequestVerification}
+        >
+          확인
+        </Button>
+      </div>
+
+      <div className="find-username-bottom-links">
+        <Button type="text-link-gray" size="small" onClick={handleFindUsername}>
+          아이디 찾기
+        </Button>
+        <span className="find-username-link-divider">|</span>
+        <Button type="text-link-gray" size="small" onClick={() => router.push('/signup')}>
+          회원가입
+        </Button>
+      </div>
+    </>
+  );
+
+  const renderVerificationForm = () => (
+    <>
+      {activeTab === 'email' && (
+        <p className="auth-verification-subtitle">
+          "{email}"(으)로 전달된<br />
+          인증번호를 입력해주세요.
+        </p>
+      )}
+      <div className="find-username-form-container">
+        <form className="find-username-form" onSubmit={handleVerifyCode}>
+          <div className="find-username-form-fields">
+            {activeTab === 'sms' ? (
+              <>
+                <TextField
+                  variant="line"
+                  label="아이디"
+                  value={userId}
+                  readOnly
+                  fullWidth
+                />
+                <div className="find-username-field-with-button">
+                  <TextField
+                    variant="line"
+                    label="휴대폰 번호"
+                    type="tel"
+                    value={phone}
+                    readOnly
+                    fullWidth
+                  />
+                  <Button
+                    type="line-white"
+                    size="medium"
+                    onClick={handleRequestVerification}
+                    disabled={!isTimerActive}
+                  >
+                    인증 재요청
+                  </Button>
                 </div>
-              </div>
-              <button type="button" className="auth-verification-button" onClick={handleRequestSmsVerification}>인증 요청</button>
-            </div>
-          </div>
-          {error && <p className="auth-error-message">{error}</p>}
-        </form>
-      </div>
-      <button type="button" className="auth-submit-button is-disabled">확인</button>
-      <div className="auth-bottom-links">
-        <button type="button" className="auth-bottom-link" onClick={handleFindUsername}>아이디 찾기</button>
-        <button type="button" className="auth-bottom-link" onClick={() => router.push('/signup')}>회원가입</button>
-      </div>
-    </>
-  );
+              </>
+            ) : null}
 
-  const renderEmailInputForm = () => (
-    <>
-      <div className="auth-form-container">
-        <form className="auth-form" onSubmit={(e) => { e.preventDefault(); handleRequestEmailVerification(); }}>
-          <div className="auth-input-group">
-            <label className="auth-input-label">아이디</label>
-            <div className="auth-input-wrapper">
-              <input type="text" className="auth-input" placeholder="아이디를 입력해주세요" value={userId} onChange={(e) => setUserId(e.target.value)} />
-              {userId && (<button type="button" className="auth-clear-button" onClick={clearUserId}><span className="auth-clear-icon" /></button>)}
+            <div className="find-username-verification-code-wrapper">
+              <TextField
+                variant="line"
+                placeholder="인증번호를 입력해주세요"
+                value={verificationCode}
+                onChange={setVerificationCode}
+                maxLength={6}
+                timer={isTimerActive ? timeLeft : undefined}
+                fullWidth
+              />
+              {activeTab === 'email' && (
+                <button
+                  type="button"
+                  className="find-username-resend-link"
+                  onClick={handleRequestVerification}
+                  disabled={!isTimerActive}
+                >
+                  인증번호 재요청
+                </button>
+              )}
             </div>
           </div>
-          <div className="auth-input-group">
-            <label className="auth-input-label">이메일</label>
-            <div className="auth-input-wrapper">
-              <input type="email" className="auth-input" placeholder="이메일 주소를 입력해주세요" value={email} onChange={(e) => setEmail(e.target.value)} />
-              {email && (<button type="button" className="auth-clear-button" onClick={clearEmail}><span className="auth-clear-icon" /></button>)}
-            </div>
-          </div>
-          {error && <p className="auth-error-message">{error}</p>}
         </form>
       </div>
-      <button type="button" className={`auth-submit-button ${!isEmailFormValid ? 'is-disabled' : ''}`} onClick={handleRequestEmailVerification}>확인</button>
-      <div className="auth-bottom-links">
-        <button type="button" className="auth-bottom-link" onClick={handleFindUsername}>아이디 찾기</button>
-        <button type="button" className="auth-bottom-link" onClick={() => router.push('/signup')}>회원가입</button>
-      </div>
-    </>
-  );
 
-  const renderSmsVerificationForm = () => (
-    <>
-      <div className="auth-form-container">
-        <form className="auth-form" onSubmit={handleVerifyCode}>
-          <div className="auth-input-group">
-            <label className="auth-input-label">아이디</label>
-            <div className="auth-input-wrapper">
-              <input type="text" className="auth-input" value={userId} disabled />
-              {userId && (<button type="button" className="auth-clear-button" onClick={clearUserId}><span className="auth-clear-icon" /></button>)}
-            </div>
-          </div>
-          <div className="auth-input-group">
-            <label className="auth-input-label">휴대폰 번호</label>
-            <div className="auth-input-with-button">
-              <div className="auth-input-flex">
-                <div className="auth-input-wrapper">
-                  <input type="tel" className="auth-input" value={phone} disabled />
-                </div>
-              </div>
-              <button type="button" className="auth-verification-button is-disabled" onClick={handleRequestSmsVerification}>인증 재요청</button>
-            </div>
-          </div>
-          <div className="auth-input-group">
-            <label className="auth-verification-label">인증번호</label>
-            <div className={`auth-verification-code-wrapper-active ${verificationCode ? 'is-active' : ''}`}>
-              <input type="text" className="auth-verification-code-input" placeholder="인증번호를 입력해주세요" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} maxLength={6} />
-              <div className="auth-input-actions">
-                {verificationCode && (<button type="button" className="auth-clear-button" onClick={clearVerificationCode}><span className="auth-clear-icon" /></button>)}
-                {isTimerActive && timeLeft > 0 && (<span className="auth-timer">{formatTime(timeLeft)}</span>)}
-              </div>
-            </div>
-          </div>
-          {error && <p className="auth-error-message">{error}</p>}
-        </form>
-      </div>
-      <button type="submit" className={`auth-submit-button ${!isVerificationFormValid ? 'is-disabled' : ''}`} onClick={handleVerifyCode}>확인</button>
-      <div className="auth-bottom-links">
-        <button type="button" className="auth-bottom-link" onClick={handleFindUsername}>아이디 찾기</button>
-        <button type="button" className="auth-bottom-link" onClick={() => router.push('/signup')}>회원가입</button>
-      </div>
-    </>
-  );
+      {error && (
+        <div className="find-username-error-wrapper">
+          <p className="auth-error-message">{error}</p>
+        </div>
+      )}
 
-  const renderEmailVerificationForm = () => (
-    <>
-      <p className="auth-page-subtitle">"{email}"(으)로 전달됨<br />인증번호를 입력해주세요.</p>
-      <div className="auth-form-container">
-        <form className="auth-form" onSubmit={handleVerifyCode}>
-          <div className="auth-input-group">
-            <div className="auth-verification-code-wrapper">
-              <input type="text" className="auth-verification-code-input" placeholder="인증번호를 입력해주세요." value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} maxLength={6} />
-              <div className="auth-input-actions">
-                {verificationCode && (<button type="button" className="auth-clear-button" onClick={clearVerificationCode}><span className="auth-clear-icon" /></button>)}
-                {isTimerActive && timeLeft > 0 && (<span className="auth-timer">{formatTime(timeLeft)}</span>)}
-              </div>
-            </div>
-          </div>
-          {error && <p className="auth-error-message">{error}</p>}
-        </form>
+      <div className="find-username-button-wrapper">
+        <Button
+          type={verificationCode && isTimerActive && !error ? "primary" : "secondary"}
+          size="large"
+          disabled={!verificationCode || !isTimerActive || !!error}
+          onClick={handleVerifyCode}
+        >
+          확인
+        </Button>
       </div>
-      <button type="submit" className={`auth-submit-button ${!isVerificationFormValid ? 'is-disabled' : ''}`} onClick={handleVerifyCode}>확인</button>
     </>
   );
 
@@ -220,19 +267,24 @@ const FindPassword: React.FC = () => {
       <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       <section className="auth-content-section">
         <h1 className="auth-page-title">FORGOT PASSWORD</h1>
-        {step !== 'emailVerification' && (
+        {step === 'input' && (
           <>
             <p className="auth-page-subtitle">사용중인 아이디를 인증 완료 시<br />비밀번호를 재설정할 수 있습니다.</p>
-            <div className="auth-tab-container">
-              <button className={`auth-tab-button ${activeTab === 'sms' ? 'is-active' : ''}`} onClick={() => handleTabChange('sms')}>문자 / 카카오 인증</button>
-              <button className={`auth-tab-button ${activeTab === 'email' ? 'is-active' : ''}`} onClick={() => handleTabChange('email')}>이메일 인증</button>
+            <div className="find-username-tab-wrapper">
+              <Tab
+                items={tabItems}
+                activeId={activeTab}
+                onChange={handleTabChange}
+                style="box"
+                size="medium"
+                showActiveDot={true}
+                fullWidth
+              />
             </div>
           </>
         )}
-        {step === 'input' && activeTab === 'sms' && renderSmsInputForm()}
-        {step === 'input' && activeTab === 'email' && renderEmailInputForm()}
-        {step === 'smsVerification' && renderSmsVerificationForm()}
-        {step === 'emailVerification' && renderEmailVerificationForm()}
+        {step === 'input' && renderInputForm()}
+        {step === 'verification' && renderVerificationForm()}
       </section>
       <Footer />
     </div>

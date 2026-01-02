@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Header from '@/components/Header';
+// @ts-ignore - lenis 타입 선언 문제 해결
+import Lenis from 'lenis';
+import Header, { HeaderVariant, HeaderSize } from '@/components/common/Header';
 import Menu from '@/components/Menu';
-import Footer from '@/components/Footer';
+import Footer from '@/components/common/Footer';
 
-// GSAP 플러그인 등록 (ssr: false로 클라이언트에서만 실행되므로 안전)
+// GSAP 플러그인 등록
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
@@ -30,17 +32,25 @@ const systemCard3Video = '/videos/system-card3.mp4';
 const champagneVideo = '/videos/champagne.mp4';
 
 // 이미지 경로 (public 폴더)
-const binocularsImg = '/images/binoculars.jpg';
-const compassImg = '/images/compass.png';
-const teamworkImg = '/images/teamwork.jpg';
-const expert1Img = '/images/expert1.png';
-const expert2Img = '/images/expert2.png';
-const expert3Img = '/images/expert3.png';
-const cruiseImg = '/images/cruise.png';
-const btnLeftActive = '/images/buttons/btn-left-active.png';
-const btnLeftInactive = '/images/buttons/btn-left-inactive.png';
-const btnRightActive = '/images/buttons/btn-right-active.png';
-const btnRightInactive = '/images/buttons/btn-right-inactive.png';
+// 메인 히어로 배경 이미지
+const mainHeroImage = '/images/main/hero/main-hero.jpg';
+
+// 섹션별 이미지
+const binocularsImg = '/images/main/sections/binoculars.jpg';
+const compassImg = '/images/main/sections/compass.png';
+const teamworkImg = '/images/main/sections/teamwork.jpg';
+const cruiseImg = '/images/main/sections/cruise.png';
+
+// 전문가 이미지
+const expert1Img = '/images/main/experts/expert1.png';
+const expert2Img = '/images/main/experts/expert2.png';
+const expert3Img = '/images/main/experts/expert3.png';
+
+// 버튼 이미지
+const btnLeftActive = '/images/main/buttons/btn-left-active.png';
+const btnLeftInactive = '/images/main/buttons/btn-left-inactive.png';
+const btnRightActive = '/images/main/buttons/btn-right-active.png';
+const btnRightInactive = '/images/main/buttons/btn-right-inactive.png';
 
 // Solution 카드 데이터
 const SOLUTION_ROW1 = [
@@ -113,9 +123,12 @@ const EXPERTS_CARDS = [
 ];
 
 const Home: React.FC = () => {
-  const [headerVariant, setHeaderVariant] = useState<'white' | 'transparent'>('white');
+  const [headerVariant, setHeaderVariant] = useState<HeaderVariant>('white');
+  const [headerSize, setHeaderSize] = useState<HeaderSize>('web');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Hero section refs
   const heroRef = useRef<HTMLDivElement>(null);
   const visionRowRef = useRef<HTMLDivElement>(null);
   const growthRowRef = useRef<HTMLDivElement>(null);
@@ -133,10 +146,11 @@ const Home: React.FC = () => {
   const rightContentRef = useRef<HTMLDivElement>(null);
   const yachtOverlayRef = useRef<HTMLDivElement>(null);
   const yachtContentRef = useRef<HTMLDivElement>(null);
-  const blackOverlayRef = useRef<HTMLDivElement>(null);
   const visionContentRef = useRef<HTMLDivElement>(null);
   const visionDescriptionRef = useRef<HTMLDivElement>(null);
   const [highlightProgress, setHighlightProgress] = useState(0);
+
+  // Growth section refs
   const growthSectionRef = useRef<HTMLDivElement>(null);
   const growthVisionTextRef = useRef<HTMLHeadingElement>(null);
   const growthOverlayRef = useRef<HTMLDivElement>(null);
@@ -145,7 +159,8 @@ const Home: React.FC = () => {
   const cardsWrapperRef = useRef<HTMLDivElement>(null);
   const [cardIndex, setCardIndex] = useState(0);
   const [cardSlideWidth, setCardSlideWidth] = useState(695);
-  const cardIndexRef = useRef(0);
+
+  // Direction section refs
   const directionSectionRef = useRef<HTMLDivElement>(null);
   const directionTextRef = useRef<HTMLHeadingElement>(null);
   const solutionOverlayRef = useRef<HTMLDivElement>(null);
@@ -191,7 +206,6 @@ const Home: React.FC = () => {
   const expertsNavRef = useRef<HTMLDivElement>(null);
   const [expertsCardIndex, setExpertsCardIndex] = useState(0);
   const [expertsCardSlideWidth, setExpertsCardSlideWidth] = useState(316);
-  const expertsCardIndexRef = useRef(0);
 
   // CHAMPAGNE section refs
   const champagneSectionRef = useRef<HTMLDivElement>(null);
@@ -206,15 +220,25 @@ const Home: React.FC = () => {
   const finalSectionRef = useRef<HTMLDivElement>(null);
   const finalContentRef = useRef<HTMLDivElement>(null);
 
+  // 반응형 슬라이드 너비 업데이트
+  // 헤더 크기 업데이트 (리사이즈)
+  useEffect(() => {
+    const updateHeaderSize = () => {
+      const isMobile = window.innerWidth <= 768;
+      setHeaderSize(isMobile ? 'mobile' : 'web');
+    };
+
+    updateHeaderSize();
+    window.addEventListener('resize', updateHeaderSize);
+    return () => window.removeEventListener('resize', updateHeaderSize);
+  }, []);
+
   useEffect(() => {
     const updateSlideWidth = () => {
       const vw = window.innerWidth;
-      // 모바일: 카드 너비 300px + gap 16px = 316px
-      // 태블릿: 카드 너비 300px + gap 32px = 332px
-      // 데스크탑: 카드 너비 663px + gap 32px = 695px
       if (vw <= 768) {
         setCardSlideWidth(316);
-        setExpertsCardSlideWidth(252); // 240px + 12px gap
+        setExpertsCardSlideWidth(252);
       } else if (vw <= 1024) {
         setCardSlideWidth(432);
         setExpertsCardSlideWidth(316);
@@ -229,69 +253,227 @@ const Home: React.FC = () => {
     return () => window.removeEventListener('resize', updateSlideWidth);
   }, []);
 
+  // Lenis 스무스 스크롤 초기화
   useEffect(() => {
-    cardIndexRef.current = cardIndex;
-  }, [cardIndex]);
+    if (typeof window === 'undefined') return;
 
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    } as any); // 타입 에러 방지를 위한 임시 처리
+
+    // GSAP ScrollTrigger와 연동
+    lenis.on('scroll', ScrollTrigger.update);
+
+    function raf(time: DOMHighResTimeStamp) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    // ScrollTrigger 새로고침 (약간의 지연 후)
+    setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 100);
+
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
+
+  // 초기 로드 시 VISION/GROWTH/CREW 등장 애니메이션
   useEffect(() => {
-    expertsCardIndexRef.current = expertsCardIndex;
-  }, [expertsCardIndex]);
+    if (typeof window === 'undefined') return;
+    if (!visionRowRef.current || !growthRowRef.current || !crewRowRef.current) return;
 
+    // 초기 로드 애니메이션 타임라인
+    const initialTl = gsap.timeline({ delay: 0.3 });
+
+    // VISION: 왼쪽에서 나타나기
+    initialTl.to(visionRowRef.current, {
+      opacity: 1,
+      x: 0,
+      duration: 0.8,
+      ease: 'power3.out'
+    }, 0);
+    initialTl.to(visionPillRef.current, {
+      opacity: 1,
+      duration: 0.8,
+      ease: 'power3.out'
+    }, 0);
+
+    // GROWTH: 오른쪽에서 나타나기
+    initialTl.to(growthRowRef.current, {
+      opacity: 1,
+      x: 0,
+      duration: 0.8,
+      ease: 'power3.out'
+    }, 0.2);
+    initialTl.to(growthPillRef.current, {
+      opacity: 1,
+      duration: 0.8,
+      ease: 'power3.out'
+    }, 0.2);
+
+    // CREW: 왼쪽에서 나타나기
+    initialTl.to(crewRowRef.current, {
+      opacity: 1,
+      x: 0,
+      duration: 0.8,
+      ease: 'power3.out'
+    }, 0.4);
+    initialTl.to(crewPillRef.current, {
+      opacity: 1,
+      duration: 0.8,
+      ease: 'power3.out'
+    }, 0.4);
+    initialTl.to(crewTextRef.current, {
+      opacity: 1,
+      duration: 0.8,
+      ease: 'power3.out'
+    }, 0.4);
+
+    return () => {
+      initialTl.kill();
+    };
+  }, []);
+
+  // 메인 스크롤 애니메이션
   useEffect(() => {
     const ctx = gsap.context(() => {
-      const vw = window.innerWidth;
-      const visionWidth = vw > 1400 ? 373 : vw > 1024 ? 280 : vw > 768 ? 200 : 150;
-      const growthWidth = vw > 1400 ? 320 : vw > 1024 ? 240 : vw > 768 ? 170 : 130;
-      const crewWidth = vw > 1400 ? 320 : vw > 1024 ? 240 : vw > 768 ? 170 : 130;
+      const isMobile = window.innerWidth <= 768;
+      
+      // 헤더 크기 설정
+      setHeaderSize(isMobile ? 'mobile' : 'web');
 
-      gsap.set(visionRowRef.current, { opacity: 0, x: -100 });
-      gsap.set(growthRowRef.current, { opacity: 0, x: 100 });
-      gsap.set(crewRowRef.current, { opacity: 0, x: -100 });
-
-      // Let CSS clamp() handle responsive sizing for pills
-      gsap.set(visionPillRef.current, { opacity: 1 });
-      gsap.set(growthPillRef.current, { opacity: 1 });
-      gsap.set(crewPillRef.current, { opacity: 1 });
-
-      gsap.set(expandingVideoRef.current, {
-        opacity: 0,
-        visibility: 'hidden',
-        scale: 0.2,
-        borderRadius: '100px',
-      });
-
+      // ===== HERO SECTION =====
+      // 초기 상태 설정 - 모두 숨김 및 위치 설정
+      gsap.set(visionRowRef.current, { opacity: 0, x: -100 }); // 왼쪽에서 시작
+      gsap.set(growthRowRef.current, { opacity: 0, x: 100 }); // 오른쪽에서 시작
+      gsap.set(crewRowRef.current, { opacity: 0, x: -100 }); // 왼쪽에서 시작
+      gsap.set([visionPillRef.current, growthPillRef.current, crewPillRef.current], { opacity: 0 });
+      gsap.set(crewTextRef.current, { opacity: 0, width: 'auto' });
+      gsap.set(expandingVideoRef.current, { opacity: 0, display: 'none', visibility: 'hidden' });
       gsap.set(shipTextRef.current, { opacity: 0 });
       gsap.set([mainTitleRef.current, subTitleRef.current], { opacity: 0, y: 50 });
       gsap.set(financeOverlayRef.current, { opacity: 0 });
       gsap.set([leftContentRef.current, rightContentRef.current], { opacity: 0, y: 50 });
-      gsap.set(yachtOverlayRef.current, { opacity: 0, display: 'none' });
+      gsap.set(yachtOverlayRef.current, { opacity: 0 });
       gsap.set(yachtContentRef.current, { opacity: 0, y: 50 });
-      gsap.set(blackOverlayRef.current, { opacity: 0, display: 'none' });
       gsap.set(visionContentRef.current, { opacity: 0 });
 
-      let visionScrollLocked = false;
-      const preventScroll = (e: Event) => {
-        if (visionScrollLocked) {
-          e.preventDefault();
-          e.stopPropagation();
-          return false;
-        }
-      };
+      // Hero 타임라인 - 스크롤 기반
+      const heroTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: heroRef.current,
+          start: 'top top',
+          end: '+=25000',
+          pin: true,
+          scrub: 4,
+          invalidateOnRefresh: true,
+          anticipatePin: 1,
+          onUpdate: (self) => {
+            // 헤더 변경
+            if (self.progress > 0.1) {
+              setHeaderVariant('transparent');
+            } else {
+              setHeaderVariant('white');
+            }
+            // 하이라이트 진행률 (Vision content 부분)
+            if (self.progress > 0.75 && self.progress < 0.95) {
+              const highlightProg = (self.progress - 0.75) / 0.2 * 100;
+              setHighlightProgress(Math.min(100, highlightProg));
+            }
+          },
+        },
+      });
 
-      const preventScrollKeys = (e: KeyboardEvent) => {
-        if (visionScrollLocked) {
-          const keys = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '];
-          if (keys.includes(e.key)) {
-            e.preventDefault();
-          }
-        }
-      };
+      // Phase 1: VISION/GROWTH/CREW 텍스트 사라짐 (0% - 2%)
+      // 초기 로드 애니메이션으로 이미 나타난 상태에서 시작
+      heroTl.to([visionRowRef.current, growthRowRef.current, crewRowRef.current], {
+        opacity: 0,
+        x: 0, // x 위치는 유지 (초기 로드 애니메이션으로 이미 0으로 이동함)
+        duration: 0.02
+      }, 0);
+      heroTl.to(crewTextRef.current, {
+        opacity: 0,
+        width: 0,
+        marginLeft: 0,
+        marginRight: 0,
+        duration: 0.02
+      }, 0);
+      heroTl.to([visionPillRef.current, growthPillRef.current], {
+        opacity: 0,
+        duration: 0.02
+      }, 0);
 
+      // Phase 2: 크루 pill 중앙 이동 후 비디오 확장 (2% - 20%)
+      heroTl.to(crewPillRef.current, {
+        opacity: 0,
+        duration: 0.05
+      }, 0.02);
+      heroTl.to(expandingVideoRef.current, {
+        opacity: 1,
+        display: 'block',
+        visibility: 'visible',
+        duration: 0.15
+      }, 0.04);
+
+      // Phase 3: Ship 텍스트 등장 (20% - 30%) - Figma 디자인에 맞게
+      heroTl.to(shipTextRef.current, { opacity: 1, duration: 0.08 }, 0.20);
+      heroTl.to(mainTitleRef.current, { opacity: 1, y: 0, duration: 0.08 }, 0.22);
+      heroTl.to(subTitleRef.current, { opacity: 1, y: 0, duration: 0.08 }, 0.24);
+
+      // Phase 4: Finance overlay 등장 (30% - 45%)
+      heroTl.to(shipTextRef.current, { opacity: 0, duration: 0.05 }, 0.30);
+      heroTl.to(financeOverlayRef.current, { opacity: 1, duration: 0.05 }, 0.32);
+      heroTl.to(leftContentRef.current, { opacity: 1, y: 0, duration: 0.05 }, 0.35);
+      heroTl.to(rightContentRef.current, { opacity: 1, y: 0, duration: 0.05 }, 0.40);
+
+      // Phase 5: Yacht overlay 등장 (45% - 60%)
+      heroTl.to(financeOverlayRef.current, { opacity: 0, duration: 0.05 }, 0.45);
+      heroTl.to(yachtOverlayRef.current, { opacity: 1, duration: 0.05 }, 0.47);
+      heroTl.to(yachtContentRef.current, { opacity: 1, y: 0, duration: 0.05 }, 0.50);
+
+      // Phase 6: Vision content 등장 (60% - 100%)
+      heroTl.to(yachtOverlayRef.current, { opacity: 0, duration: 0.1 }, 0.60);
+      heroTl.to(expandingVideoRef.current, { opacity: 0, duration: 0.1 }, 0.60);
+      heroTl.to(visionContentRef.current, { opacity: 1, duration: 0.1 }, 0.65);
+
+      // ===== GROWTH SECTION =====
       gsap.set(growthVisionTextRef.current, { opacity: 0 });
       gsap.set(growthOverlayRef.current, { opacity: 0 });
       gsap.set(growthContentRef.current, { opacity: 0 });
       gsap.set(cardsContainerRef.current, { opacity: 0 });
 
+      const growthTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: growthSectionRef.current,
+          start: 'top top',
+          end: '+=18000',
+          pin: true,
+          scrub: 4,
+          invalidateOnRefresh: true,
+          anticipatePin: 1,
+          onUpdate: (self) => {
+            // 카드 인덱스 업데이트 (스크롤에 따라)
+            if (self.progress > 0.5) {
+              const cardProgress = (self.progress - 0.5) / 0.5;
+              const newIndex = Math.floor(cardProgress * SERVICE_CARDS.length);
+              setCardIndex(Math.min(newIndex, SERVICE_CARDS.length - 1));
+            }
+          },
+        },
+      });
+
+      growthTl.to(growthVisionTextRef.current, { opacity: 1, duration: 0.15 }, 0);
+      growthTl.to(growthVisionTextRef.current, { opacity: 0, duration: 0.1 }, 0.2);
+      growthTl.to(growthOverlayRef.current, { opacity: 1, duration: 0.1 }, 0.25);
+      growthTl.to(growthContentRef.current, { opacity: 1, duration: 0.1 }, 0.30);
+      growthTl.to(cardsContainerRef.current, { opacity: 1, duration: 0.1 }, 0.35);
+
+      // ===== DIRECTION SECTION =====
       gsap.set(directionTextRef.current, { opacity: 0 });
       gsap.set(solutionOverlayRef.current, { opacity: 0 });
       gsap.set(solutionContentRef.current, { opacity: 0 });
@@ -303,7 +485,31 @@ const Home: React.FC = () => {
       gsap.set(solutionGrid3Ref.current, { opacity: 0 });
       gsap.set(solutionGrid4Ref.current, { opacity: 0 });
 
-      // Solution 02 초기 설정
+      const directionTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: directionSectionRef.current,
+          start: 'top top',
+          end: '+=20000',
+          pin: true,
+          scrub: 4,
+          invalidateOnRefresh: true,
+          anticipatePin: 1,
+        },
+      });
+
+      directionTl.to(directionTextRef.current, { opacity: 1, duration: 0.1 }, 0);
+      directionTl.to(directionTextRef.current, { opacity: 0, duration: 0.05 }, 0.15);
+      directionTl.to(solutionOverlayRef.current, { opacity: 1, duration: 0.05 }, 0.18);
+      directionTl.to(solutionContentRef.current, { opacity: 1, duration: 0.05 }, 0.20);
+      directionTl.to(solutionLabelRef.current, { opacity: 1, duration: 0.05 }, 0.25);
+      directionTl.to(solutionTitleRef.current, { opacity: 1, duration: 0.05 }, 0.30);
+      directionTl.to(solutionDescRef.current, { opacity: 1, duration: 0.05 }, 0.35);
+      directionTl.to(solutionGrid1Ref.current, { opacity: 1, duration: 0.1 }, 0.45);
+      directionTl.to(solutionGrid2Ref.current, { opacity: 1, duration: 0.1 }, 0.55);
+      directionTl.to(solutionGrid3Ref.current, { opacity: 1, duration: 0.1 }, 0.65);
+      directionTl.to(solutionGrid4Ref.current, { opacity: 1, duration: 0.1 }, 0.75);
+
+      // ===== SOLUTION 02 SECTION =====
       gsap.set(solution02LabelRef.current, { opacity: 0 });
       gsap.set(solution02TitleRef.current, { opacity: 0 });
       gsap.set(solution02DescRef.current, { opacity: 0 });
@@ -315,1362 +521,197 @@ const Home: React.FC = () => {
         if (step) gsap.set(step, { opacity: 0 });
       });
 
-      const loadTl = gsap.timeline();
-      loadTl.to(visionRowRef.current, { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out' }, 0.2);
-      loadTl.to(growthRowRef.current, { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out' }, 0.7);
-      loadTl.to(crewRowRef.current, { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out' }, 1.2);
-
-      let isWaitingForClick = false;
-      let hasExpanded = false;
-      let showingFinance = false;
-      let showingYacht = false;
-      let showingVision = false;
-      let scrollLocked = false;
-      let lockedScrollY = 0;
-      let currentHighlight = 0;
-
-      const lockScroll = () => {
-        if (scrollLocked) {
-          window.scrollTo(0, lockedScrollY);
-        }
-      };
-
-      const tl = gsap.timeline({
+      const solution02Tl = gsap.timeline({
         scrollTrigger: {
-          trigger: heroRef.current,
+          trigger: solution02SectionRef.current,
           start: 'top top',
-          end: '+=600',
+          end: '+=18000',
           pin: true,
-          scrub: 1.5,
-          invalidateOnRefresh: false,
-          onUpdate: (self) => {
-            if (self.progress >= 0.99 && !scrollLocked && !hasExpanded) {
-              isWaitingForClick = true;
-              scrollLocked = true;
-              lockedScrollY = window.scrollY;
-              window.addEventListener('scroll', lockScroll);
-            }
-          },
-          onLeaveBack: () => {
-            isWaitingForClick = false;
-            scrollLocked = false;
-            window.removeEventListener('scroll', lockScroll);
-          },
+          scrub: 4,
+          invalidateOnRefresh: true,
+          anticipatePin: 1,
         },
       });
 
-      tl.to([visionRowRef.current, growthRowRef.current], { opacity: 0, duration: 0.3, ease: 'power2.out', immediateRender: false }, 0);
-      tl.to(crewTextRef.current, { opacity: 0, width: 0, overflow: 'hidden', marginLeft: 0, marginRight: 0, padding: 0, duration: 0.3, ease: 'power2.out', immediateRender: false }, 0);
-      tl.to([visionPillRef.current, growthPillRef.current], { opacity: 0, duration: 0.3, ease: 'power2.out', immediateRender: false }, 0);
+      solution02Tl.to(solution02LabelRef.current, { opacity: 1, duration: 0.1 }, 0);
+      solution02Tl.to(solution02TitleRef.current, { opacity: 1, duration: 0.1 }, 0.1);
+      solution02Tl.to(solution02DescRef.current, { opacity: 1, duration: 0.1 }, 0.2);
+      solution02Tl.to(timelineContainerRef.current, { opacity: 1, duration: 0.1 }, 0.3);
 
-      // Calculate vertical movement to center (X is handled by flex centering after text collapses)
-      const pillRect = crewPillRef.current?.getBoundingClientRect();
-      const windowCenterY = window.innerHeight / 2;
-      const pillCenterY = pillRect ? pillRect.top + pillRect.height / 2 : 0;
-      const moveY = windowCenterY - pillCenterY;
-
-      // Animate pill to center (flex handles X centering, we only need Y)
-      tl.to(crewPillRef.current, { y: moveY, duration: 0.5, ease: 'power2.out' }, 0.3);
-      gsap.set(expandingVideoRef.current, { display: 'none' });
-
-      const handleClick = () => {
-        if (!isWaitingForClick) return;
-
-        if (showingYacht && !showingVision) {
-          showingVision = true;
-          visionScrollLocked = true;
-          document.body.style.overflow = 'hidden';
-          window.addEventListener('scroll', preventScroll, { passive: false });
-          window.addEventListener('touchmove', preventScroll, { passive: false });
-          window.addEventListener('keydown', preventScrollKeys);
-
-          gsap.set(blackOverlayRef.current, { display: 'block' });
-          gsap.to(blackOverlayRef.current, {
-            opacity: 1,
-            duration: 1,
-            ease: 'power2.out',
-            onComplete: () => {
-              gsap.to(visionContentRef.current, {
-                opacity: 1,
-                duration: 0.8,
-                delay: 0.3,
-                ease: 'power2.out',
-                onComplete: () => {
-                  let highlightComplete = false;
-                  const handleWheel = (e: WheelEvent) => {
-                    e.preventDefault();
-                    if (highlightComplete) return;
-                    const delta = e.deltaY > 0 ? 2 : -2;
-                    currentHighlight = Math.max(0, Math.min(100, currentHighlight + delta));
-                    setHighlightProgress(currentHighlight);
-                    if (currentHighlight >= 100) {
-                      highlightComplete = true;
-                    }
-                  };
-
-                  const handleVisionClick = (e: MouseEvent) => {
-                    if (!highlightComplete) return;
-                    e.stopPropagation();
-                    window.removeEventListener('wheel', handleWheel);
-                    window.removeEventListener('click', handleVisionClick);
-                    visionScrollLocked = false;
-                    document.body.style.overflow = '';
-                    window.removeEventListener('scroll', preventScroll);
-                    window.removeEventListener('touchmove', preventScroll);
-                    window.removeEventListener('keydown', preventScrollKeys);
-                    if (growthSectionRef.current) {
-                      growthSectionRef.current.classList.add('active');
-                    }
-                    // hero 섹션 및 내부 요소들 숨기기
-                    if (heroRef.current) {
-                      heroRef.current.style.visibility = 'hidden';
-                    }
-                    if (expandingVideoRef.current) {
-                      expandingVideoRef.current.style.display = 'none';
-                    }
-                    if (shipTextRef.current) {
-                      shipTextRef.current.style.display = 'none';
-                    }
-                    scrollLocked = false;
-                    window.removeEventListener('scroll', lockScroll);
-                    setTimeout(() => {
-                      growthSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-                    }, 100);
-                  };
-
-                  window.addEventListener('wheel', handleWheel, { passive: false });
-                  window.addEventListener('click', handleVisionClick);
-                },
-              });
-            },
-          });
-          return;
-        }
-
-        if (showingFinance && !showingYacht) {
-          showingYacht = true;
-          // Show yacht first, then fade out finance to prevent ship video flash
-          gsap.set(yachtOverlayRef.current, { display: 'block', opacity: 1 });
-          gsap.to(financeOverlayRef.current, { opacity: 0, duration: 0.5, ease: 'power2.out' });
-          gsap.to(yachtContentRef.current, { opacity: 1, y: 0, duration: 0.5, delay: 0.3, ease: 'power2.out' });
-          return;
-        }
-
-        if (hasExpanded && !showingFinance) {
-          showingFinance = true;
-          gsap.to(shipTextRef.current, { opacity: 0, duration: 0.3, ease: 'power2.out' });
-          gsap.to(financeOverlayRef.current, { opacity: 1, duration: 0.3, delay: 0.2, ease: 'power2.out' });
-          gsap.to(leftContentRef.current, {
-            opacity: 1,
-            y: 0,
-            duration: 0.5,
-            delay: 0.4,
-            ease: 'power2.out',
-            onComplete: () => {
-              gsap.to(rightContentRef.current, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' });
-            },
-          });
-          return;
-        }
-
-        if (!hasExpanded) {
-          hasExpanded = true;
-          gsap.set(crewTextRef.current, { display: 'none' });
-          setHeaderVariant('transparent');
-          gsap.to(crewPillRef.current, { opacity: 0, duration: 0.3, ease: 'power2.out' });
-          gsap.set(expandingVideoRef.current, { display: 'block', visibility: 'visible', opacity: 0, scale: 1, borderRadius: 0 });
-          gsap.to(expandingVideoRef.current, {
-            opacity: 1,
-            duration: 0.8,
-            ease: 'power2.out',
-            onComplete: () => {
-              gsap.to(shipTextRef.current, { opacity: 1, duration: 0.3, delay: 0.2, ease: 'power2.out' });
-              gsap.to(mainTitleRef.current, {
-                opacity: 1,
-                y: 0,
-                duration: 0.3,
-                delay: 0.2,
-                ease: 'power2.out',
-                onComplete: () => {
-                  gsap.to(subTitleRef.current, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' });
-                },
-              });
-            },
-          });
-        }
-      };
-
-      const heroElement = heroRef.current;
-      if (heroElement) {
-        heroElement.style.cursor = 'pointer';
-        heroElement.addEventListener('click', handleClick);
-      }
-
-      let growthPhase = 0;
-      let growthClickEnabled = false;
-
-      const observeGrowth = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-              document.body.style.overflow = 'hidden';
-              setTimeout(() => {
-                growthClickEnabled = true;
-              }, 800);
-            }
-          });
-        },
-        { threshold: 0.5 }
-      );
-
-      if (growthSectionRef.current) {
-        observeGrowth.observe(growthSectionRef.current);
-      }
-
-      let isGrowthClickProcessing = false;
-
-      const handleGrowthClick = (e: MouseEvent) => {
-        if (!growthClickEnabled) return;
-        if (isGrowthClickProcessing) return;
-        const target = e.target as HTMLElement;
-        if (target.closest('button')) return;
-
-        isGrowthClickProcessing = true;
-        setTimeout(() => {
-          isGrowthClickProcessing = false;
-        }, 300);
-
-        if (growthPhase === 0) {
-          growthPhase = 1;
-          gsap.to(growthVisionTextRef.current, { opacity: 1, duration: 0.5, ease: 'power2.out' });
-        } else if (growthPhase === 1) {
-          growthPhase = 2;
-          gsap.to(growthVisionTextRef.current, { opacity: 0, duration: 0.3, ease: 'power2.out' });
-          gsap.to(growthOverlayRef.current, { opacity: 1, duration: 0.5, delay: 0.2, ease: 'power2.out' });
-          gsap.to(growthContentRef.current, { opacity: 1, duration: 0.5, delay: 0.4, ease: 'power2.out' });
-          gsap.to(cardsContainerRef.current, { opacity: 1, duration: 0.5, delay: 0.6, ease: 'power2.out' });
-        } else if (growthPhase === 2) {
-          const currentCardIndex = cardIndexRef.current;
-          const maxCardIndex = SERVICE_CARDS.length - 1;
-          if (currentCardIndex < maxCardIndex) {
-            setCardIndex(currentCardIndex + 1);
-          } else {
-            growthPhase = 3;
-            document.body.style.overflow = '';
-            gsap.set(directionSectionRef.current, { display: 'flex', opacity: 1 });
-            setTimeout(() => {
-              directionSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
+      // 타임라인 스텝 순차 등장
+      TIMELINE_STEPS.forEach((step, index) => {
+        const startTime = 0.4 + index * 0.1;
+        const colsNeeded = step.cols;
+        for (let i = 0; i < colsNeeded; i++) {
+          const col = timelineColumnRefs.current[i];
+          if (col) {
+            solution02Tl.to(col, { opacity: 1, duration: 0.05 }, startTime);
           }
         }
-      };
-
-      const growthElement = growthSectionRef.current;
-      if (growthElement) {
-        growthElement.style.cursor = 'pointer';
-        growthElement.addEventListener('click', handleGrowthClick);
-      }
-
-      let directionPhase = 0;
-      let directionScrollLocked = false;
-      let directionClickEnabled = false;
-
-      const lockDirectionScroll = () => {
-        if (directionScrollLocked && directionSectionRef.current) {
-          const directionTop = directionSectionRef.current.offsetTop;
-          if (window.scrollY < directionTop) {
-            window.scrollTo(0, directionTop);
-          }
+        const stepEl = timelineStepRefs.current[index];
+        if (stepEl) {
+          solution02Tl.to(stepEl, { opacity: 1, duration: 0.08 }, startTime + 0.02);
         }
-      };
+      });
 
-      const startDirectionAutoSequence = () => {
-        gsap.to(directionTextRef.current, { opacity: 0, duration: 0.3, ease: 'power2.out' });
-        setTimeout(() => {
-          gsap.to(solutionOverlayRef.current, { opacity: 1, duration: 0.5, ease: 'power2.out' });
-          gsap.to(solutionContentRef.current, { opacity: 1, duration: 0.5, ease: 'power2.out' });
-          setTimeout(() => {
-            gsap.to(solutionLabelRef.current, { opacity: 1, duration: 0.5, ease: 'power2.out' });
-            setTimeout(() => {
-              gsap.to(solutionTitleRef.current, { opacity: 1, duration: 0.5, ease: 'power2.out' });
-              setTimeout(() => {
-                gsap.to(solutionDescRef.current, { opacity: 1, duration: 0.5, ease: 'power2.out' });
-                directionPhase = 4;
-                directionClickEnabled = true;
-              }, 600);
-            }, 600);
-          }, 600);
-        }, 300);
-      };
-
-      const observeDirection = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-              directionScrollLocked = true;
-              window.addEventListener('scroll', lockDirectionScroll);
-              setTimeout(() => {
-                directionClickEnabled = true;
-              }, 500);
-            }
-          });
-        },
-        { threshold: 0.5 }
-      );
-
-      if (directionSectionRef.current) {
-        observeDirection.observe(directionSectionRef.current);
-      }
-
-      const handleDirectionClick = () => {
-        if (!directionClickEnabled) return;
-
-        if (directionPhase === 0) {
-          directionPhase = 1;
-          directionClickEnabled = false;
-          gsap.to(directionTextRef.current, {
-            opacity: 1,
-            duration: 0.3,
-            ease: 'power2.out',
-            onComplete: () => {
-              directionClickEnabled = true;
-            },
-          });
-        } else if (directionPhase === 1) {
-          directionPhase = 2;
-          directionClickEnabled = false;
-          startDirectionAutoSequence();
-        } else if (directionPhase === 4) {
-          directionPhase = 5;
-          gsap.to(solutionGrid1Ref.current, {
-            opacity: 1,
-            duration: 0.5,
-            ease: 'power2.out',
-            onComplete: () => {
-              const directionEl = directionSectionRef.current;
-              if (!directionEl) return;
-
-              let wheelAccumulator = 0;
-              let row2Shown = false;
-              let row3Shown = false;
-              let row4Shown = false;
-
-              const handleWheel = (e: WheelEvent) => {
-                if (e.deltaY > 0) {
-                  wheelAccumulator += e.deltaY;
-                  if (!row2Shown && wheelAccumulator > 300) {
-                    row2Shown = true;
-                    gsap.to(solutionGrid2Ref.current, { opacity: 1, duration: 1, ease: 'power2.out' });
-                  }
-                  if (!row3Shown && wheelAccumulator > 700) {
-                    row3Shown = true;
-                    gsap.to(solutionGrid3Ref.current, { opacity: 1, duration: 1, ease: 'power2.out' });
-                  }
-                  if (!row4Shown && wheelAccumulator > 1100) {
-                    row4Shown = true;
-                    gsap.to(solutionGrid4Ref.current, {
-                      opacity: 1,
-                      duration: 1,
-                      ease: 'power2.out',
-                      onComplete: () => {
-                        directionEl.removeEventListener('wheel', handleWheel);
-                        // Solution 02 섹션으로 이동
-                        directionScrollLocked = false;
-                        window.removeEventListener('scroll', lockDirectionScroll);
-                        if (solution02SectionRef.current) {
-                          solution02SectionRef.current.style.display = 'flex';
-                          setTimeout(() => {
-                            solution02SectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-                          }, 100);
-                        }
-                      },
-                    });
-                  }
-                }
-              };
-
-              directionEl.addEventListener('wheel', handleWheel);
-            },
-          });
-        }
-      };
-
-      const directionElement = directionSectionRef.current;
-      if (directionElement) {
-        directionElement.style.cursor = 'pointer';
-        directionElement.addEventListener('click', handleDirectionClick);
-      }
-
-      // Solution 02 애니메이션 로직 - 시간차 자동 등장
-      let solution02AnimationStarted = false;
-
-      const startSolution02Animation = () => {
-        if (solution02AnimationStarted) return;
-        solution02AnimationStarted = true;
-
-        const tl = gsap.timeline();
-
-        // 라벨 표시
-        tl.to(solution02LabelRef.current, {
-          opacity: 1,
-          duration: 0.3,
-          ease: 'power2.out',
-        });
-
-        // 제목 표시
-        tl.to(solution02TitleRef.current, {
-          opacity: 1,
-          duration: 0.3,
-          ease: 'power2.out',
-        }, '+=0.15');
-
-        // 설명 표시
-        tl.to(solution02DescRef.current, {
-          opacity: 1,
-          duration: 0.3,
-          ease: 'power2.out',
-        }, '+=0.15');
-
-        // 타임라인 컨테이너 표시
-        tl.to(timelineContainerRef.current, {
-          opacity: 1,
-          duration: 0.3,
-          ease: 'power2.out',
-        }, '+=0.15');
-
-        // 각 스텝 순차 등장
-        TIMELINE_STEPS.forEach((step, stepIndex) => {
-          // 해당 스텝까지의 컬럼 헤더 표시
-          const colsNeeded = step.cols;
-          for (let i = 0; i < colsNeeded; i++) {
-            const col = timelineColumnRefs.current[i];
-            if (col) {
-              tl.to(col, { opacity: 1, duration: 0.15, ease: 'power2.out' }, `step${stepIndex}`);
-            }
-          }
-
-          // 해당 스텝 표시
-          const stepEl = timelineStepRefs.current[stepIndex];
-          if (stepEl) {
-            tl.to(stepEl, { opacity: 1, duration: 0.3, ease: 'power2.out' }, `step${stepIndex}+=0.05`);
-          }
-
-          // 다음 스텝 전 딜레이
-          tl.addLabel(`step${stepIndex + 1}`, '+=0.3');
-        });
-
-        // STEP 6까지 표시 후 멈춤, 클릭하면 SYSTEM으로 이동
-        tl.call(() => {
-          solution02ClickEnabled = true;
-        }, [], '+=0.3');
-      };
-
-      let solution02ClickEnabled = false;
-
-      const handleSolution02Click = () => {
-        if (!solution02ClickEnabled) return;
-        solution02ClickEnabled = false;
-
-        if (systemSectionRef.current) {
-          systemSectionRef.current.style.display = 'flex';
-          setTimeout(() => {
-            systemSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }, 100);
-        }
-      };
-
-      const solution02Element = solution02SectionRef.current;
-      if (solution02Element) {
-        solution02Element.style.cursor = 'pointer';
-        solution02Element.addEventListener('click', handleSolution02Click);
-      }
-
-      const observeSolution02 = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
-              startSolution02Animation();
-            }
-          });
-        },
-        { threshold: 0.3 }
-      );
-
-      if (solution02SectionRef.current) {
-        observeSolution02.observe(solution02SectionRef.current);
-      }
-
-      // SYSTEM section 애니메이션 로직
-      let systemPhase = 0;
-      let systemClickEnabled = false;
-      let systemScrollLocked = false;
-      let systemHighlightComplete = false;
-      let currentSystemHighlight = 0;
-
-      // SYSTEM 초기 설정
-      // 모바일 여부에 따라 초기 설정
-      const isMobile = window.innerWidth <= 768;
-      if (isMobile) {
-        // 모바일: 큰 SYSTEM 텍스트가 뷰포트 중앙보다 약간 위에서 시작
-        gsap.set(systemTextRef.current, {
-          fontSize: '50px',
-          position: 'fixed',
-          top: '40vh',
-          left: '50%',
-          x: '-50%',
-          y: '-50%'
-        });
-      } else {
-        // 데스크톱: 중앙에서 시작
-        gsap.set(systemTextRef.current, {
-          fontSize: '265px',
-          top: '50%',
-          left: '50%',
-          x: '-50%',
-          y: '-50%'
-        });
-      }
+      // ===== SYSTEM SECTION =====
+      gsap.set(systemTextRef.current, {
+        fontSize: isMobile ? '50px' : '265px',
+        opacity: 1
+      });
       gsap.set(systemHeadlineRef.current, { opacity: 0 });
       gsap.set(systemDescRef.current, { opacity: 0 });
-      gsap.set(systemVideoRef.current, {
-        opacity: 0,
-        width: '1058px',
-        height: '579px',
-        left: '50%',
-        top: '50%',
-        x: '-50%',
-        y: '-50%'
-      });
+      gsap.set(systemVideoRef.current, { opacity: 0 });
       gsap.set(systemCardsRef.current, { opacity: 0 });
 
-      // SYSTEM 섹션 진입 시 텍스트 아래에서 중앙으로 애니메이션
-      const observeSystemEntry = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
-              gsap.to(systemTextRef.current, {
-                top: '50%',
-                duration: 1,
-                ease: 'power2.out',
-              });
-              observeSystemEntry.disconnect();
+      const systemTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: systemSectionRef.current,
+          start: 'top top',
+          end: '+=20000',
+          pin: true,
+          scrub: 4,
+          invalidateOnRefresh: true,
+          anticipatePin: 1,
+          onUpdate: (self) => {
+            // 시스템 하이라이트 진행률
+            if (self.progress > 0.25 && self.progress < 0.45) {
+              const highlightProg = (self.progress - 0.25) / 0.2 * 100;
+              setSystemHighlightProgress(Math.min(100, highlightProg));
             }
-          });
+          },
         },
-        { threshold: 0.3 }
-      );
+      });
 
-      if (systemSectionRef.current) {
-        observeSystemEntry.observe(systemSectionRef.current);
-      }
+      // SYSTEM 텍스트 축소
+      systemTl.to(systemTextRef.current, {
+        fontSize: isMobile ? '14px' : '26px',
+        duration: 0.15
+      }, 0);
 
-      const lockSystemScroll = () => {
-        if (systemScrollLocked && systemSectionRef.current) {
-          const sectionTop = systemSectionRef.current.offsetTop;
-          if (window.scrollY < sectionTop) {
-            window.scrollTo(0, sectionTop);
-          }
-        }
-      };
+      // 헤드라인, 설명 등장
+      systemTl.to(systemHeadlineRef.current, { opacity: 1, duration: 0.1 }, 0.15);
+      systemTl.to(systemDescRef.current, { opacity: 1, duration: 0.1 }, 0.25);
 
-      const observeSystem = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-              systemScrollLocked = true;
-              window.addEventListener('scroll', lockSystemScroll);
-              // 모바일에서 스크롤 완전 잠금
-              if (isMobile) {
-                document.body.style.overflow = 'hidden';
-              }
-              setTimeout(() => {
-                systemClickEnabled = true;
-              }, 500);
-            }
-          });
-        },
-        { threshold: 0.5 }
-      );
+      // 텍스트 사라지고 비디오 등장
+      systemTl.to([systemTextRef.current, systemHeadlineRef.current, systemDescRef.current], {
+        opacity: 0,
+        duration: 0.1
+      }, 0.50);
+      systemTl.to(systemVideoRef.current, { opacity: 1, duration: 0.15 }, 0.55);
 
-      if (systemSectionRef.current) {
-        observeSystem.observe(systemSectionRef.current);
-      }
+      // 비디오 크기 조정 및 카드 등장
+      systemTl.to(systemVideoRef.current, {
+        width: isMobile ? '100%' : '55vw',
+        height: isMobile ? '191px' : 'calc(100vh - 160px)',
+        left: isMobile ? '0' : '64px',
+        borderRadius: '24px',
+        duration: 0.15
+      }, 0.70);
+      systemTl.to(systemCardsRef.current, { opacity: 1, duration: 0.15 }, 0.80);
 
-      const handleSystemClick = () => {
-        if (!systemClickEnabled) return;
-
-        if (systemPhase === 0) {
-          // Phase 1: SYSTEM 텍스트 작아지기
-          systemPhase = 1;
-          systemClickEnabled = false;
-
-          if (isMobile) {
-            // 모바일: 큰 SYSTEM → 작은 SYSTEM (중앙 유지)
-            gsap.to(systemTextRef.current, {
-              fontSize: '14px',
-              letterSpacing: '0px',
-              duration: 0.5,
-              ease: 'power2.out',
-              onComplete: () => {
-                systemClickEnabled = true;
-              },
-            });
-          } else {
-            gsap.to(systemTextRef.current, {
-              fontSize: '26px',
-              top: '160px',
-              y: '0%',
-              letterSpacing: '-0.52px',
-              duration: 0.8,
-              ease: 'power2.out',
-              onComplete: () => {
-                systemClickEnabled = true;
-              },
-            });
-          }
-        } else if (systemPhase === 1) {
-          // Phase 2: 헤드라인 등장
-          systemPhase = 2;
-          systemClickEnabled = false;
-
-          if (isMobile) {
-            // 모바일: SYSTEM 상단으로 이동 + 헤드라인 + 설명 동시 표시
-            const tl = gsap.timeline({
-              onComplete: () => {
-                // 스크롤은 계속 잠금 상태 유지, 터치/휠로 하이라이트 애니메이션 시작
-                systemPhase = 3;
-
-                let touchStartY = 0;
-                const systemEl = systemSectionRef.current;
-
-                // 휠 이벤트 (Vision 섹션과 동일)
-                const handleMobileWheel = (e: WheelEvent) => {
-                  e.preventDefault();
-                  if (systemHighlightComplete) return;
-                  const delta = e.deltaY > 0 ? 3 : -3;
-                  currentSystemHighlight = Math.max(0, Math.min(100, currentSystemHighlight + delta));
-                  setSystemHighlightProgress(currentSystemHighlight);
-                  if (currentSystemHighlight >= 100) {
-                    systemHighlightComplete = true;
-                    window.removeEventListener('wheel', handleMobileWheel);
-
-                    // 모바일: 하이라이트 완료 후 비디오 섹션 표시
-                    startMobileVideoSection();
-                  }
-                };
-
-                // 터치 이벤트
-                const handleTouchStart = (e: TouchEvent) => {
-                  touchStartY = e.touches[0].clientY;
-                };
-
-                const handleTouchMove = (e: TouchEvent) => {
-                  e.preventDefault();
-                  if (systemHighlightComplete) return;
-
-                  const touchY = e.touches[0].clientY;
-                  const delta = Math.abs(touchStartY - touchY) * 0.5;
-                  touchStartY = touchY;
-
-                  currentSystemHighlight = Math.max(0, Math.min(100, currentSystemHighlight + delta));
-                  setSystemHighlightProgress(currentSystemHighlight);
-
-                  if (currentSystemHighlight >= 100) {
-                    systemHighlightComplete = true;
-                    if (systemEl) {
-                      systemEl.removeEventListener('touchstart', handleTouchStart);
-                      systemEl.removeEventListener('touchmove', handleTouchMove);
-                    }
-                    window.removeEventListener('wheel', handleMobileWheel);
-
-                    // 모바일: 하이라이트 완료 후 비디오 섹션 표시
-                    startMobileVideoSection();
-                  }
-                };
-
-                // 모바일 비디오 섹션 시작 함수
-                const startMobileVideoSection = () => {
-                  // SYSTEM 텍스트, 헤드라인, 설명 페이드 아웃
-                  gsap.to([systemTextRef.current, systemHeadlineRef.current, systemDescRef.current], {
-                    opacity: 0,
-                    duration: 0.5,
-                    ease: 'power2.out',
-                    onComplete: () => {
-                      // 비디오 컨테이너 표시 (풀스크린)
-                      gsap.set(systemVideoRef.current, {
-                        position: 'relative',
-                        top: 'auto',
-                        left: 'auto',
-                        x: 0,
-                        y: 0,
-                        width: '100%',
-                        height: '191px',
-                        borderRadius: '0',
-                        opacity: 1
-                      });
-
-                      // 섹션 스타일 변경 (스크롤 가능하도록)
-                      if (systemSectionRef.current) {
-                        systemSectionRef.current.classList.add('mobile-video-mode');
-                      }
-
-                      // 카드 표시
-                      gsap.to(systemCardsRef.current, {
-                        opacity: 1,
-                        duration: 0.5,
-                        ease: 'power2.out',
-                        onComplete: () => {
-                          // 스크롤 잠금 해제 (카드 스크롤 가능하도록)
-                          document.body.style.overflow = '';
-                          systemScrollLocked = false;
-                          window.removeEventListener('scroll', lockSystemScroll);
-
-                          // 모바일 비디오 모드에서 클릭 시 TEAMWORK으로 이동
-                          systemPhase = 10; // 모바일 비디오 모드
-                          systemClickEnabled = true;
-                          // TEAMWORK 섹션은 클릭 후에 표시 (스크롤 시 자동 전환 방지)
-                        }
-                      });
-                    }
-                  });
-                };
-
-                window.addEventListener('wheel', handleMobileWheel, { passive: false });
-                if (systemEl) {
-                  systemEl.addEventListener('touchstart', handleTouchStart, { passive: false });
-                  systemEl.addEventListener('touchmove', handleTouchMove, { passive: false });
-                }
-              },
-            });
-            tl.to(systemTextRef.current, {
-              position: 'absolute',
-              top: '200px',
-              duration: 0.5,
-              ease: 'power2.out',
-            });
-            tl.to(systemHeadlineRef.current, {
-              opacity: 1,
-              duration: 0.5,
-              ease: 'power2.out',
-            }, '-=0.3');
-            tl.to(systemDescRef.current, {
-              opacity: 1,
-              duration: 0.5,
-              ease: 'power2.out',
-            }, '-=0.3');
-          } else {
-            gsap.to(systemHeadlineRef.current, {
-              opacity: 1,
-              duration: 0.5,
-              ease: 'power2.out',
-              onComplete: () => {
-                systemClickEnabled = true;
-              },
-            });
-          }
-        } else if (systemPhase === 2) {
-          // Phase 3: 설명 등장
-          systemPhase = 3;
-          systemClickEnabled = false;
-          gsap.to(systemDescRef.current, {
-            opacity: 1,
-            duration: 0.5,
-            ease: 'power2.out',
-            onComplete: () => {
-              // 하이라이트 애니메이션 시작
-              const handleWheel = (e: WheelEvent) => {
-                e.preventDefault();
-                if (systemHighlightComplete) return;
-                const delta = e.deltaY > 0 ? 3 : -3;
-                currentSystemHighlight = Math.max(0, Math.min(100, currentSystemHighlight + delta));
-                setSystemHighlightProgress(currentSystemHighlight);
-                if (currentSystemHighlight >= 100) {
-                  systemHighlightComplete = true;
-                  systemClickEnabled = true;
-                  window.removeEventListener('wheel', handleWheel);
-                }
-              };
-              window.addEventListener('wheel', handleWheel, { passive: false });
-            },
-          });
-        } else if (systemPhase === 3 && systemHighlightComplete) {
-          // Phase 4: 비디오 카드 등장, SYSTEM/헤드라인/설명 숨기기
-          systemPhase = 4;
-          systemClickEnabled = false;
-
-          // SYSTEM, 헤드라인, 설명 페이드 아웃
-          gsap.to([systemTextRef.current, systemHeadlineRef.current, systemDescRef.current], {
-            opacity: 0,
-            duration: 0.5,
-            ease: 'power2.out',
-          });
-
-          // 비디오 등장 (부드럽게)
-          gsap.to(systemVideoRef.current, {
-            opacity: 1,
-            duration: 1.2,
-            delay: 0.5,
-            ease: 'power2.inOut',
-            onComplete: () => {
-              systemClickEnabled = true;
-            },
-          });
-        } else if (systemPhase === 4) {
-          // Phase 5: 비디오 풀스크린 확장 (중앙 유지)
-          systemPhase = 5;
-          systemClickEnabled = false;
-          gsap.to(systemVideoRef.current, {
-            width: '100vw',
-            height: '100vh',
-            borderRadius: '0px',
-            duration: 0.8,
-            ease: 'power2.out',
-            onComplete: () => {
-              systemClickEnabled = true;
-            },
-          });
-        } else if (systemPhase === 5) {
-          // Phase 6: 비디오 왼쪽 절반으로 이동 (중간 50%만 보이도록 크롭), 카드 등장
-          systemPhase = 6;
-
-          // 비디오 컨테이너를 왼쪽으로 이동 (여백 포함, 둥근 모서리)
-          // Calculate target dimensions dynamically to match CSS constraints
-          const vh = window.innerHeight;
-          const vw = window.innerWidth;
-          const availableHeight = vh - 160; // Increased margin: 80px top + 80px bottom
-          const targetRatio = 1.16;
-
-          let targetWidth = availableHeight * targetRatio;
-          let targetHeight = availableHeight;
-
-          // Apply max-width constraint (55vw)
-          const maxWidth = vw * 0.55;
-          if (targetWidth > maxWidth) {
-            targetWidth = maxWidth;
-            targetHeight = targetWidth / targetRatio;
-          }
-
-          // Reset position to top-left to prevent "moving right" artifact during shrink
-          // Since width/height are 100vw/100vh, visually this is identical to centered
-          gsap.set(systemVideoRef.current, {
-            left: 0,
-            top: 0,
-            xPercent: 0,
-            yPercent: 0
-          });
-
-          // 비디오 컨테이너를 왼쪽으로 이동 (여백 포함, 둥근 모서리)
-          gsap.to(systemVideoRef.current, {
-            top: '80px', // Increased top margin
-            left: '64px',
-            xPercent: 0,
-            yPercent: 0,
-            width: targetWidth,
-            height: targetHeight,
-            borderRadius: '24px',
-            duration: 0.8,
-            ease: 'power2.out',
-            onComplete: () => {
-              // Add class to enforce responsive layout after animation
-              if (systemVideoRef.current) {
-                systemVideoRef.current.classList.add('is-layout-fixed');
-              }
-            }
-          });
-
-          // 비디오 컨테이너에 클래스 추가 (텍스트 스타일용)
-          if (systemVideoRef.current) {
-            systemVideoRef.current.classList.add('is-shrunk');
-          }
-
-          // 텍스트 크기 애니메이션 (GSAP로 부드럽게 연결)
-          const videoText = systemVideoRef.current?.querySelector('.system-video-text');
-          if (videoText) {
-            gsap.to(videoText, {
-              fontSize: '40px',
-              duration: 0.8,
-              ease: 'power2.out'
-            });
-          }
-
-          gsap.to(systemCardsRef.current, {
-            opacity: 1,
-            duration: 0.8,
-            delay: 0.3,
-            ease: 'power2.out',
-            onComplete: () => {
-              // 스크롤 잠금 해제
-              systemScrollLocked = false;
-              window.removeEventListener('scroll', lockSystemScroll);
-              document.body.style.overflow = '';
-              systemClickEnabled = true;
-
-              // TEAMWORK 섹션 표시
-              if (teamworkSectionRef.current) {
-                teamworkSectionRef.current.style.display = 'flex';
-              }
-            },
-          });
-        } else if (systemPhase === 6) {
-          // Phase 7: TEAMWORK 섹션으로 이동
-          systemPhase = 7;
-          systemClickEnabled = false;
-
-          if (teamworkSectionRef.current) {
-            setTimeout(() => {
-              teamworkSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-          }
-        } else if (systemPhase === 10) {
-          // 모바일: 비디오/카드 모드에서 클릭 시 TEAMWORK으로 이동
-          // 섹션 끝까지 스크롤했는지 확인
-          if (systemSectionRef.current) {
-            const section = systemSectionRef.current;
-            const sectionBottom = section.offsetTop + section.offsetHeight;
-            const scrollBottom = window.scrollY + window.innerHeight;
-
-            // 섹션 하단에서 100px 이내일 때만 클릭 허용
-            if (scrollBottom < sectionBottom - 100) {
-              return; // 아직 끝까지 스크롤하지 않음
-            }
-          }
-
-          systemPhase = 11;
-          systemClickEnabled = false;
-
-          // TEAMWORK 섹션 표시 후 스크롤
-          if (teamworkSectionRef.current) {
-            teamworkSectionRef.current.style.display = 'flex';
-            setTimeout(() => {
-              teamworkSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-          }
-        }
-      };
-
-      const systemElement = systemSectionRef.current;
-      if (systemElement) {
-        systemElement.style.cursor = 'pointer';
-        systemElement.addEventListener('click', handleSystemClick);
-      }
-
-      // TEAMWORK section 애니메이션 로직
-      let teamworkPhase = 1; // 헤드라인이 이미 보이는 상태로 시작
-      let teamworkClickEnabled = false;
-      let teamworkScrollLocked = false;
-
-      // TEAMWORK 초기 설정 - 헤드라인은 바로 보임
+      // ===== TEAMWORK SECTION =====
       gsap.set(teamworkHeadlineRef.current, { opacity: 1 });
       gsap.set(teamworkBgRef.current, { opacity: 0 });
       gsap.set(teamworkTextRef.current, { opacity: 0 });
 
-      const lockTeamworkScroll = () => {
-        if (teamworkScrollLocked && teamworkSectionRef.current) {
-          const sectionTop = teamworkSectionRef.current.offsetTop;
-          if (window.scrollY < sectionTop) {
-            window.scrollTo(0, sectionTop);
-          }
-        }
-      };
-
-      const observeTeamwork = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-              teamworkScrollLocked = true;
-              window.addEventListener('scroll', lockTeamworkScroll);
-              setTimeout(() => {
-                teamworkClickEnabled = true;
-              }, 500);
-            }
-          });
+      const teamworkTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: teamworkSectionRef.current,
+          start: 'top top',
+          end: '+=12000',
+          pin: true,
+          scrub: 4,
+          invalidateOnRefresh: true,
+          anticipatePin: 1,
         },
-        { threshold: 0.5 }
-      );
+      });
 
-      if (teamworkSectionRef.current) {
-        observeTeamwork.observe(teamworkSectionRef.current);
-      }
+      teamworkTl.to(teamworkHeadlineRef.current, { opacity: 0, duration: 0.2 }, 0);
+      teamworkTl.to(teamworkBgRef.current, { opacity: 1, duration: 0.3 }, 0.1);
+      teamworkTl.to(teamworkTextRef.current, { opacity: 1, duration: 0.2 }, 0.5);
 
-      const handleTeamworkClick = () => {
-        if (!teamworkClickEnabled) return;
-
-        if (teamworkPhase === 1) {
-          // Phase 2: 배경 이미지 등장, 헤드라인 페이드 아웃 (크로스페이드)
-          teamworkPhase = 2;
-          teamworkClickEnabled = false;
-
-          // 동시에 실행되는 크로스페이드 애니메이션
-          gsap.to(teamworkHeadlineRef.current, {
-            opacity: 0,
-            duration: 1.2,
-            ease: 'power2.inOut',
-          });
-          gsap.to(teamworkBgRef.current, {
-            opacity: 1,
-            duration: 1.5,
-            ease: 'power2.inOut',
-            onComplete: () => {
-              teamworkClickEnabled = true;
-            },
-          });
-        } else if (teamworkPhase === 2) {
-          // Phase 3: TEAMWORK 텍스트 등장
-          teamworkPhase = 3;
-          gsap.to(teamworkTextRef.current, {
-            opacity: 1,
-            duration: 0.8,
-            ease: 'power2.out',
-            onComplete: () => {
-              teamworkClickEnabled = true;
-              // EXPERTS 섹션 표시
-              if (expertsSectionRef.current) {
-                expertsSectionRef.current.style.display = 'flex';
-              }
-            },
-          });
-        } else if (teamworkPhase === 3) {
-          // Phase 4: EXPERTS 섹션으로 이동
-          teamworkPhase = 4;
-          teamworkClickEnabled = false;
-          teamworkScrollLocked = false;
-          window.removeEventListener('scroll', lockTeamworkScroll);
-          document.body.style.overflow = '';
-
-          if (expertsSectionRef.current) {
-            setTimeout(() => {
-              expertsSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-          }
-        }
-      };
-
-      const teamworkElement = teamworkSectionRef.current;
-      if (teamworkElement) {
-        teamworkElement.style.cursor = 'pointer';
-        teamworkElement.addEventListener('click', handleTeamworkClick);
-      }
-
-      // EXPERTS section 애니메이션 로직
-      let expertsPhase = 0;
-      let expertsClickEnabled = false;
-      let expertsScrollLocked = false;
-
-      // EXPERTS 초기 설정
+      // ===== EXPERTS SECTION =====
       gsap.set(expertsHeadlineRef.current, { opacity: 0 });
-      gsap.set(expertsNavRef.current, { opacity: 0 });
       gsap.set(expertsDescRef.current, { opacity: 0 });
+      gsap.set(expertsNavRef.current, { opacity: 0 });
       gsap.set(expertsCardsRef.current, { opacity: 0 });
 
-      const lockExpertsScroll = () => {
-        if (expertsScrollLocked && expertsSectionRef.current) {
-          const sectionTop = expertsSectionRef.current.offsetTop;
-          if (window.scrollY < sectionTop) {
-            window.scrollTo(0, sectionTop);
-          }
-        }
-      };
-
-      const observeExperts = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-              expertsScrollLocked = true;
-              window.addEventListener('scroll', lockExpertsScroll);
-              setTimeout(() => {
-                expertsClickEnabled = true;
-              }, 500);
-            }
-          });
-        },
-        { threshold: 0.5 }
-      );
-
-      if (expertsSectionRef.current) {
-        observeExperts.observe(expertsSectionRef.current);
-      }
-
-      const handleExpertsClick = (e: MouseEvent) => {
-        if (!expertsClickEnabled) return;
-        const target = e.target as HTMLElement;
-        if (target.closest('button')) return;
-
-        if (expertsPhase === 0) {
-          // Phase 1: 헤드라인, VIP 텍스트, 네비게이션 등장
-          expertsPhase = 1;
-          expertsClickEnabled = false;
-          gsap.to(expertsHeadlineRef.current, {
-            opacity: 1,
-            duration: 0.8,
-            ease: 'power2.out',
-          });
-          gsap.to(expertsDescRef.current, {
-            opacity: 1,
-            duration: 0.8,
-            delay: 0.2,
-            ease: 'power2.out',
-          });
-          gsap.to(expertsNavRef.current, {
-            opacity: 1,
-            duration: 0.8,
-            delay: 0.4,
-            ease: 'power2.out',
-            onComplete: () => {
-              expertsClickEnabled = true;
-            },
-          });
-        } else if (expertsPhase === 1) {
-          // Phase 2: 카드 등장
-          expertsPhase = 2;
-          expertsClickEnabled = false;
-          gsap.to(expertsCardsRef.current, {
-            opacity: 1,
-            duration: 0.8,
-            ease: 'power2.out',
-            onComplete: () => {
-              expertsClickEnabled = true;
-              // CHAMPAGNE 섹션 표시
-              if (champagneSectionRef.current) {
-                champagneSectionRef.current.style.display = 'flex';
-              }
-            },
-          });
-        } else if (expertsPhase === 2) {
-          // Phase 3: CHAMPAGNE 섹션으로 이동
-          expertsPhase = 3;
-          expertsClickEnabled = false;
-          expertsScrollLocked = false;
-          window.removeEventListener('scroll', lockExpertsScroll);
-          document.body.style.overflow = '';
-
-          if (champagneSectionRef.current) {
-            setTimeout(() => {
-              champagneSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-          }
-        }
-      };
-
-      const expertsElement = expertsSectionRef.current;
-      if (expertsElement) {
-        expertsElement.style.cursor = 'pointer';
-        expertsElement.addEventListener('click', handleExpertsClick);
-      }
-
-      // CHAMPAGNE section 애니메이션 로직
-      let champagneClickEnabled = false;
-      let champagneScrollLocked = false;
-      let champagneCompleted = false;
-
-      const lockChampagneScroll = () => {
-        if (champagneScrollLocked && champagneSectionRef.current) {
-          const sectionTop = champagneSectionRef.current.offsetTop;
-          if (window.scrollY < sectionTop) {
-            window.scrollTo(0, sectionTop);
-          }
-        }
-      };
-
-      const observeChampagne = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            // 이미 CHAMPAGNE → CRUISE 전환이 완료된 경우 스크롤 잠금하지 않음
-            if (entry.isIntersecting && entry.intersectionRatio > 0.5 && !champagneCompleted) {
-              document.body.style.overflow = 'hidden';
-              champagneScrollLocked = true;
-              window.addEventListener('scroll', lockChampagneScroll);
-              setTimeout(() => {
-                champagneClickEnabled = true;
-              }, 500);
-            }
-          });
-        },
-        { threshold: 0.5 }
-      );
-
-      if (champagneSectionRef.current) {
-        observeChampagne.observe(champagneSectionRef.current);
-      }
-
-      const handleChampagneClick = () => {
-        if (!champagneClickEnabled) return;
-
-        champagneClickEnabled = false;
-        champagneCompleted = true;
-
-        // Hero 섹션 및 내부 요소들 숨김 (전환 전에 먼저 숨김)
-        if (heroRef.current) {
-          heroRef.current.style.visibility = 'hidden';
-        }
-        if (expandingVideoRef.current) {
-          expandingVideoRef.current.style.display = 'none';
-        }
-        if (shipTextRef.current) {
-          shipTextRef.current.style.display = 'none';
-        }
-
-        // CRUISE 섹션 표시
-        if (cruiseSectionRef.current) {
-          cruiseSectionRef.current.style.display = 'flex';
-          gsap.set(cruiseSectionRef.current, { opacity: 0 });
-        }
-
-        // 크로스페이드 전환: CHAMPAGNE 페이드아웃 + CRUISE 페이드인
-        gsap.to(champagneSectionRef.current, {
-          opacity: 0,
-          duration: 0.8,
-          ease: 'power2.inOut',
-        });
-
-        gsap.to(cruiseSectionRef.current, {
-          opacity: 1,
-          duration: 1.5,
-          delay: 0.3,
-          ease: 'power2.out',
-          onComplete: () => {
-            champagneScrollLocked = false;
-            window.removeEventListener('scroll', lockChampagneScroll);
-            document.body.style.overflow = '';
-
-            // CHAMPAGNE 섹션 완전히 숨김 (스크롤 간섭 방지)
-            if (champagneSectionRef.current) {
-              champagneSectionRef.current.style.visibility = 'hidden';
-              champagneSectionRef.current.style.pointerEvents = 'none';
-            }
-
-            // 스크롤 없이 바로 CRUISE 위치로 이동 (페이드인이 메인 전환 효과)
-            if (cruiseSectionRef.current) {
-              window.scrollTo(0, cruiseSectionRef.current.offsetTop);
+      const expertsTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: expertsSectionRef.current,
+          start: 'top top',
+          end: '+=14000',
+          pin: true,
+          scrub: 4,
+          invalidateOnRefresh: true,
+          anticipatePin: 1,
+          onUpdate: (self) => {
+            // 전문가 카드 인덱스 업데이트
+            if (self.progress > 0.6) {
+              const cardProgress = (self.progress - 0.6) / 0.4;
+              const newIndex = Math.floor(cardProgress * EXPERTS_CARDS.length);
+              setExpertsCardIndex(Math.min(newIndex, EXPERTS_CARDS.length - 1));
             }
           },
-        });
-      };
+        },
+      });
 
-      const champagneElement = champagneSectionRef.current;
-      if (champagneElement) {
-        champagneElement.style.cursor = 'pointer';
-        champagneElement.addEventListener('click', handleChampagneClick);
-      }
+      expertsTl.to(expertsHeadlineRef.current, { opacity: 1, duration: 0.15 }, 0);
+      expertsTl.to(expertsDescRef.current, { opacity: 1, duration: 0.15 }, 0.15);
+      expertsTl.to(expertsNavRef.current, { opacity: 1, duration: 0.1 }, 0.30);
+      expertsTl.to(expertsCardsRef.current, { opacity: 1, duration: 0.15 }, 0.40);
 
-      // CRUISE section 애니메이션 로직
-      let cruisePhase = 0;
-      let cruiseClickEnabled = false;
-      let cruiseScrollLocked = false;
+      // ===== CHAMPAGNE SECTION =====
+      gsap.set(champagneTextRef.current, { opacity: 0 });
 
-      // CRUISE 초기 설정
+      const champagneTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: champagneSectionRef.current,
+          start: 'top top',
+          end: '+=10000',
+          pin: true,
+          scrub: 4,
+          invalidateOnRefresh: true,
+          anticipatePin: 1,
+        },
+      });
+
+      champagneTl.to(champagneTextRef.current, { opacity: 1, duration: 0.3 }, 0.2);
+
+      // ===== CRUISE SECTION =====
       gsap.set(cruiseLeftTextRef.current, { opacity: 0 });
       gsap.set(cruiseRightTextRef.current, { opacity: 0 });
 
-      const lockCruiseScroll = () => {
-        if (cruiseScrollLocked && cruiseSectionRef.current) {
-          const sectionTop = cruiseSectionRef.current.offsetTop;
-          if (window.scrollY < sectionTop) {
-            window.scrollTo(0, sectionTop);
-          }
-        }
-      };
-
-      const observeCruise = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            // 이미 Phase 2가 완료된 경우 스크롤 잠금하지 않음
-            if (entry.isIntersecting && entry.intersectionRatio > 0.5 && cruisePhase < 2) {
-              document.body.style.overflow = 'hidden';
-              cruiseScrollLocked = true;
-              window.addEventListener('scroll', lockCruiseScroll);
-              setTimeout(() => {
-                cruiseClickEnabled = true;
-              }, 500);
-            }
-          });
+      const cruiseTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: cruiseSectionRef.current,
+          start: 'top top',
+          end: '+=12000',
+          pin: true,
+          scrub: 4,
+          invalidateOnRefresh: true,
+          anticipatePin: 1,
         },
-        { threshold: 0.5 }
-      );
+      });
 
-      if (cruiseSectionRef.current) {
-        observeCruise.observe(cruiseSectionRef.current);
-      }
+      cruiseTl.to(cruiseLeftTextRef.current, { opacity: 1, duration: 0.3 }, 0);
+      cruiseTl.to(cruiseRightTextRef.current, { opacity: 1, duration: 0.3 }, 0.4);
 
-      const handleCruiseClick = () => {
-        if (!cruiseClickEnabled) return;
+      // ===== FINAL SECTION =====
+      gsap.set(finalContentRef.current, { opacity: 0, y: 50 });
 
-        if (cruisePhase === 0) {
-          // Phase 1: 왼쪽 텍스트 표시
-          cruisePhase = 1;
-          cruiseClickEnabled = false;
-          gsap.to(cruiseLeftTextRef.current, {
-            opacity: 1,
-            duration: 0.8,
-            ease: 'power2.out',
-            onComplete: () => {
-              cruiseClickEnabled = true;
-            },
-          });
-        } else if (cruisePhase === 1) {
-          // Phase 2: 오른쪽 텍스트 표시 + 스크롤 잠금 해제
-          cruisePhase = 2;
-          cruiseClickEnabled = false;
-          gsap.to(cruiseRightTextRef.current, {
-            opacity: 1,
-            duration: 0.8,
-            ease: 'power2.out',
-            onComplete: () => {
-              // FINAL 섹션 표시 및 스크롤 잠금 해제
-              if (finalSectionRef.current) {
-                finalSectionRef.current.style.display = 'flex';
-              }
-              // hero 섹션 숨기기 (yacht-overlay, vision-content가 보이지 않도록)
-              if (heroRef.current) {
-                heroRef.current.style.visibility = 'hidden';
-              }
-              cruiseScrollLocked = false;
-              window.removeEventListener('scroll', lockCruiseScroll);
-              document.body.style.overflow = '';
-            },
-          });
-        }
-      };
+      const finalTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: finalSectionRef.current,
+          start: 'top 80%',
+          end: 'top 20%',
+          scrub: 2,
+          invalidateOnRefresh: true,
+        },
+      });
 
-      const cruiseElement = cruiseSectionRef.current;
-      if (cruiseElement) {
-        cruiseElement.style.cursor = 'pointer';
-        cruiseElement.addEventListener('click', handleCruiseClick);
-      }
-
-      return () => {
-        if (heroElement) {
-          heroElement.removeEventListener('click', handleClick);
-        }
-        if (growthElement) {
-          growthElement.removeEventListener('click', handleGrowthClick);
-        }
-        if (directionElement) {
-          directionElement.removeEventListener('click', handleDirectionClick);
-        }
-        if (solution02Element) {
-          solution02Element.removeEventListener('click', handleSolution02Click);
-        }
-        if (systemElement) {
-          systemElement.removeEventListener('click', handleSystemClick);
-        }
-        if (teamworkElement) {
-          teamworkElement.removeEventListener('click', handleTeamworkClick);
-        }
-        if (expertsElement) {
-          expertsElement.removeEventListener('click', handleExpertsClick);
-        }
-        if (champagneElement) {
-          champagneElement.removeEventListener('click', handleChampagneClick);
-        }
-        if (cruiseElement) {
-          cruiseElement.removeEventListener('click', handleCruiseClick);
-        }
-        window.removeEventListener('scroll', lockSystemScroll);
-        window.removeEventListener('scroll', lockTeamworkScroll);
-        window.removeEventListener('scroll', lockExpertsScroll);
-        window.removeEventListener('scroll', lockChampagneScroll);
-        window.removeEventListener('scroll', lockCruiseScroll);
-      };
+      finalTl.to(finalContentRef.current, { opacity: 1, y: 0, duration: 1 }, 0);
 
     }, containerRef);
 
@@ -1679,9 +720,15 @@ const Home: React.FC = () => {
 
   return (
     <div className="home-container" ref={containerRef}>
-      <Header variant={headerVariant} onMenuClick={() => setIsMenuOpen(true)} />
+      <Header 
+        variant={headerVariant} 
+        size={headerSize}
+        onMenuClick={() => setIsMenuOpen(true)}
+        isFixed={true}
+      />
       <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
+      {/* HERO SECTION */}
       <section className="hero-section" ref={heroRef}>
         <div className="hero-content">
           <div className="text-row" ref={visionRowRef}>
@@ -1713,9 +760,7 @@ const Home: React.FC = () => {
         </div>
 
         <div className="expanding-video" ref={expandingVideoRef}>
-          <video autoPlay muted loop playsInline>
-            <source src={shipVideo1} type="video/mp4" />
-          </video>
+          <img src={mainHeroImage} alt="Main Hero Background" className="hero-background-image" />
           <div className="video-overlay" />
         </div>
 
@@ -1753,8 +798,6 @@ const Home: React.FC = () => {
           </div>
         </div>
 
-        <div className="black-overlay" ref={blackOverlayRef} />
-
         <div className="vision-content" ref={visionContentRef}>
           <h2 className="vision-title">우리는 단순히<br className="mobile-br" /><span className="nowrap">멀리 보는 것이 아니라,</span><br /><span className="mobile-spacer" />정확히 &apos;어디로<br className="mobile-br" /><span className="nowrap">향해야 하는지&apos; 를 봅니다</span></h2>
           <div className="vision-description" ref={visionDescriptionRef}>
@@ -1787,6 +830,7 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* GROWTH SECTION */}
       <section className="growth-section" ref={growthSectionRef}>
         <div className="growth-background">
           <img src={binocularsImg} alt="Binoculars looking at the sea" />
@@ -1854,6 +898,7 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* DIRECTION SECTION */}
       <section className="direction-section" ref={directionSectionRef}>
         <div className="direction-background">
           <img src={compassImg} alt="Compass" />
@@ -1919,6 +964,7 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* SOLUTION 02 SECTION */}
       <section className="solution02-section" ref={solution02SectionRef}>
         <div className="solution02-background" />
         <div className="solution02-content">
@@ -1988,6 +1034,7 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* SYSTEM SECTION */}
       <section className="system-section" ref={systemSectionRef}>
         <div className="system-background" />
 
@@ -2101,6 +1148,7 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* TEAMWORK SECTION */}
       <section className="teamwork-section" ref={teamworkSectionRef}>
         <div className="teamwork-background" ref={teamworkBgRef}>
           <img src={teamworkImg} alt="Teamwork - People collaborating on ship" />
@@ -2118,6 +1166,7 @@ const Home: React.FC = () => {
         </h2>
       </section>
 
+      {/* EXPERTS SECTION */}
       <section className="experts-section" ref={expertsSectionRef}>
         <div className="experts-headline" ref={expertsHeadlineRef}>
           <h2>세무사·회계사·노무사·변호사 등</h2>
@@ -2169,7 +1218,7 @@ const Home: React.FC = () => {
                   <img src={expert.image} alt={expert.name} />
                 </div>
                 <div className="expert-info">
-                  <img className="expert-quote-icon" src="/images/quote-icon.svg" alt="quote" />
+                  <img className="expert-quote-icon" src="/images/main/icons/quote-icon.svg" alt="quote" />
                   <p className="expert-quote">{expert.quote}</p>
                   <div className="expert-name-row">
                     <span className="expert-name">{expert.name}</span>
@@ -2182,7 +1231,7 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* CHAMPAGNE Section */}
+      {/* CHAMPAGNE SECTION */}
       <section className="champagne-section" ref={champagneSectionRef}>
         <video
           className="champagne-video"
@@ -2199,7 +1248,7 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* CRUISE Section */}
+      {/* CRUISE SECTION */}
       <section className="cruise-section" ref={cruiseSectionRef}>
         <div className="cruise-background">
           <img src={cruiseImg} alt="Cruise ship at sunset" />
@@ -2211,11 +1260,11 @@ const Home: React.FC = () => {
         </div>
         <div className="cruise-right-text" ref={cruiseRightTextRef}>
           <p>당신의 브랜드를</p>
-          <p>'1등 세무사'로 완성합니다</p>
+          <p>&apos;1등 세무사&apos;로 완성합니다</p>
         </div>
       </section>
 
-      {/* FINAL Section */}
+      {/* FINAL SECTION */}
       <section className="final-section" ref={finalSectionRef}>
         <div className="final-content" ref={finalContentRef}>
           <h2 className="final-title">모두가 함께하고 있습니다.</h2>
