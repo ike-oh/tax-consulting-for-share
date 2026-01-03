@@ -3,7 +3,10 @@
     "allow": [
       "Bash(lsof:*)",
       "Bash(xargs kill -9)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: 지점 상세 모달 기능 추가\n\n- BranchDetailModal 컴포넌트 생성\n- 지점 클릭 시 상세 정보 모달 표시\n- 네이버 지도 연동 및 커스텀 마커 표시\n- 교통 정보 \\(버스, 지하철, 택시\\) 표시\n- 소셜 링크 \\(네이버 블로그, 유튜브, 인스타그램, 웹사이트\\) 연동\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }

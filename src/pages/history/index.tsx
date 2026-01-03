@@ -6,6 +6,7 @@ import Footer from '@/components/common/Footer';
 import PageHeader from '@/components/common/PageHeader';
 import FloatingButton from '@/components/common/FloatingButton';
 import Tab from '@/components/common/Tab';
+import BranchDetailModal from '@/components/history/BranchDetailModal';
 import { get } from '@/lib/api';
 import { API_ENDPOINTS } from '@/config/api';
 import styles from './history.module.scss';
@@ -109,6 +110,8 @@ const HistoryPage: React.FC = () => {
   const [branchesData, setBranchesData] = useState<BranchItem[]>([]);
   const [branchesLoading, setBranchesLoading] = useState(true);
   const [branchesError, setBranchesError] = useState<string | null>(null);
+  const [selectedBranch, setSelectedBranch] = useState<BranchItem | null>(null);
+  const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
 
   const cardImages = {
     professionalism: '/images/intro/meeting.jpg',
@@ -1056,7 +1059,14 @@ const HistoryPage: React.FC = () => {
                   <div className={styles.branchesList}>
                     {branchesData.map((branch, index) => (
                       <React.Fragment key={branch.id}>
-                        <div className={styles.branchItem}>
+                        <div
+                          className={styles.branchItem}
+                          onClick={() => {
+                            setSelectedBranch(branch);
+                            setIsBranchModalOpen(true);
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
                           <div className={styles.branchHeader}>
                             <h3 className={styles.branchName}>{branch.name}</h3>
                             <div className={styles.branchSocialLinks}>
@@ -1184,6 +1194,16 @@ const HistoryPage: React.FC = () => {
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         />
       </div>
+
+      {/* Branch Detail Modal */}
+      <BranchDetailModal
+        isOpen={isBranchModalOpen}
+        onClose={() => {
+          setIsBranchModalOpen(false);
+          setSelectedBranch(null);
+        }}
+        branch={selectedBranch}
+      />
     </div>
   );
 };
