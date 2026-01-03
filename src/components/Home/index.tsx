@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-// @ts-ignore - lenis 타입 선언 문제 해결
 import Lenis from 'lenis';
 import Header, { HeaderVariant, HeaderSize } from '@/components/common/Header';
 import Menu from '@/components/Menu';

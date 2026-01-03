@@ -67,8 +67,7 @@
 
 .mainContent {
   display: flex;
-  gap: 32px;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .formSection {
@@ -410,6 +409,42 @@
   cursor: not-allowed;
 }
 
+.cancelButton {
+  width: 100%;
+  height: auto;
+  background: transparent;
+  border: none;
+  color: #f35064;
+  font-family: $font-pretendard;
+  font-weight: $font-weight-regular;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.075px;
+  cursor: pointer;
+  padding: 16px 0;
+  margin-top: 8px;
+  text-align: center;
+  transition: opacity 0.2s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 0.7;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.verticalDivider {
+  width: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+  margin: 0 24px;
+  align-self: stretch;
+  min-height: 100%;
+}
+
 .summarySection {
   width: 400px;
   flex-shrink: 0;
@@ -417,7 +452,7 @@
   flex-direction: column;
   gap: 24px;
   padding-top: 8px;
-  padding-left: 24px;
+  padding-left: 0;
 }
 
 .summaryImage {

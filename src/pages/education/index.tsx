@@ -9,7 +9,8 @@ import Tab from '@/components/common/Tab';
 import { TextField } from '@/components/common/TextField';
 import Checkbox from '@/components/common/Checkbox';
 import Button from '@/components/common/Button';
-import { get } from '@/lib/api';
+import Pagination from '@/components/common/Pagination';
+import { get, post } from '@/lib/api';
 import { API_ENDPOINTS } from '@/config/api';
 import type { EducationItem, EducationListResponse, EducationType } from '@/types/education';
 import styles from './education.module.scss';
@@ -24,6 +25,7 @@ const EducationPage: React.FC = () => {
   const [selectedType, setSelectedType] = useState<EducationType | 'ALL'>('ALL');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [newEducationIndex, setNewEducationIndex] = useState(0);
   
   // Newsletter form state
   const [newsletterName, setNewsletterName] = useState('');
@@ -32,6 +34,7 @@ const EducationPage: React.FC = () => {
   const [optionalAgreed, setOptionalAgreed] = useState(false);
   const [nameError, setNameError] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Email validation
   const validateEmail = (email: string) => {
@@ -40,7 +43,7 @@ const EducationPage: React.FC = () => {
   };
   
   // Handle newsletter subscription
-  const handleNewsletterSubmit = () => {
+  const handleNewsletterSubmit = async () => {
     // Reset errors
     setNameError('');
     setEmailError('');
@@ -68,15 +71,41 @@ const EducationPage: React.FC = () => {
       return;
     }
     
-    // TODO: Implement API call
-    console.log('Subscribe:', { newsletterName, newsletterEmail, privacyAgreed, optionalAgreed });
-    alert('뉴스레터 구독이 완료되었습니다.');
+    // Prevent double submission
+    if (isSubmitting) {
+      return;
+    }
     
-    // Reset form
-    setNewsletterName('');
-    setNewsletterEmail('');
-    setPrivacyAgreed(false);
-    setOptionalAgreed(false);
+    setIsSubmitting(true);
+    
+    try {
+      const response = await post(
+        API_ENDPOINTS.NEWSLETTER.SUBSCRIBE,
+        {
+          name: newsletterName.trim(),
+          email: newsletterEmail.trim(),
+        }
+      );
+      
+      if (response.error) {
+        alert(response.error || '뉴스레터 구독 중 오류가 발생했습니다.');
+        return;
+      }
+      
+      // Success
+      alert('뉴스레터 구독이 완료되었습니다.');
+      
+      // Reset form
+      setNewsletterName('');
+      setNewsletterEmail('');
+      setPrivacyAgreed(false);
+      setOptionalAgreed(false);
+    } catch (error) {
+      console.error('Newsletter subscription error:', error);
+      alert('뉴스레터 구독 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   // Check if form is valid
@@ -93,6 +122,12 @@ const EducationPage: React.FC = () => {
   // 교육 세미나 목록 가져오기
   useEffect(() => {
     if (activeSubTab === 'education') {
+      setCurrentPage(1); // 타입 변경 시 첫 페이지로 리셋
+    }
+  }, [activeSubTab, selectedType]);
+
+  useEffect(() => {
+    if (activeSubTab === 'education') {
       fetchEducationList();
     }
   }, [activeSubTab, selectedType, currentPage]);
@@ -104,7 +139,7 @@ const EducationPage: React.FC = () => {
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        limit: '20',
+        limit: '9', // 3x3 그리드를 위한 9개
       });
 
       if (selectedType !== 'ALL') {
@@ -117,7 +152,16 @@ const EducationPage: React.FC = () => {
 
       if (response.data) {
         setEducationList(response.data.items);
-        setTotalPages(Math.ceil(response.data.total / response.data.limit));
+        const limit = 9; // 요청한 limit 사용
+        const calculatedTotalPages = Math.ceil(response.data.total / limit);
+        setTotalPages(calculatedTotalPages);
+        console.log('Education pagination:', {
+          total: response.data.total,
+          limit,
+          totalPages: calculatedTotalPages,
+          items: response.data.items.length
+        });
+        setNewEducationIndex(0); // Reset carousel index when list changes
       } else if (response.error) {
         setError(response.error);
       }
@@ -128,9 +172,21 @@ const EducationPage: React.FC = () => {
     }
   };
 
-  // 신규 교육 (최신 3개)
-  const newEducations = educationList.slice(0, 3);
+  // 신규 교육 캐러셀 로직
+  const itemsPerPage = 3;
+  const maxIndex = Math.max(0, Math.ceil(educationList.length / itemsPerPage) - 1);
+  const startIndex = newEducationIndex * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const newEducations = educationList.slice(startIndex, endIndex);
   const hasEducationData = educationList.length > 0;
+  
+  const handlePrevEducation = () => {
+    setNewEducationIndex((prev) => Math.max(0, prev - 1));
+  };
+  
+  const handleNextEducation = () => {
+    setNewEducationIndex((prev) => Math.min(maxIndex, prev + 1));
+  };
 
   // 날짜 포맷팅
   const formatDate = (dateString: string) => {
@@ -216,14 +272,22 @@ const EducationPage: React.FC = () => {
                       </div>
                       <h4 className={styles.sectionTitle}>신규 교육</h4>
                     </div>
-                    {hasEducationData && newEducations.length > 0 && (
+                    {hasEducationData && educationList.length > itemsPerPage && (
                       <div className={styles.sectionNav}>
-                        <button className={styles.navButton}>
+                        <button 
+                          className={styles.navButton}
+                          onClick={handlePrevEducation}
+                          disabled={newEducationIndex === 0}
+                        >
                           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                             <path d="M12.5 5L7.5 10L12.5 15" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </button>
-                        <button className={styles.navButton}>
+                        <button 
+                          className={styles.navButton}
+                          onClick={handleNextEducation}
+                          disabled={newEducationIndex >= maxIndex}
+                        >
                           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                             <path d="M7.5 5L12.5 10L7.5 15" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
@@ -242,7 +306,7 @@ const EducationPage: React.FC = () => {
                             onClick={() => router.push(`/education/${item.id}`)}
                           >
                             <div className={styles.cardImage}>
-                              <img src={item.image.url} alt={item.name} />
+                              <img src={item.image?.url || '/images/education/default-thumbnail.png'} alt={item.name} />
                             </div>
                             <div className={styles.cardContent}>
                               <div className={styles.cardLabels}>
@@ -258,9 +322,14 @@ const EducationPage: React.FC = () => {
                               <h3 className={styles.cardTitle}>{item.name}</h3>
                               <div className={styles.cardInfo}>
                                 <p className={styles.cardLocation}>{item.location}</p>
-                                <p className={styles.cardDate}>
-                                  {item.educationDates[0]} {item.educationTimeSlots[0]}
-                                </p>
+                                <div className={styles.cardDateWrapper}>
+                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={styles.cardDateIcon}>
+                                    <path d="M3 2V4M13 2V4M2 6H14M3 2H13C13.5523 2 14 2.44772 14 3V13C14 13.5523 13.5523 14 13 14H3C2.44772 14 2 13.5523 2 13V3C2 2.44772 2.44772 2 3 2Z" stroke="#d8d8d8" strokeWidth="1" strokeLinecap="round"/>
+                                  </svg>
+                                  <p className={styles.cardDate}>
+                                    {item.educationDates[0]} {item.educationTimeSlots[0]}
+                                  </p>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -320,41 +389,63 @@ const EducationPage: React.FC = () => {
                     </div>
                     <div className={styles.mainContent}>
                       {educationList.length > 0 ? (
-                        <div className={styles.educationList}>
-                          {educationList.map((item) => {
-                            const daysLeft = getDaysUntilDeadline(item.recruitmentEndDate);
-                            return (
-                              <div
-                                key={item.id}
-                                className={styles.educationListItem}
-                                onClick={() => router.push(`/education/${item.id}`)}
-                              >
-                                <div className={styles.listItemImage}>
-                                  <img src={item.image.url} alt={item.name} />
-                                </div>
-                                <div className={styles.listItemContent}>
-                                  <div className={styles.listItemLabels}>
-                                    {daysLeft > 0 && (
-                                      <span className={styles.labelRed}>
-                                        신청마감 D-{daysLeft}
+                        <>
+                          <div className={styles.educationGrid}>
+                            {educationList.map((item) => {
+                              const daysLeft = getDaysUntilDeadline(item.recruitmentEndDate);
+                              return (
+                                <div
+                                  key={item.id}
+                                  className={styles.educationCard}
+                                  onClick={() => router.push(`/education/${item.id}`)}
+                                >
+                                  <div className={styles.cardImage}>
+                                    <img src={item.image?.url || '/images/education/default-thumbnail.png'} alt={item.name} />
+                                  </div>
+                                  <div className={styles.cardContent}>
+                                    <div className={styles.cardLabels}>
+                                      {daysLeft > 0 ? (
+                                        <span className={styles.labelRed}>
+                                          신청마감 D-{daysLeft}
+                                        </span>
+                                      ) : (
+                                        <span className={styles.labelGray}>
+                                          신청마감
+                                        </span>
+                                      )}
+                                      <span className={styles.labelWhite}>
+                                        {item.typeLabel}
                                       </span>
-                                    )}
-                                    <span className={styles.labelWhite}>
-                                      {item.typeLabel}
-                                    </span>
-                                  </div>
-                                  <h3 className={styles.listItemTitle}>{item.name}</h3>
-                                  <div className={styles.listItemInfo}>
-                                    <p className={styles.listItemLocation}>{item.location}</p>
-                                    <p className={styles.listItemDate}>
-                                      {item.educationDates.join(', ')} {item.educationTimeSlots.join(', ')}
-                                    </p>
+                                    </div>
+                                    <h3 className={styles.cardTitle}>{item.name}</h3>
+                                    <div className={styles.cardInfo}>
+                                      <p className={styles.cardLocation}>{item.location}</p>
+                                      <div className={styles.cardDateWrapper}>
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={styles.cardDateIcon}>
+                                          <path d="M3 2V4M13 2V4M2 6H14M3 2H13C13.5523 2 14 2.44772 14 3V13C14 13.5523 13.5523 14 13 14H3C2.44772 14 2 13.5523 2 13V3C2 2.44772 2.44772 2 3 2Z" stroke="#d8d8d8" strokeWidth="1" strokeLinecap="round"/>
+                                        </svg>
+                                        <p className={styles.cardDate}>
+                                          {item.educationDates[0]} {item.educationTimeSlots[0]}
+                                        </p>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                              );
+                            })}
+                          </div>
+                          <div className={styles.paginationWrapper}>
+                            <Pagination
+                              currentPage={currentPage}
+                              totalPages={totalPages}
+                              onPageChange={(page) => {
+                                setCurrentPage(page);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              visiblePages={4}
+                            />
+                          </div>
+                        </>
                       ) : (
                         <div className={styles.emptyState}>
                           <img src="/images/education/empty-icon.svg" alt="Empty" className={styles.emptyIcon} />
@@ -442,10 +533,10 @@ const EducationPage: React.FC = () => {
                       type="primary"
                       size="large"
                       fullWidth
-                      disabled={!isFormValid}
+                      disabled={!isFormValid || isSubmitting}
                       onClick={handleNewsletterSubmit}
                     >
-                      구독하기
+                      {isSubmitting ? '구독 중...' : '구독하기'}
                     </Button>
                   </div>
                 </div>

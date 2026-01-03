@@ -22,10 +22,17 @@ $color-card-bg: #1e1e1e;
   font-family: 'Pretendard', sans-serif;
   overflow: hidden;
   background-color: $color-card-bg;
+  outline: none;
 
   // Hover 상태
   &:hover {
     box-shadow: 0 0 0 2px $color-hover-border;
+  }
+
+  // Focus 상태 - 브라우저 기본 outline 제거
+  &:focus,
+  &:focus-visible {
+    outline: none;
   }
 
   // ========================================
@@ -411,6 +418,7 @@ $color-card-bg: #1e1e1e;
   // ========================================
   &--profile {
     border-radius: 0;
+    background-color: transparent;
 
     &:hover {
       box-shadow: none;

@@ -7,15 +7,39 @@ import PageHeader from '@/components/common/PageHeader';
 import FloatingButton from '@/components/common/FloatingButton';
 import Icon from '@/components/common/Icon';
 import Card from '@/components/common/Card';
+import { get } from '@/lib/api';
+import { API_ENDPOINTS } from '@/config/api';
 import styles from './experts.module.scss';
 
 interface Expert {
   id?: number;
   name: string;
-  position: string;
-  tel: string;
+  position?: string;
+  affiliation?: string;
+  tel?: string;
+  phoneNumber?: string;
   email: string;
   imageUrl?: string;
+  mainPhoto?: {
+    id: number;
+    url: string;
+  };
+}
+
+interface Category {
+  id: number;
+  name: string;
+  isExposed: boolean;
+  majorCategoryId: number;
+  majorCategoryName: string;
+}
+
+interface MembersResponse {
+  items?: Expert[];
+  data?: Expert[];
+  total?: number;
+  page?: number;
+  limit?: number;
 }
 
 const ExpertsPage: React.FC = () => {
@@ -23,53 +47,13 @@ const ExpertsPage: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedField, setSelectedField] = useState<string>('분야를 선택해주세요');
+  const [selectedFieldId, setSelectedFieldId] = useState<number | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [experts, setExperts] = useState<Expert[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [isLoadingExperts, setIsLoadingExperts] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const industryCategories = [
-    '제조업',
-    '건설·부동산업',
-    '도·소매업',
-    '서비스업',
-    '운수·물류업',
-    '정보통신업',
-  ];
-
-  // 분야별 전문가 데이터
-  const expertsByField: Record<string, Expert[]> = {
-    '제조업': [
-      { name: '홍길동', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '박준서', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '김민우', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '이지은', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '이지은', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '김민우', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '박준서', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '박준서', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-    ],
-    '건설·부동산업': [
-      { name: '홍길동', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '박준서', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '김민우', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-    ],
-    '도·소매업': [
-      { name: '홍길동', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '박준서', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-    ],
-    '서비스업': [
-      { name: '홍길동', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '박준서', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '김민우', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-    ],
-    '운수·물류업': [
-      { name: '홍길동', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '박준서', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-    ],
-    '정보통신업': [
-      { name: '홍길동', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '박준서', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-      { name: '김민우', position: '세무사', tel: '031-425-4259', email: 'name@together.tax' },
-    ],
-  };
 
   const personalSubCategories = [
     '연금 저축',
@@ -85,8 +69,81 @@ const ExpertsPage: React.FC = () => {
     '임직원 복지 보험',
   ];
 
-  const handleFieldSelect = (field: string) => {
-    setSelectedField(field);
+  // 분야 목록 가져오기
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setIsLoadingCategories(true);
+      setError(null);
+      try {
+        const response = await get<Category[]>(API_ENDPOINTS.BUSINESS_AREAS_CATEGORIES);
+        if (response.error) {
+          setError(response.error);
+        } else if (response.data) {
+          // isExposed가 true인 분야만 필터링
+          const exposedCategories = response.data.filter(cat => cat.isExposed);
+          setCategories(exposedCategories);
+        }
+      } catch (err) {
+        setError('분야 목록을 불러오는 중 오류가 발생했습니다.');
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // 선택된 분야에 따라 전문가 목록 가져오기
+  useEffect(() => {
+    if (selectedFieldId === null) {
+      setExperts([]);
+      return;
+    }
+
+    const fetchExperts = async () => {
+      setIsLoadingExperts(true);
+      setError(null);
+      try {
+        const url = `${API_ENDPOINTS.MEMBERS}?page=1&limit=20&workArea=${selectedFieldId}`;
+        console.log('Fetching experts from:', url);
+        const response = await get<Expert[] | MembersResponse>(url);
+        console.log('API Response:', response);
+        
+        if (response.error) {
+          console.error('API Error:', response.error);
+          setError(response.error);
+          setExperts([]);
+        } else if (response.data) {
+          // 응답이 배열인 경우와 객체인 경우 모두 처리
+          let expertsList: Expert[] = [];
+          if (Array.isArray(response.data)) {
+            expertsList = response.data;
+          } else {
+            const membersResponse = response.data as MembersResponse;
+            // items 필드 우선 확인, 없으면 data 필드 확인
+            expertsList = membersResponse.items || membersResponse.data || [];
+          }
+          console.log('Parsed experts list:', expertsList);
+          setExperts(expertsList);
+        } else {
+          console.warn('No data in response');
+          setExperts([]);
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setError('전문가 목록을 불러오는 중 오류가 발생했습니다.');
+        setExperts([]);
+      } finally {
+        setIsLoadingExperts(false);
+      }
+    };
+
+    fetchExperts();
+  }, [selectedFieldId]);
+
+  const handleFieldSelect = (category: Category) => {
+    setSelectedField(category.name);
+    setSelectedFieldId(category.id);
     setIsDropdownOpen(false);
     // 선택된 분야로 스크롤
     setTimeout(() => {
@@ -96,10 +153,6 @@ const ExpertsPage: React.FC = () => {
       }
     }, 100);
   };
-
-  const selectedExperts = selectedField !== '분야를 선택해주세요' 
-    ? expertsByField[selectedField] || []
-    : [];
 
 
   const handleTopClick = () => {
@@ -196,17 +249,27 @@ const ExpertsPage: React.FC = () => {
               {isDropdownOpen && (
                 <div className={styles.dropdownMenu}>
                   <div className={styles.dropdownContent}>
-                    {industryCategories.map((category, index) => (
-                      <div
-                        key={index}
-                        className={`${styles.dropdownItem} ${
-                          selectedField === category ? styles.dropdownItemActive : ''
-                        }`}
-                        onClick={() => handleFieldSelect(category)}
-                      >
-                        <p>{category}</p>
+                    {isLoadingCategories ? (
+                      <div className={styles.dropdownItem}>
+                        <p>로딩 중...</p>
                       </div>
-                    ))}
+                    ) : categories.length > 0 ? (
+                      categories.map((category) => (
+                        <div
+                          key={category.id}
+                          className={`${styles.dropdownItem} ${
+                            selectedFieldId === category.id ? styles.dropdownItemActive : ''
+                          }`}
+                          onClick={() => handleFieldSelect(category)}
+                        >
+                          <p>{category.name}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className={styles.dropdownItem}>
+                        <p>분야가 없습니다</p>
+                      </div>
+                    )}
                   </div>
                   <div className={styles.dropdownDivider} />
                   <div className={styles.dropdownDivider} />
@@ -217,31 +280,45 @@ const ExpertsPage: React.FC = () => {
         </div>
 
         {/* Experts List Section - shown when field is selected */}
-        {selectedField !== '분야를 선택해주세요' && selectedExperts.length > 0 && (
+        {selectedField !== '분야를 선택해주세요' && (
           <div id="experts-list-section" className={styles.expertsListSection}>
             <div className={styles.expertsListContent}>
               <div className={styles.expertsListLayout}>
                 <div className={styles.expertsListHeader}>
                   <h2 className={styles.expertsListTitle}>{selectedField}</h2>
                 </div>
-                <div className={styles.expertsGridWrapper}>
-                  <div className={styles.expertsGrid}>
-                    {selectedExperts.map((expert, index) => (
-                      <Card
-                        key={expert.id || index}
-                        variant="profile"
-                        title={expert.name}
-                        position={expert.position}
-                        tel={expert.tel}
-                        email={expert.email}
-                        imageUrl={expert.imageUrl}
-                        size="web"
-                        className={styles.expertCard}
-                        onClick={() => expert.id && router.push(`/experts/${expert.id}`)}
-                      />
-                    ))}
+                {isLoadingExperts ? (
+                  <div className={styles.loadingContainer}>
+                    <p>전문가 목록을 불러오는 중...</p>
                   </div>
-                </div>
+                ) : error ? (
+                  <div className={styles.errorContainer}>
+                    <p>{error}</p>
+                  </div>
+                ) : experts.length > 0 ? (
+                  <div className={styles.expertsGridWrapper}>
+                    <div className={styles.expertsGrid}>
+                      {experts.map((expert, index) => (
+                        <Card
+                          key={expert.id || index}
+                          variant="profile"
+                          title={expert.name}
+                          position={expert.position || expert.affiliation || ''}
+                          tel={expert.tel || expert.phoneNumber || ''}
+                          email={expert.email}
+                          imageUrl={expert.imageUrl || expert.mainPhoto?.url}
+                          size="web"
+                          className={styles.expertCard}
+                          onClick={() => expert.id && router.push(`/experts/${expert.id}`)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.emptyContainer}>
+                    <p>해당 분야의 전문가가 없습니다.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

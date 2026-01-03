@@ -55,10 +55,17 @@ interface BusinessAreaDetail {
 interface Expert {
   id: number;
   name: string;
-  position: string;
+  position?: string;
+  affiliation?: string;
   tel?: string;
+  phoneNumber?: string;
   email?: string;
   imageUrl?: string;
+  mainPhoto?: {
+    id: number;
+    url: string;
+  };
+  workAreas?: string[] | Array<{ id: number; value: string }>;
   tags?: string[]; // 전문 분야 태그
 }
 
@@ -93,17 +100,28 @@ const BusinessAreaDetailPage: React.FC = () => {
   const [youtubePage, setYoutubePage] = useState(0);
   const [imageError, setImageError] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [youtubeVideos, setYoutubeVideos] = useState<{ [key: string]: { title: string; author_name: string } }>({});
+  const [isOverviewPassed, setIsOverviewPassed] = useState(false);
+  const [isOverviewBannerExpanded, setIsOverviewBannerExpanded] = useState(false);
   const checkpointRef = useRef<HTMLDivElement>(null);
   const executionRef = useRef<HTMLDivElement>(null);
   const casesRef = useRef<HTMLDivElement>(null);
+  const overviewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (id) {
       fetchBusinessAreaDetail();
-      fetchRelatedData();
       setImageError(false); // 새 데이터 로드 시 이미지 에러 상태 초기화
     }
   }, [id]);
+
+  // 관련 데이터는 메인 데이터 로드 후에 가져오기
+  useEffect(() => {
+    if (id && typeof id === 'string' && data?.id) {
+      console.log('Fetching related data for workArea:', id);
+      fetchRelatedData();
+    }
+  }, [id, data?.id]);
 
   // 섹션 활성화 감지 (목차 하이라이트용)
   useEffect(() => {
@@ -122,20 +140,34 @@ const BusinessAreaDetailPage: React.FC = () => {
 
     const observers: IntersectionObserver[] = [];
 
-    sections.forEach(({ id, ref }) => {
+    const handleIntersection = (entries: IntersectionObserverEntry[]) => {
+      // 가장 많이 보이는 섹션을 찾기
+      let maxRatio = 0;
+      let activeId: string | null = null;
+
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && entry.intersectionRatio > maxRatio) {
+          maxRatio = entry.intersectionRatio;
+          const section = sections.find(s => s.ref.current === entry.target);
+          if (section && entry.intersectionRatio > 0.1) {
+            activeId = section.id;
+          }
+        }
+      });
+
+      if (activeId) {
+        setActiveSection(activeId);
+      }
+    };
+
+    sections.forEach(({ ref }) => {
       if (!ref.current) return;
 
       const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
-              setActiveSection(id);
-            }
-          });
-        },
+        handleIntersection,
         { 
-          threshold: [0, 0.3, 0.5, 1],
-          rootMargin: '-20% 0px -60% 0px'
+          threshold: [0, 0.1, 0.3, 0.5, 0.7, 1],
+          rootMargin: '-10% 0px -70% 0px'
         }
       );
 
@@ -143,10 +175,50 @@ const BusinessAreaDetailPage: React.FC = () => {
       observers.push(observer);
     });
 
+    // 초기 스크롤 위치 확인
+    const checkInitialSection = () => {
+      sections.forEach(({ id, ref }) => {
+        if (!ref.current) return;
+        const rect = ref.current.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const isVisible = rect.top < viewportHeight * 0.5 && rect.bottom > viewportHeight * 0.3;
+        if (isVisible) {
+          setActiveSection(id);
+        }
+      });
+    };
+
+    // 약간의 지연 후 초기 섹션 확인
+    const timeoutId = setTimeout(checkInitialSection, 100);
+
     return () => {
       observers.forEach(observer => observer.disconnect());
+      clearTimeout(timeoutId);
     };
   }, [data]);
+
+  // Overview 섹션이 화면에서 보이지 않는지 감지
+  useEffect(() => {
+    if (!overviewRef.current || !data?.overview) return;
+
+    const handleScroll = () => {
+      if (!overviewRef.current) return;
+      const rect = overviewRef.current.getBoundingClientRect();
+      // Overview 섹션이 화면에서 완전히 사라졌는지 확인 (화면 상단을 지나갔을 때)
+      // rect.bottom <= 0이면 Overview가 화면 위로 완전히 사라짐
+      // rect.bottom > 0이면 Overview가 다시 보임
+      const isNotVisible = rect.bottom <= 0;
+      setIsOverviewPassed(isNotVisible);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // 초기 상태 확인
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [data]);
+
 
   const fetchBusinessAreaDetail = async () => {
     setLoading(true);
@@ -171,17 +243,38 @@ const BusinessAreaDetailPage: React.FC = () => {
 
   const fetchRelatedData = async () => {
     try {
-      // 관련 업무 세무사 가져오기 (임시로 members API 사용)
-      try {
-        const membersResponse = await get<{ items: Expert[] }>(
-          `${API_ENDPOINTS.MEMBERS}?limit=4`
-        );
-        if (membersResponse.data?.items) {
-          setExperts(membersResponse.data.items);
+      // 관련 업무 세무사 가져오기 (workArea 파라미터 사용)
+      if (id && typeof id === 'string') {
+        try {
+          const url = `${API_ENDPOINTS.MEMBERS}?page=1&limit=20&workArea=${id}`;
+          console.log('Calling members API:', url);
+          const membersResponse = await get<Expert[] | { items: Expert[]; data: Expert[] }>(url);
+          console.log('Members API response:', membersResponse);
+          
+          if (membersResponse.data) {
+            // 응답이 배열인 경우와 객체인 경우 모두 처리
+            let expertsList: Expert[] = [];
+            if (Array.isArray(membersResponse.data)) {
+              expertsList = membersResponse.data;
+            } else {
+              const response = membersResponse.data as { items?: Expert[]; data?: Expert[] };
+              expertsList = response.items || response.data || [];
+            }
+            // workAreas를 tags로 변환
+            expertsList = expertsList.map(expert => ({
+              ...expert,
+              tags: expert.workAreas 
+                ? expert.workAreas.map(area => typeof area === 'string' ? area : area.value)
+                : expert.tags || [],
+              tel: expert.tel || expert.phoneNumber,
+              position: expert.position || expert.affiliation || '세무사',
+            }));
+            setExperts(expertsList);
+          }
+        } catch (err) {
+          console.error('세무사 데이터를 불러오는 중 오류:', err);
+          setExperts([]);
         }
-      } catch (err) {
-        // 실패 시 빈 배열
-        setExperts([]);
       }
 
       // 관련 소식 가져오기
@@ -215,6 +308,39 @@ const BusinessAreaDetailPage: React.FC = () => {
     return match && match[2].length === 11 ? match[2] : null;
   };
 
+  const fetchYouTubeVideoInfo = async (url: string) => {
+    try {
+      const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+      const response = await fetch(oembedUrl);
+      if (response.ok) {
+        const data = await response.json();
+        return { title: data.title, author_name: data.author_name };
+      }
+    } catch (err) {
+      console.error('YouTube video info fetch error:', err);
+    }
+    return null;
+  };
+
+  // YouTube 영상 정보 가져오기
+  useEffect(() => {
+    if (data?.youtubeUrls && data.youtubeUrls.length > 0) {
+      const fetchAllVideoInfo = async () => {
+        const videoInfoMap: { [key: string]: { title: string; author_name: string } } = {};
+        await Promise.all(
+          data.youtubeUrls.map(async (url) => {
+            const info = await fetchYouTubeVideoInfo(url);
+            if (info) {
+              videoInfoMap[url] = info;
+            }
+          })
+        );
+        setYoutubeVideos(videoInfoMap);
+      };
+      fetchAllVideoInfo();
+    }
+  }, [data?.youtubeUrls]);
+
   const handleTopClick = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -230,7 +356,8 @@ const BusinessAreaDetailPage: React.FC = () => {
   };
 
   const handleExpertNext = () => {
-    if (expertsPage < Math.ceil(experts.length / 4) - 1) {
+    const maxPage = Math.ceil(experts.length / 4) - 1;
+    if (expertsPage < maxPage) {
       setExpertsPage(expertsPage + 1);
     }
   };
@@ -345,16 +472,49 @@ const BusinessAreaDetailPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Fixed Overview Banner - Shows when Overview section is not visible */}
+      {isOverviewPassed && data.overview && (
+        <div 
+          className={`${styles.overviewFixedBanner} ${isOverviewBannerExpanded ? styles.expanded : ''}`}
+          onClick={() => setIsOverviewBannerExpanded(!isOverviewBannerExpanded)}
+        >
+          <div className={styles.overviewFixedBannerContent}>
+            <div className={styles.overviewFixedBannerTitle}>OVERVIEW</div>
+            <div className={styles.overviewFixedBannerDivider} />
+            <div className={`${styles.overviewFixedBannerBody} ${!isOverviewBannerExpanded ? styles.collapsed : ''}`}>
+              <div className={styles.overviewContentInner}>
+                <Viewer initialValue={data.overview} />
+              </div>
+            </div>
+            <div className={styles.overviewFixedBannerToggle}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path 
+                  d={isOverviewBannerExpanded ? "M5 12.5L10 7.5L15 12.5" : "M5 7.5L10 12.5L15 7.5"} 
+                  stroke="#FFF" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Overview Section - Below Hero Image */}
       {data.overview && (
-        <div className={styles.overviewSectionWrapper}>
+        <div ref={overviewRef} className={styles.overviewSectionWrapper}>
           <div className={styles.overviewContainer}>
-            <section className={styles.overviewSection}>
+            <section id="overview" className={styles.overviewSection}>
               <div className={styles.overviewHeader}>
                 <h2 className={styles.overviewTitle}>OVERVIEW</h2>
               </div>
               <div className={styles.overviewContent}>
                 <div className={styles.overviewContentLayout}>
+                  <div className={styles.overviewFieldTitle}>
+                    {data.name}
+                  </div>
+                  <div className={styles.overviewDivider} />
                   <div className={styles.overviewContentInner}>
                     <Viewer initialValue={data.overview} />
                   </div>
@@ -418,6 +578,7 @@ const BusinessAreaDetailPage: React.FC = () => {
                 <h2 className={styles.sectionTitle}>CHECK POINT</h2>
               </div>
               <div className={styles.sectionContent}>
+                <h3 className={styles.subSectionTitle}>체크포인트</h3>
                 <ContentBox>
                   <div className={styles.checkPointContent}>
                     {getSectionContent('체크포인트') && (
@@ -541,23 +702,30 @@ const BusinessAreaDetailPage: React.FC = () => {
                 {Array.from({ length: Math.ceil(experts.length / 4) }).map((_, pageIndex) => (
                   <div key={pageIndex} className={styles.expertsPage}>
                     {experts.slice(pageIndex * 4, (pageIndex + 1) * 4).map((expert, index) => (
-                      <div key={expert.id || index} className={styles.expertCard}>
+                      <div 
+                        key={expert.id || index} 
+                        className={styles.expertCard}
+                        onClick={() => router.push(`/experts/${expert.id}`)}
+                      >
                         <div className={styles.expertImage}>
                           <img
-                            src={expert.imageUrl || '/images/common/default-avatar.png'}
+                            src={expert.mainPhoto?.url || expert.imageUrl || '/images/common/default-avatar.png'}
                             alt={expert.name}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/images/common/default-avatar.png';
+                            }}
                           />
                         </div>
                         <div className={styles.expertInfo}>
                           <div className={styles.expertNameRow}>
                             <p className={styles.expertName}>{expert.name}</p>
-                            <p className={styles.expertPositionLabel}>{expert.position}</p>
+                            <p className={styles.expertPositionLabel}>{expert.position || '세무사'}</p>
                           </div>
                           <div className={styles.expertContact}>
-                            {expert.tel && (
+                            {(expert.tel || expert.phoneNumber) && (
                               <div className={styles.expertContactItem}>
                                 <span className={styles.expertContactLabel}>TEL</span>
-                                <span className={styles.expertContactValue}>{expert.tel}</span>
+                                <span className={styles.expertContactValue}>{expert.tel || expert.phoneNumber}</span>
                               </div>
                             )}
                             {expert.email && (
@@ -569,11 +737,22 @@ const BusinessAreaDetailPage: React.FC = () => {
                           </div>
                           {expert.tags && expert.tags.length > 0 && (
                             <div className={styles.expertTags}>
-                              {expert.tags.map((tag, tagIndex) => (
-                                <span key={tagIndex} className={styles.expertTag}>
-                                  {tag}
-                                </span>
-                              ))}
+                              {expert.tags.map((tag, tagIndex) => {
+                                // 인덱스에 따라 표시 변경
+                                let indicator = '';
+                                if (tagIndex === 0) {
+                                  indicator = ' ■■■';
+                                } else if (tagIndex === 1) {
+                                  indicator = ' ■■□';
+                                } else if (tagIndex === 2) {
+                                  indicator = ' ■□□';
+                                }
+                                return (
+                                  <span key={tagIndex} className={styles.expertTag}>
+                                    {tag}{indicator}
+                                  </span>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
@@ -630,7 +809,11 @@ const BusinessAreaDetailPage: React.FC = () => {
                       const videoId = extractYouTubeId(url);
                       if (!videoId) return null;
                       return (
-                        <div key={index} className={styles.youtubeCard}>
+                        <div 
+                          key={index} 
+                          className={styles.youtubeCard}
+                          onClick={() => window.open(url, '_blank')}
+                        >
                           <div className={styles.youtubeThumbnail}>
                             <img
                               src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
@@ -641,10 +824,11 @@ const BusinessAreaDetailPage: React.FC = () => {
                             />
                           </div>
                           <div className={styles.youtubeInfo}>
-                            <p className={styles.youtubeChannel}>세무법인함께 TV</p>
+                            <p className={styles.youtubeChannel}>
+                              {youtubeVideos[url]?.author_name || '세무법인함께 TV'}
+                            </p>
                             <p className={styles.youtubeTitle}>
-                              {/* YouTube API를 통해 제목을 가져올 수 있지만, 여기서는 URL만 있으므로 기본 텍스트 사용 */}
-                              세무 관련 정보를 제공하는 영상입니다
+                              {youtubeVideos[url]?.title || '세무 관련 정보를 제공하는 영상입니다'}
                             </p>
                           </div>
                         </div>

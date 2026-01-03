@@ -8,10 +8,16 @@ import Footer from '@/components/common/Footer';
 import Icon from '@/components/common/Icon';
 import DatePickerModal from '@/components/education/DatePickerModal';
 import ApplicationModal from '@/components/education/ApplicationModal';
-import { get } from '@/lib/api';
+import { get, del } from '@/lib/api';
 import { API_ENDPOINTS } from '@/config/api';
-import type { EducationDetail } from '@/types/education';
+import type { EducationDetail, ApplicationStatus } from '@/types/education';
 import styles from './detail.module.scss';
+
+interface UserProfile {
+  id: number;
+  loginId: string;
+  name: string;
+}
 
 // Toast UI Viewer는 클라이언트 사이드에서만 로드
 const Viewer = dynamic(
@@ -29,12 +35,29 @@ const EducationDetailPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  // 사용자 정보 가져오기
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
 
   useEffect(() => {
     if (id) {
       fetchEducationDetail();
     }
   }, [id]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await get<UserProfile>(API_ENDPOINTS.AUTH.ME);
+      if (response.data) {
+        setUserProfile(response.data);
+      }
+    } catch (err) {
+      console.error('유저 정보를 불러오는 중 오류:', err);
+    }
+  };
 
   const fetchEducationDetail = async () => {
     setLoading(true);
@@ -72,37 +95,63 @@ const EducationDetailPage: React.FC = () => {
   // 교육 일자 포맷팅 (첫 번째 날짜 ~ 마지막 날짜 형식)
   const formatEducationDates = (dates: string[]) => {
     if (!dates || dates.length === 0) return '';
-    if (dates.length === 1) {
-      const date = dates[0];
-      const dateObj = new Date(date.replace(/\./g, '-'));
+    
+    const formatSingleDate = (dateString: string) => {
+      // 날짜 문자열을 Date 객체로 변환 (YYYY.MM.DD 또는 YYYY-MM-DD 형식 지원)
+      const normalizedDate = dateString.replace(/\./g, '-');
+      const dateObj = new Date(normalizedDate);
+      
+      // 유효하지 않은 날짜인 경우 원본 반환
+      if (isNaN(dateObj.getTime())) {
+        return dateString;
+      }
+      
       const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
       const weekday = weekdays[dateObj.getDay()];
+      
       // YY.MM.DD 형식으로 변환
-      const parts = date.split('.');
-      const year = parts[0].slice(-2);
-      return `${year}.${parts[1]}.${parts[2]} (${weekday})`;
+      const year = dateObj.getFullYear().toString().slice(-2);
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      
+      return `${year}.${month}.${day} (${weekday})`;
+    };
+    
+    if (dates.length === 1) {
+      return formatSingleDate(dates[0]);
     }
     
     // 첫 번째와 마지막 날짜만 사용
     const firstDate = dates[0];
     const lastDate = dates[dates.length - 1];
     
-    const firstParts = firstDate.split('.');
-    const lastParts = lastDate.split('.');
-    const firstYear = firstParts[0].slice(-2);
-    const lastYear = lastParts[0].slice(-2);
+    const firstNormalized = firstDate.replace(/\./g, '-');
+    const lastNormalized = lastDate.replace(/\./g, '-');
+    const firstDateObj = new Date(firstNormalized);
+    const lastDateObj = new Date(lastNormalized);
     
-    const firstDateObj = new Date(firstDate.replace(/\./g, '-'));
-    const lastDateObj = new Date(lastDate.replace(/\./g, '-'));
+    // 유효하지 않은 날짜인 경우 원본 반환
+    if (isNaN(firstDateObj.getTime()) || isNaN(lastDateObj.getTime())) {
+      return `${firstDate} ~ ${lastDate}`;
+    }
+    
     const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
     const firstWeekday = weekdays[firstDateObj.getDay()];
     const lastWeekday = weekdays[lastDateObj.getDay()];
     
+    const firstYear = firstDateObj.getFullYear().toString().slice(-2);
+    const firstMonth = String(firstDateObj.getMonth() + 1).padStart(2, '0');
+    const firstDay = String(firstDateObj.getDate()).padStart(2, '0');
+    
+    const lastYear = lastDateObj.getFullYear().toString().slice(-2);
+    const lastMonth = String(lastDateObj.getMonth() + 1).padStart(2, '0');
+    const lastDay = String(lastDateObj.getDate()).padStart(2, '0');
+    
     // 같은 연도면 두 번째 날짜에서 연도 생략
-    const firstFormatted = `${firstYear}.${firstParts[1]}.${firstParts[2]} (${firstWeekday})`;
+    const firstFormatted = `${firstYear}.${firstMonth}.${firstDay} (${firstWeekday})`;
     const lastFormatted = firstYear === lastYear 
-      ? `${lastParts[1]}.${lastParts[2]} (${lastWeekday})`
-      : `${lastYear}.${lastParts[1]}.${lastParts[2]} (${lastWeekday})`;
+      ? `${lastMonth}.${lastDay} (${lastWeekday})`
+      : `${lastYear}.${lastMonth}.${lastDay} (${lastWeekday})`;
     
     return `${firstFormatted} ~ ${lastFormatted}`;
   };
@@ -135,6 +184,141 @@ const EducationDetailPage: React.FC = () => {
 
   const daysLeft = getDaysUntilDeadline(education.recruitmentEndDate);
 
+  // 모집 종료 여부 확인 (모달과 동일한 로직)
+  const checkRecruitmentClosed = () => {
+    if (!education.recruitmentEndDate) return false;
+    const today = new Date();
+    const endDate = new Date(education.recruitmentEndDate);
+    return today > endDate;
+  };
+
+  const isRecruitmentClosed = checkRecruitmentClosed();
+
+  // applications 배열에서 현재 사용자의 가장 최근 신청 찾기 (모달과 동일한 로직)
+  const getUserApplication = () => {
+    if (!userProfile || !education.applications || education.applications.length === 0) {
+      return null;
+    }
+    // 현재 유저의 모든 신청 찾기
+    const userApps = education.applications.filter(
+      (app: any) => app.userId === userProfile.id || app.name === userProfile.name
+    );
+    if (userApps.length === 0) return null;
+    // 가장 최근 신청 반환 (id가 큰 것 또는 appliedAt이 최신인 것)
+    return userApps.sort((a: any, b: any) => {
+      if (a.appliedAt && b.appliedAt) {
+        return new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime();
+      }
+      return (b.id || 0) - (a.id || 0);
+    })[0];
+  };
+
+  const userApplication = getUserApplication();
+  const hasApplication = !!userApplication;
+
+  // 버튼 상태 결정 (모달과 동일한 로직)
+  const getButtonState = () => {
+    if (isRecruitmentClosed) {
+      return 'recruitment_closed';
+    }
+    if (hasApplication) {
+      const status = (userApplication?.status || '').toUpperCase();
+      // 취소/거절된 경우 다시 신청 가능
+      if (status === 'CANCELLED' || status === 'REJECTED') {
+        return 'can_apply';
+      }
+      if (status === 'COMPLETED') {
+        return 'completed';
+      }
+      if (status === 'APPROVED' || status === 'CONFIRMED') {
+        return 'approved';
+      }
+      // WAITING, PENDING 등은 모두 승인 대기중
+      return 'pending';
+    }
+    return 'can_apply';
+  };
+
+  const buttonState = getButtonState();
+
+  // 신청 취소 처리
+  const handleCancelApplication = async () => {
+    if (!userApplication?.id) return;
+
+    const confirmed = window.confirm('신청을 취소하시겠습니까?');
+    if (!confirmed) return;
+
+    try {
+      // 신청 취소 API: DELETE /training-seminars/{seminarId}/apply
+      const response = await del(
+        `${API_ENDPOINTS.TRAINING_SEMINARS}/${id}/apply`
+      );
+
+      if (response.error) {
+        // API 미지원 시 조용히 처리
+        console.error('신청 취소 실패:', response.error);
+        alert('신청 취소 기능이 현재 지원되지 않습니다.');
+        return;
+      }
+
+      alert('신청이 취소되었습니다.');
+      fetchEducationDetail(); // 데이터 새로고침
+    } catch (err) {
+      console.error('신청 취소 중 오류:', err);
+      alert('신청 취소 기능이 현재 지원되지 않습니다.');
+    }
+  };
+
+  // 버튼 렌더링 함수 (모달과 동일한 로직)
+  const renderActionButton = () => {
+    if (buttonState === 'recruitment_closed') {
+      return (
+        <button className={styles.closedButton} disabled>
+          모집 종료
+        </button>
+      );
+    }
+
+    if (buttonState === 'completed') {
+      return (
+        <button className={styles.completedButton} disabled>
+          수강 완료
+        </button>
+      );
+    }
+
+    if (buttonState === 'approved') {
+      return (
+        <button className={styles.pendingButton} disabled>
+          승인 완료
+        </button>
+      );
+    }
+
+    if (buttonState === 'pending') {
+      return (
+        <>
+          <button className={styles.pendingButton} disabled>
+            승인 대기중
+          </button>
+          <button className={styles.cancelLink} onClick={handleCancelApplication}>
+            신청 취소
+          </button>
+        </>
+      );
+    }
+
+    // can_apply: 신청하기 버튼
+    return (
+      <button
+        className={styles.applyButton}
+        onClick={() => setIsApplicationModalOpen(true)}
+      >
+        신청하기
+      </button>
+    );
+  };
+
   return (
     <div className={styles.page}>
       <Header variant="transparent" onMenuClick={() => setIsMenuOpen(true)} />
@@ -145,7 +329,7 @@ const EducationDetailPage: React.FC = () => {
           <div className={styles.mainSection}>
             <div className={styles.imageSection}>
               <div className={styles.imageWrapper}>
-                <img src={education.image.url} alt={education.name} />
+                <img src={education.image?.url || '/images/education/default-thumbnail.png'} alt={education.name} />
               </div>
             </div>
             <div className={styles.bodySection}>
@@ -159,9 +343,13 @@ const EducationDetailPage: React.FC = () => {
             <div className={styles.sidebarCard}>
               <div className={styles.cardHeader}>
                 <div className={styles.labels}>
-                  {daysLeft > 0 && (
+                  {daysLeft > 0 ? (
                     <span className={styles.labelRed}>
                       신청마감 D-{daysLeft}
+                    </span>
+                  ) : (
+                    <span className={styles.labelGray}>
+                      신청마감
                     </span>
                   )}
                   <span className={styles.labelWhite}>
@@ -274,12 +462,7 @@ const EducationDetailPage: React.FC = () => {
                 <p>0원</p>
               </div>
 
-              <button 
-                className={styles.applyButton}
-                onClick={() => setIsApplicationModalOpen(true)}
-              >
-                신청하기
-              </button>
+              {renderActionButton()}
             </div>
           </div>
         </div>
@@ -301,8 +484,8 @@ const EducationDetailPage: React.FC = () => {
           education={education}
           initialDate={selectedDate}
           onSuccess={() => {
-            // 신청 성공 후 처리
-            alert('신청이 완료되었습니다.');
+            // 신청 성공 후 데이터 새로고침
+            fetchEducationDetail();
           }}
         />
       )}

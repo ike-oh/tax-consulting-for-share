@@ -6,6 +6,8 @@ import Footer from '@/components/common/Footer';
 import PageHeader from '@/components/common/PageHeader';
 import Checkbox from '@/components/common/Checkbox';
 import Button from '@/components/common/Button';
+import { post } from '@/lib/api';
+import { API_ENDPOINTS } from '@/config/api';
 import styles from './apply.module.scss';
 
 interface ConsultationFormData {
@@ -18,14 +20,34 @@ interface ConsultationFormData {
   termsAgreement: boolean;
 }
 
+interface ConsultationApiRequest {
+  name: string;
+  phoneNumber: string;
+  consultingField: string;
+  assignedTaxAccountant: string;
+  content: string;
+  privacyAgreed: boolean;
+  termsAgreed: boolean;
+  memberFlag: 'MEMBER' | 'NON_MEMBER';
+}
+
 const ConsultationApplyPage: React.FC = () => {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isFieldDropdownOpen, setIsFieldDropdownOpen] = useState(false);
   const [isAccountantDropdownOpen, setIsAccountantDropdownOpen] = useState(false);
   const [searchFieldQuery, setSearchFieldQuery] = useState('');
   const [searchAccountantQuery, setSearchAccountantQuery] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // 로그인 상태 확인
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    setIsLoggedIn(!!token);
+  }, []);
   
   const [formData, setFormData] = useState<ConsultationFormData>({
     consultationField: '',
@@ -119,12 +141,42 @@ const ConsultationApplyPage: React.FC = () => {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isFormValid()) {
-      // TODO: API 호출
-      console.log('Form submitted:', formData);
+    if (!isFormValid() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      // 폼 데이터를 API 요청 형식으로 변환
+      const selectedField = consultationFields.find(f => f.value === formData.consultationField);
+      const selectedAccountant = taxAccountants.find(a => a.value === formData.taxAccountant);
+
+      const apiRequestBody: ConsultationApiRequest = {
+        name: formData.name,
+        phoneNumber: formData.phone.replace(/-/g, ''), // 하이픈 제거
+        consultingField: selectedField?.label || formData.consultationField,
+        assignedTaxAccountant: selectedAccountant?.label || formData.taxAccountant,
+        content: formData.additionalRequest,
+        privacyAgreed: formData.privacyAgreement,
+        termsAgreed: formData.termsAgreement,
+        memberFlag: isLoggedIn ? 'MEMBER' : 'NON_MEMBER', // 로그인 상태에 따라 설정
+      };
+
+      // post 함수 사용 (인증 토큰 자동 포함)
+      const response = await post(API_ENDPOINTS.CONSULTATIONS, apiRequestBody);
+
+      if (response.error) {
+        throw new Error(response.error || '상담 신청에 실패했습니다. 다시 시도해주세요.');
+      }
+
       setIsSuccessModalOpen(true);
+    } catch (error) {
+      console.error('Consultation submission error:', error);
+      setSubmitError(error instanceof Error ? error.message : '상담 신청에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -384,15 +436,17 @@ const ConsultationApplyPage: React.FC = () => {
               </div>
 
               <div className={styles.submitButtonWrapper}>
+                {submitError && (
+                  <p className={styles.errorMessage}>{submitError}</p>
+                )}
                 <Button
                   type="primary"
                   size="large"
-                  disabled={!isFormValid()}
-                  onClick={handleSubmit}
+                  disabled={!isFormValid() || isSubmitting}
                   htmlType="submit"
                   className={styles.submitButton}
                 >
-                  신청하기
+                  {isSubmitting ? '신청 중...' : '신청하기'}
                 </Button>
               </div>
             </form>

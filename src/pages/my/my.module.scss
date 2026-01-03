@@ -831,6 +831,109 @@
   }
 }
 
+// Education Card Style (same as /education page)
+.educationCard {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #2d2d2d;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.cardImage {
+  width: 100%;
+  aspect-ratio: 400 / 300;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.cardContent {
+  padding: 12px 8px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cardLabels {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.labelStatus {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px;
+  border-radius: 4px;
+  @include pretendard-15-semibold;
+  color: #fb7058;
+}
+
+.labelType {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px;
+  border-radius: 4px;
+  @include pretendard-15-semibold;
+  color: #f8f8fc;
+}
+
+.cardTitle {
+  @include pretendard-21-semibold;
+  color: white;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cardLocation {
+  @include pretendard-15-semibold;
+  color: #d8d8d8;
+  margin: 0;
+}
+
+.cardDateWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardDateIcon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.cardDate {
+  @include pretendard-13-regular;
+  color: #d8d8d8;
+  margin: 0;
+}
+
+.paginationWrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 60px;
+}
+
 .emptyState {
   display: flex;
   align-items: center;

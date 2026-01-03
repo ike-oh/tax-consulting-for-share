@@ -202,11 +202,10 @@
 }
 
 .leftSectionImage {
-  width: 50vw;
-  height: 1080px;
+  width: 100%;
+  height: 100%;
   position: relative;
-  margin-bottom: 120px;
-  margin-left: 0;
+  margin: 0;
   overflow: hidden;
 
   &::after {
@@ -217,16 +216,8 @@
     z-index: 1;
   }
 
-  @media (max-width: $breakpoint-desktop) {
-    width: 50vw;
-    margin-left: 0;
-    height: 600px;
-    margin-bottom: 60px;
-  }
-
   @media (max-width: $breakpoint-tablet) {
     width: 100%;
-    margin-left: 0;
     height: 400px;
     margin-bottom: 40px;
   }
@@ -243,57 +234,56 @@
 }
 
 .content {
-  display: grid;
-  grid-template-columns: 50vw 1fr;
+  display: flex;
   gap: 0;
   margin-top: 0;
   width: 100vw;
   margin-left: calc(-50vw + 50%);
   margin-right: calc(-50vw + 50%);
-
-  @media (max-width: $breakpoint-desktop) {
-    grid-template-columns: 50vw 1fr;
-  }
+  position: relative;
 
   @media (max-width: $breakpoint-tablet) {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 }
 
 .leftSection {
   display: flex;
   flex-direction: column;
-  position: relative;
-  padding: 160px 120px 120px 0;
+  position: sticky;
+  top: 0;
+  width: 50vw;
+  height: 100vh;
+  flex-shrink: 0;
+  padding: 0;
+  align-self: flex-start;
 
   @media (max-width: $breakpoint-desktop) {
-    padding: 80px 60px 60px 0;
+    width: 50vw;
   }
 
   @media (max-width: $breakpoint-tablet) {
+    position: relative;
+    width: 100%;
+    height: auto;
     padding: 40px 0 40px 24px;
   }
 }
 
 .titleSection {
   position: absolute;
-  top: 160px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0;
 
-  @media (max-width: $breakpoint-desktop) {
-    top: 80px;
-    gap: 0;
-  }
-
   @media (max-width: $breakpoint-tablet) {
-    top: 40px;
-    gap: 0;
+    top: 50%;
+    transform: translate(-50%, -50%);
   }
 }
 
@@ -362,7 +352,9 @@
 .rightSection {
   display: flex;
   flex-direction: column;
+  flex: 1;
   padding: 320px 240px 120px 88px;
+  min-height: 100vh;
 
   @media (max-width: $breakpoint-desktop) {
     padding: 160px 120px 60px 40px;
@@ -370,6 +362,7 @@
 
   @media (max-width: $breakpoint-tablet) {
     padding: 80px 24px 40px 24px;
+    min-height: auto;
   }
 }
 
@@ -1285,7 +1278,7 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-  width: 342px;
+  width: calc(33.333% - 16px);
 
   @media (max-width: $breakpoint-desktop) {
     width: calc(50% - 12px);
@@ -1299,16 +1292,11 @@
 
 .awardCardImage {
   position: relative;
-  width: 342px;
-  height: 342px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
   border-radius: 8px;
   overflow: hidden;
-
-  @media (max-width: $breakpoint-desktop) {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1;
-  }
 
   @media (max-width: $breakpoint-tablet) {
     width: 100%;

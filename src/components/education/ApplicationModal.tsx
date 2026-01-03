@@ -1,7 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DatePickerModal from './DatePickerModal';
 import type { EducationDetail } from '@/types/education';
+import { get, post, del } from '@/lib/api';
+import { API_ENDPOINTS } from '@/config/api';
 import styles from './ApplicationModal.module.scss';
+
+interface UserProfile {
+  id: number;
+  loginId: string;
+  name: string;
+  phoneNumber?: string;
+  email?: string;
+  memberType?: string;
+  oauthProvider?: string;
+  newsletterSubscribed?: boolean;
+}
 
 interface ApplicationModalProps {
   isOpen: boolean;
@@ -20,50 +33,102 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({
 }) => {
   const [selectedDate, setSelectedDate] = useState<string>(initialDate);
   const [selectedTime, setSelectedTime] = useState<string>('');
-  const [participantCount, setParticipantCount] = useState<string>('0');
+  const [participantCount, setParticipantCount] = useState<string>('1');
   const [requestNote, setRequestNote] = useState<string>('');
   const [isAgreed, setIsAgreed] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingUser, setIsLoadingUser] = useState(false);
+
+  // 유저 정보 가져오기
+  useEffect(() => {
+    if (isOpen) {
+      fetchUserProfile();
+    }
+  }, [isOpen]);
 
   // initialDate가 변경되면 selectedDate 업데이트
-  React.useEffect(() => {
+  useEffect(() => {
     if (initialDate) {
       setSelectedDate(initialDate);
     }
   }, [initialDate]);
 
+  const fetchUserProfile = async () => {
+    try {
+      setIsLoadingUser(true);
+      const response = await get<UserProfile>(API_ENDPOINTS.AUTH.ME);
+      
+      if (response.data) {
+        setUserProfile(response.data);
+      }
+    } catch (err) {
+      console.error('유저 정보를 불러오는 중 오류:', err);
+    } finally {
+      setIsLoadingUser(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   const formatEducationDates = (dates: string[]) => {
     if (!dates || dates.length === 0) return '';
-    if (dates.length === 1) {
-      const date = dates[0];
-      const dateObj = new Date(date.replace(/\./g, '-'));
+    
+    const formatSingleDate = (dateString: string) => {
+      // 날짜 문자열을 Date 객체로 변환 (YYYY.MM.DD 또는 YYYY-MM-DD 형식 지원)
+      const normalizedDate = dateString.replace(/\./g, '-');
+      const dateObj = new Date(normalizedDate);
+      
+      // 유효하지 않은 날짜인 경우 원본 반환
+      if (isNaN(dateObj.getTime())) {
+        return dateString;
+      }
+      
       const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
       const weekday = weekdays[dateObj.getDay()];
-      const parts = date.split('.');
-      const year = parts[0].slice(-2);
-      return `${year}.${parts[1]}.${parts[2]}(${weekday})`;
+      
+      // YY.MM.DD 형식으로 변환
+      const year = dateObj.getFullYear().toString().slice(-2);
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      
+      return `${year}.${month}.${day}(${weekday})`;
+    };
+    
+    if (dates.length === 1) {
+      return formatSingleDate(dates[0]);
     }
     
     const firstDate = dates[0];
     const lastDate = dates[dates.length - 1];
     
-    const firstParts = firstDate.split('.');
-    const lastParts = lastDate.split('.');
-    const firstYear = firstParts[0].slice(-2);
-    const lastYear = lastParts[0].slice(-2);
+    const firstNormalized = firstDate.replace(/\./g, '-');
+    const lastNormalized = lastDate.replace(/\./g, '-');
+    const firstDateObj = new Date(firstNormalized);
+    const lastDateObj = new Date(lastNormalized);
     
-    const firstDateObj = new Date(firstDate.replace(/\./g, '-'));
-    const lastDateObj = new Date(lastDate.replace(/\./g, '-'));
+    // 유효하지 않은 날짜인 경우 원본 반환
+    if (isNaN(firstDateObj.getTime()) || isNaN(lastDateObj.getTime())) {
+      return `${firstDate} ~ ${lastDate}`;
+    }
+    
     const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
     const firstWeekday = weekdays[firstDateObj.getDay()];
     const lastWeekday = weekdays[lastDateObj.getDay()];
     
-    const firstFormatted = `${firstYear}.${firstParts[1]}.${firstParts[2]}(${firstWeekday})`;
+    const firstYear = firstDateObj.getFullYear().toString().slice(-2);
+    const firstMonth = String(firstDateObj.getMonth() + 1).padStart(2, '0');
+    const firstDay = String(firstDateObj.getDate()).padStart(2, '0');
+    
+    const lastYear = lastDateObj.getFullYear().toString().slice(-2);
+    const lastMonth = String(lastDateObj.getMonth() + 1).padStart(2, '0');
+    const lastDay = String(lastDateObj.getDate()).padStart(2, '0');
+    
+    const firstFormatted = `${firstYear}.${firstMonth}.${firstDay}(${firstWeekday})`;
     const lastFormatted = firstYear === lastYear 
-      ? `${lastParts[1]}.${lastParts[2]}(${lastWeekday})`
-      : `${lastYear}.${lastParts[1]}.${lastParts[2]}(${lastWeekday})`;
+      ? `${lastMonth}.${lastDay}(${lastWeekday})`
+      : `${lastYear}.${lastMonth}.${lastDay}(${lastWeekday})`;
     
     return `${firstFormatted} ~ ${lastFormatted}`;
   };
@@ -78,28 +143,173 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({
     return `${year}.${parts[1]}.${parts[2]}(${weekday})`;
   };
 
-  const handleApply = () => {
+  // 날짜 형식 변환 (YYYY.MM.DD -> YYYY-MM-DD)
+  const convertDateToApiFormat = (dateStr: string): string => {
+    if (!dateStr) return '';
+    return dateStr.replace(/\./g, '-');
+  };
+
+  // 시간 형식 변환 (필요시)
+  const convertTimeToApiFormat = (timeStr: string): string => {
+    if (!timeStr) return '';
+    // 이미 "16:00~17:00" 형식이면 그대로 반환
+    if (timeStr.includes('~')) {
+      return timeStr;
+    }
+    // "16:00-17:00" 형식이면 "~"로 변환
+    if (timeStr.includes('-')) {
+      return timeStr.replace('-', '~');
+    }
+    return timeStr;
+  };
+
+  const handleApply = async () => {
+    // 유효성 검사
     if (!selectedDate || !selectedTime || !isAgreed) {
       alert('필수 항목을 모두 입력해주세요.');
       return;
     }
-    
-    // TODO: API 호출
-    console.log('신청 정보:', {
-      educationId: education.id,
-      date: selectedDate,
-      time: selectedTime,
-      participantCount,
-      requestNote,
-    });
 
-    if (onSuccess) {
-      onSuccess();
+    if (!userProfile) {
+      alert('유저 정보를 불러올 수 없습니다. 다시 시도해주세요.');
+      return;
     }
-    onClose();
+
+    if (!userProfile.name) {
+      alert('유저 이름 정보가 없습니다.');
+      return;
+    }
+
+    if (parseInt(participantCount) < 1) {
+      alert('참석인원은 1명 이상이어야 합니다.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const requestBody = {
+        name: userProfile.name,
+        phoneNumber: userProfile.phoneNumber || '',
+        email: userProfile.email || '',
+        participationDate: convertDateToApiFormat(selectedDate),
+        participationTime: convertTimeToApiFormat(selectedTime),
+        attendeeCount: parseInt(participantCount),
+        requestDetails: requestNote || '',
+        privacyAgreed: isAgreed,
+      };
+
+      const response = await post(
+        `${API_ENDPOINTS.TRAINING_SEMINARS}/${education.id}/apply`,
+        requestBody
+      );
+
+      if (response.error) {
+        alert(`신청 중 오류가 발생했습니다: ${response.error}`);
+        return;
+      }
+
+      // 성공
+      alert('신청이 완료되었습니다.');
+      
+      if (onSuccess) {
+        onSuccess();
+      }
+      onClose();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '신청 중 오류가 발생했습니다.';
+      alert(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const canApply = selectedDate && selectedTime && isAgreed;
+
+  // 모집 종료 여부 확인
+  const isRecruitmentClosed = () => {
+    if (!education.recruitmentEndDate) return false;
+    const today = new Date();
+    const endDate = new Date(education.recruitmentEndDate);
+    return today > endDate;
+  };
+
+  // 현재 유저의 가장 최근 신청 내역 찾기
+  const getUserApplication = () => {
+    if (!userProfile || !education.applications || education.applications.length === 0) {
+      return null;
+    }
+    // 현재 유저의 모든 신청 찾기
+    const userApps = education.applications.filter(
+      (app: any) => app.userId === userProfile.id || app.name === userProfile.name
+    );
+    if (userApps.length === 0) return null;
+    // 가장 최근 신청 반환 (id가 큰 것 또는 appliedAt이 최신인 것)
+    return userApps.sort((a: any, b: any) => {
+      if (a.appliedAt && b.appliedAt) {
+        return new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime();
+      }
+      return (b.id || 0) - (a.id || 0);
+    })[0];
+  };
+
+  const userApplication = getUserApplication();
+  const isRecruitmentEnded = isRecruitmentClosed();
+  const hasApplication = !!userApplication;
+
+  // 버튼 상태 결정
+  const getButtonState = () => {
+    if (isRecruitmentEnded) {
+      return 'recruitment_closed'; // 모집 종료
+    }
+    if (hasApplication) {
+      const status = (userApplication?.status || '').toUpperCase();
+      // 취소/거절된 경우 다시 신청 가능
+      if (status === 'CANCELLED' || status === 'REJECTED') {
+        return 'can_apply';
+      }
+      if (status === 'COMPLETED') {
+        return 'completed'; // 수강 완료
+      }
+      if (status === 'APPROVED' || status === 'CONFIRMED') {
+        return 'approved'; // 승인 완료
+      }
+      // WAITING, PENDING 등은 모두 승인 대기중
+      return 'pending';
+    }
+    return 'can_apply'; // 신청 가능
+  };
+
+  const buttonState = getButtonState();
+
+  // 신청 취소 핸들러
+  const handleCancelApplication = async () => {
+    if (!userApplication || !confirm('신청을 취소하시겠습니까?')) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await del(`${API_ENDPOINTS.TRAINING_SEMINARS}/${education.id}/apply`);
+
+      if (response.error) {
+        console.error('신청 취소 실패:', response.error);
+        alert('신청 취소 기능이 현재 지원되지 않습니다.');
+        return;
+      }
+
+      alert('신청이 취소되었습니다.');
+      if (onSuccess) {
+        onSuccess();
+      }
+      onClose();
+    } catch (err) {
+      console.error('신청 취소 중 오류:', err);
+      alert('신청 취소 기능이 현재 지원되지 않습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <>
@@ -270,14 +480,54 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({
                 </div>
               </div>
 
-              <button
-                className={`${styles.applyButton} ${!canApply ? styles.applyButtonDisabled : ''}`}
-                onClick={handleApply}
-                disabled={!canApply}
-              >
-                신청하기
-              </button>
+              {buttonState === 'recruitment_closed' && (
+                <button
+                  className={`${styles.applyButton} ${styles.applyButtonDisabled}`}
+                  disabled
+                >
+                  모집 종료
+                </button>
+              )}
+
+              {buttonState === 'completed' && (
+                <button
+                  className={`${styles.applyButton} ${styles.applyButtonDisabled}`}
+                  disabled
+                >
+                  수강 완료
+                </button>
+              )}
+
+              {buttonState === 'pending' && (
+                <>
+                  <button
+                    className={`${styles.applyButton} ${styles.applyButtonDisabled}`}
+                    disabled
+                  >
+                    승인 대기중
+                  </button>
+                  <button
+                    className={styles.cancelButton}
+                    onClick={handleCancelApplication}
+                    disabled={isLoading}
+                  >
+                    신청 취소
+                  </button>
+                </>
+              )}
+
+              {buttonState === 'can_apply' && (
+                <button
+                  className={`${styles.applyButton} ${!canApply || isLoading || isLoadingUser ? styles.applyButtonDisabled : ''}`}
+                  onClick={handleApply}
+                  disabled={!canApply || isLoading || isLoadingUser}
+                >
+                  {isLoading ? '신청 중...' : isLoadingUser ? '정보 불러오는 중...' : '신청하기'}
+                </button>
+              )}
             </div>
+
+            <div className={styles.verticalDivider} />
 
             <div className={styles.summarySection}>
               <div className={styles.summaryImage}>

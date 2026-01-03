@@ -175,16 +175,19 @@ export function TextField({
   const [cursorPosition, setCursorPosition] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // email, number 타입은 setSelectionRange를 지원하지 않음
+  const supportsSelection = type !== 'email' && type !== 'number';
+
   useEffect(() => {
     if (value !== internalValue) {
       const input = inputRef.current;
-      if (input && document.activeElement === input) {
+      if (input && document.activeElement === input && supportsSelection) {
         // 포커스가 있을 때만 커서 위치 보존
         const cursorPosition = input.selectionStart || 0;
         setInternalValue(value);
         // 다음 렌더링 사이클에서 커서 위치 복원
         requestAnimationFrame(() => {
-          if (inputRef.current && document.activeElement === inputRef.current) {
+          if (inputRef.current && document.activeElement === inputRef.current && supportsSelection) {
             const newPosition = Math.min(cursorPosition, value.length);
             inputRef.current.setSelectionRange(newPosition, newPosition);
           }
@@ -193,7 +196,7 @@ export function TextField({
         setInternalValue(value);
       }
     }
-  }, [value, internalValue]);
+  }, [value, internalValue, supportsSelection]);
 
   const getState = (): TextFieldState => {
     if (readOnly) return 'readonly';
@@ -209,31 +212,34 @@ export function TextField({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     const input = e.target;
-    const currentCursorPosition = input.selectionStart || 0;
-    
+    const currentCursorPosition = supportsSelection ? (input.selectionStart || 0) : newValue.length;
+
     setInternalValue(newValue);
     setCursorPosition(currentCursorPosition);
     onChange?.(newValue);
-    
-    // 커서 위치 보존 - 입력/삭제에 따라 위치 조정
-    requestAnimationFrame(() => {
-      if (inputRef.current && document.activeElement === inputRef.current) {
-        // 값이 변경된 후 커서 위치 계산
-        let newPosition = currentCursorPosition;
-        if (newValue.length > internalValue.length) {
-          // 텍스트가 추가된 경우
-          newPosition = currentCursorPosition;
-        } else if (newValue.length < internalValue.length) {
-          // 텍스트가 삭제된 경우
-          newPosition = Math.min(currentCursorPosition, newValue.length);
+
+    // 커서 위치 보존 - 입력/삭제에 따라 위치 조정 (email, number 타입 제외)
+    if (supportsSelection) {
+      requestAnimationFrame(() => {
+        if (inputRef.current && document.activeElement === inputRef.current) {
+          // 값이 변경된 후 커서 위치 계산
+          let newPosition = currentCursorPosition;
+          if (newValue.length > internalValue.length) {
+            // 텍스트가 추가된 경우
+            newPosition = currentCursorPosition;
+          } else if (newValue.length < internalValue.length) {
+            // 텍스트가 삭제된 경우
+            newPosition = Math.min(currentCursorPosition, newValue.length);
+          }
+          inputRef.current.setSelectionRange(newPosition, newPosition);
+          setCursorPosition(newPosition);
         }
-        inputRef.current.setSelectionRange(newPosition, newPosition);
-        setCursorPosition(newPosition);
-      }
-    });
+      });
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!supportsSelection) return;
     requestAnimationFrame(() => {
       if (inputRef.current && document.activeElement === inputRef.current) {
         const pos = inputRef.current.selectionStart || 0;
@@ -243,6 +249,7 @@ export function TextField({
   };
 
   const handleClick = (e: React.MouseEvent<HTMLInputElement>) => {
+    if (!supportsSelection) return;
     requestAnimationFrame(() => {
       if (inputRef.current && document.activeElement === inputRef.current) {
         const pos = inputRef.current.selectionStart || 0;
@@ -252,6 +259,7 @@ export function TextField({
   };
 
   const handleSelect = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    if (!supportsSelection) return;
     requestAnimationFrame(() => {
       if (inputRef.current && document.activeElement === inputRef.current) {
         const pos = inputRef.current.selectionStart || 0;
@@ -282,7 +290,8 @@ export function TextField({
   };
 
   const showClearButton = showClear && (state === 'filling' || state === 'filled') && internalValue && !readOnly && !disabled;
-  const showCursor = state === 'focus' || state === 'filling';
+  // email, number 타입은 커스텀 커서 대신 기본 브라우저 커서 사용
+  const showCursor = (state === 'focus' || state === 'filling') && supportsSelection;
   const hasRightButton = !!rightButton;
   const hasTimer = typeof timer === 'number' && timer > 0;
   const hasPasswordToggle = type === 'password' && showPasswordToggle;
@@ -306,18 +315,30 @@ export function TextField({
               {showCursor ? (
                 <div className="textfield__text-with-cursor">
                   {(() => {
-                    const displayText = internalValue ? maskPassword(internalValue) : placeholder;
                     const isPlaceholder = !internalValue;
+                    if (isPlaceholder) {
+                      // placeholder일 때는 커서를 맨 앞에 표시
+                      return (
+                        <>
+                          <CursorIcon />
+                          <span className="textfield__display-text textfield__display-text--placeholder">
+                            {placeholder}
+                          </span>
+                        </>
+                      );
+                    }
+                    // 값이 있을 때 cursorPosition 사용
+                    const displayText = maskPassword(internalValue);
                     const pos = Math.min(cursorPosition, displayText.length);
                     const beforeCursor = displayText.substring(0, pos);
                     const afterCursor = displayText.substring(pos);
                     return (
                       <>
-                        <span className={`textfield__display-text ${isPlaceholder ? 'textfield__display-text--placeholder' : ''}`}>
+                        <span className="textfield__display-text">
                           {beforeCursor}
                         </span>
                         <CursorIcon />
-                        <span className={`textfield__display-text ${isPlaceholder ? 'textfield__display-text--placeholder' : ''}`}>
+                        <span className="textfield__display-text">
                           {afterCursor}
                         </span>
                       </>
@@ -352,12 +373,14 @@ export function TextField({
                   onSelect={handleSelect}
                   onFocus={() => {
                     setIsFocused(true);
-                    requestAnimationFrame(() => {
-                      if (inputRef.current) {
-                        const pos = inputRef.current.selectionStart || 0;
-                        setCursorPosition(pos);
-                      }
-                    });
+                    if (supportsSelection) {
+                      requestAnimationFrame(() => {
+                        if (inputRef.current) {
+                          const pos = inputRef.current.selectionStart || 0;
+                          setCursorPosition(pos);
+                        }
+                      });
+                    }
                   }}
                   onBlur={() => setIsFocused(false)}
                   readOnly={readOnly}

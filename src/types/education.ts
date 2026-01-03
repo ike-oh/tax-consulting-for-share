@@ -41,13 +41,25 @@ export interface EducationListResponse {
   limit: number;
 }
 
+// 사용자 신청 상태
+export type ApplicationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED';
+
+export interface UserApplication {
+  id: number;
+  status: ApplicationStatus;
+  applicationDate: string;
+}
+
 export interface EducationDetail extends EducationItem {
   instructorName: string;
   target: string;
   body: string;
   vimeoVideoUrl: string | null;
   applications: any[];
+  userApplication?: UserApplication | null; // 현재 사용자의 신청 정보
+  isRecruitmentClosed?: boolean; // 모집 종료 여부
 }
+
 
 
 

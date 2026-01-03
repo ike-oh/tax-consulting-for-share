@@ -349,8 +349,13 @@
   cursor: pointer;
   transition: all 0.2s ease;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
   }
 
   @media (max-width: $breakpoint-tablet) {
@@ -476,6 +481,13 @@
   }
 }
 
+.paginationWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0 0;
+}
+
 .educationGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -519,10 +531,10 @@
 }
 
 .cardContent {
-  padding: 24px;
+  padding: 12px 8px 40px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .cardLabels {
@@ -555,12 +567,24 @@
   color: #f8f8fc;
 }
 
+.labelGray {
+  background: #555;
+  padding: 8px;
+  border-radius: 4px;
+  font-family: $font-pretendard;
+  font-weight: $font-weight-semibold;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.075px;
+  color: #f0f0f0;
+}
+
 .cardTitle {
   font-family: $font-pretendard;
   font-weight: $font-weight-semibold;
-  font-size: 25px;
+  font-size: 21px;
   line-height: 1.5;
-  letter-spacing: -0.125px;
+  letter-spacing: -0.105px;
   color: white;
   margin: 0;
   display: -webkit-box;
@@ -572,15 +596,37 @@
 .cardInfo {
   display: flex;
   flex-direction: column;
+  gap: 24px;
+}
+
+.cardLocation {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-semibold;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.075px;
+  color: #d8d8d8;
+  margin: 0;
+}
+
+.cardDateWrapper {
+  display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-.cardLocation,
+.cardDateIcon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
 .cardDate {
   font-family: $font-pretendard;
   font-weight: $font-weight-regular;
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1.5;
+  letter-spacing: -0.065px;
   color: #d8d8d8;
   margin: 0;
 }

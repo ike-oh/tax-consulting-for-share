@@ -317,9 +317,21 @@
 // Submit Button
 .submitButtonWrapper {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 16px;
   padding-top: 56px;
+}
+
+.errorMessage {
+  font-family: 'Pretendard', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #f35064;
+  text-align: center;
+  margin: 0;
 }
 
 .submitButton {

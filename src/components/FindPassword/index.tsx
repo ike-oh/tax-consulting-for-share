@@ -6,6 +6,8 @@ import Footer from '@/components/common/Footer';
 import { TextField } from '@/components/common/TextField';
 import Tab from '@/components/common/Tab';
 import Button from '@/components/common/Button';
+import { post } from '@/lib/api';
+import { API_ENDPOINTS } from '@/config/api';
 // styles는 _app.tsx에서 import됨 (FindUsername과 동일한 스타일 사용)
 
 type TabType = 'sms' | 'email';
@@ -28,6 +30,8 @@ const FindPassword: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [resetToken, setResetToken] = useState('');
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -42,50 +46,71 @@ const FindPassword: React.FC = () => {
     return () => clearInterval(interval);
   }, [isTimerActive, timeLeft]);
 
-  const handleRequestVerification = useCallback(() => {
+  const handleRequestVerification = useCallback(async () => {
     setError('');
+
     if (!userId) {
       setError('아이디를 입력해주세요.');
       return;
     }
+
     if (activeTab === 'sms') {
       if (!phone) {
         setError('휴대폰 번호를 입력해주세요.');
         return;
       }
+
+      const cleanPhone = phone.replace(/[^0-9]/g, '');
+      if (cleanPhone.length < 10 || cleanPhone.length > 11) {
+        setError('올바른 휴대폰 번호를 입력해주세요.');
+        return;
+      }
+
+      // API 호출 임시 비활성화 - 바로 타이머 시작
+      setTimeLeft(180);
+      setIsTimerActive(true);
+      setStep('verification');
     } else {
       if (!email) {
         setError('이메일을 입력해주세요.');
         return;
       }
-      // 테스트용: 특정 이메일로 이메일 계정 없음 에러 테스트
-      // 에러를 설정하고 인증번호 입력 단계로 넘어가서 에러를 표시
-      if (email === 'notfound@test.com') {
-        setTimeLeft(180);
-        setIsTimerActive(true);
-        setStep('verification');
-        setError('등록된 이메일 계정이 아닙니다');
+
+      // 이메일 형식 검증
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setError('올바른 이메일 형식을 입력해주세요.');
         return;
       }
+
+      // API 호출 임시 비활성화 - 바로 타이머 시작
+      setTimeLeft(180);
+      setIsTimerActive(true);
+      setStep('verification');
     }
-    setTimeLeft(180);
-    setIsTimerActive(true);
-    setStep('verification');
   }, [activeTab, userId, phone, email]);
 
-  const handleVerifyCode = useCallback((e?: React.FormEvent) => {
+  const handleVerifyCode = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
     setError('');
+
     if (!verificationCode) {
       setError('인증번호를 입력해주세요.');
       return;
     }
-    if (verificationCode !== '123456') {
-      setError('인증번호가 올바르지 않습니다');
-      return;
+
+    // API 호출 임시 비활성화 - 인증번호 1234로 검증 (서버에서 4자리 요구)
+    if (verificationCode === '1234') {
+      // 임시 토큰 생성
+      const tempToken = 'temp_reset_token_' + Date.now();
+      setResetToken(tempToken);
+      setIsTimerActive(false);
+
+      // 토큰과 함께 비밀번호 재설정 페이지로 이동
+      router.push(`/reset-password?token=${encodeURIComponent(tempToken)}`);
+    } else {
+      setError('인증번호가 올바르지 않습니다.');
     }
-    setIsTimerActive(false);
-    router.push('/reset-password');
   }, [verificationCode, router]);
 
   const handleTabChange = (tabId: string) => {
@@ -131,9 +156,9 @@ const FindPassword: React.FC = () => {
                   type="line-white"
                   size="medium"
                   onClick={handleRequestVerification}
-                  disabled={!userId || !phone}
+                  disabled={!userId || !phone || isLoading}
                 >
-                  인증 요청
+                  {isLoading ? '발송 중...' : '인증 요청'}
                 </Button>
               </div>
             ) : (
@@ -157,10 +182,10 @@ const FindPassword: React.FC = () => {
         <Button
           type="primary"
           size="large"
-          disabled={!userId || (activeTab === 'sms' ? !phone : !email)}
+          disabled={!userId || (activeTab === 'sms' ? !phone : !email) || isLoading}
           onClick={handleRequestVerification}
         >
-          확인
+          {isLoading ? '확인 중...' : '확인'}
         </Button>
       </div>
 
@@ -209,9 +234,9 @@ const FindPassword: React.FC = () => {
                     type="line-white"
                     size="medium"
                     onClick={handleRequestVerification}
-                    disabled={!isTimerActive}
+                    disabled={!isTimerActive || isLoading}
                   >
-                    인증 재요청
+                    {isLoading ? '발송 중...' : '인증 재요청'}
                   </Button>
                 </div>
               </>
@@ -232,9 +257,9 @@ const FindPassword: React.FC = () => {
                   type="button"
                   className="find-username-resend-link"
                   onClick={handleRequestVerification}
-                  disabled={!isTimerActive}
+                  disabled={!isTimerActive || isLoading}
                 >
-                  인증번호 재요청
+                  {isLoading ? '발송 중...' : '인증번호 재요청'}
                 </button>
               )}
             </div>
@@ -252,10 +277,10 @@ const FindPassword: React.FC = () => {
         <Button
           type={verificationCode && isTimerActive && !error ? "primary" : "secondary"}
           size="large"
-          disabled={!verificationCode || !isTimerActive || !!error}
+          disabled={!verificationCode || !isTimerActive || !!error || isLoading}
           onClick={handleVerifyCode}
         >
-          확인
+          {isLoading ? '확인 중...' : '확인'}
         </Button>
       </div>
     </>

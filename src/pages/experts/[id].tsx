@@ -7,6 +7,7 @@ import Menu from '@/components/Menu';
 import Footer from '@/components/common/Footer';
 import FloatingButton from '@/components/common/FloatingButton';
 import PageHeader from '@/components/common/PageHeader';
+import ContentBox from '@/components/common/ContentBox';
 import Icon from '@/components/common/Icon';
 import { get } from '@/lib/api';
 import { API_ENDPOINTS } from '@/config/api';
@@ -189,8 +190,8 @@ const ExpertDetailPage: React.FC = () => {
 
   // Breadcrumb 생성
   const breadcrumbs = [
-    { label: '전문가', href: '/experts' },
-    { label: data.name },
+    { label: '전문가 소개', href: '/experts' },
+    { label: `${data.name} 세무사` },
   ];
 
   return (
@@ -198,40 +199,47 @@ const ExpertDetailPage: React.FC = () => {
       <Header variant="transparent" onMenuClick={() => setIsMenuOpen(true)} />
       <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
-      <div className={styles.container}>
-        {/* Page Header with Breadcrumb */}
-        <div className={styles.pageHeaderWrapper}>
-          <PageHeader
-            title={data.name}
-            breadcrumbs={breadcrumbs}
-            size="web"
-          />
-        </div>
-      </div>
-
       {/* Hero Section - Full Width */}
       <div className={styles.heroSection}>
-        {data.mainPhoto?.url && !imageError ? (
-          <img 
-            src={data.mainPhoto.url} 
-            alt={data.name}
-            className={styles.heroImage}
-            onError={() => setImageError(true)}
-            onLoad={() => setImageError(false)}
-          />
-        ) : (
-          <div className={styles.imagePlaceholder}>
-            <span>{data.name}</span>
+        {/* Breadcrumb */}
+        <div className={styles.heroBreadcrumb}>
+          <div className={styles.container}>
+            <PageHeader
+              title=""
+              breadcrumbs={breadcrumbs}
+              size="web"
+            />
           </div>
-        )}
-        <div className={styles.heroOverlay} />
-        <div className={styles.heroContent}>
+        </div>
+        <div className={styles.heroBackground} />
+        <div className={styles.heroContainer}>
+          <div className={styles.heroImageWrapper}>
+            {data.mainPhoto?.url && !imageError ? (
+              <img 
+                src={data.mainPhoto.url} 
+                alt={data.name}
+                className={styles.heroImage}
+                onError={() => setImageError(true)}
+                onLoad={() => setImageError(false)}
+              />
+            ) : (
+              <div className={styles.imagePlaceholder}>
+                <span>{data.name}</span>
+              </div>
+            )}
+          </div>
           <div className={styles.heroInfo}>
             <div className={styles.heroNameRow}>
               <h1 className={styles.heroName}>{data.name}</h1>
               <span className={styles.heroPosition}>세무사</span>
             </div>
             <div className={styles.heroContact}>
+              {data.affiliation && (
+                <div className={styles.heroContactItem}>
+                  <Icon type="location" size={20} />
+                  <span className={styles.heroContactLabel}>{data.affiliation}</span>
+                </div>
+              )}
               {data.phoneNumber && (
                 <div className={styles.heroContactItem}>
                   <Icon type="call" size={20} />
@@ -244,142 +252,178 @@ const ExpertDetailPage: React.FC = () => {
                   <span className={styles.heroContactLabel}>{data.email}</span>
                 </div>
               )}
-              {data.affiliation && (
-                <div className={styles.heroContactItem}>
-                  <Icon type="location" size={20} />
-                  <span className={styles.heroContactLabel}>{data.affiliation}</span>
-                </div>
-              )}
             </div>
             {data.workAreas && data.workAreas.length > 0 && (
               <div className={styles.heroWorkAreas}>
                 <p className={styles.heroWorkAreasLabel}>주요 업무 분야</p>
                 <div className={styles.heroWorkAreasTags}>
-                  {data.workAreas.map((area, index) => (
-                    <span key={index} className={styles.heroWorkAreaTag}>
-                      {typeof area === 'string' ? area : (area?.value || String(area?.id || ''))}
-                    </span>
-                  ))}
+                  {data.workAreas.map((area, index) => {
+                    const areaName = typeof area === 'string' ? area : (area?.value || String(area?.id || ''));
+                    const indicator = index === 0 ? '■■■' : index === 1 ? '■■□' : '■□□';
+                    return (
+                      <span key={index} className={styles.heroWorkAreaTag}>
+                        {areaName}{indicator}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
-          <div className={styles.heroActions}>
-            {data.vcard && (
-              <button className={styles.actionButton} onClick={handleDownloadVCard}>
-                <Icon type="document" size={20} />
-                <span>연락처 저장</span>
-              </button>
-            )}
-            {data.pdf && (
-              <button className={styles.actionButton} onClick={handleDownloadPDF}>
-                <Icon type="document" size={20} />
-                <span>이력서 다운로드</span>
-              </button>
-            )}
-          </div>
         </div>
+        {data.oneLineIntro && (
+          <div className={styles.heroQuote}>
+            <div className={styles.heroQuoteContent}>
+              <img src="/images/experts/icons/quote-right.svg" alt="" className={`${styles.quoteMark} ${styles.quoteMarkLeft}`} />
+              <p className={styles.heroQuoteText}>{data.oneLineIntro}</p>
+              <img src="/images/experts/icons/quote-left.svg" alt="" className={styles.quoteMark} />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Main Content */}
-      <div className={styles.mainContent}>
-        <div className={styles.contentWrapper}>
-          {/* About the Expert Section */}
+      {/* About the Expert Section with Sidebar */}
+      <div className={styles.aboutSectionWrapper}>
+        <div className={styles.aboutContainer}>
+          {/* About the Expert Section - Full Width */}
           {data.expertIntro && (
-            <section className={styles.section}>
-              <h2 className={styles.sectionTitle}>About the Expert</h2>
-              <div className={styles.sectionContent}>
-                <Viewer initialValue={data.expertIntro} />
+            <section className={styles.aboutSection}>
+              <div className={styles.aboutHeader}>
+                <h2 className={styles.aboutTitle}>About the Expert</h2>
               </div>
-            </section>
-          )}
-
-          {/* Main Cases Section */}
-          {data.mainCases && (
-            <section className={styles.section}>
-              <h2 className={styles.sectionTitle}>주요 처리 사례</h2>
-              <div className={styles.sectionContent}>
-                <Viewer initialValue={data.mainCases} />
-              </div>
-            </section>
-          )}
-
-          {/* Education Section */}
-          {data.education && (
-            <section className={styles.section}>
-              <h2 className={styles.sectionTitle}>학력</h2>
-              <div className={styles.sectionContent}>
-                <Viewer initialValue={data.education} />
-              </div>
-            </section>
-          )}
-
-          {/* Career and Awards Section */}
-          {data.careerAndAwards && (
-            <section className={styles.section}>
-              <h2 className={styles.sectionTitle}>경력 및 수상 실적</h2>
-              <div className={styles.sectionContent}>
-                <Viewer initialValue={data.careerAndAwards} />
-              </div>
-            </section>
-          )}
-
-          {/* Books, Activities, Other Section */}
-          {data.booksActivitiesOther && (
-            <section className={styles.section}>
-              <h2 className={styles.sectionTitle}>저서·활동·기타</h2>
-              <div className={styles.sectionContent}>
-                <Viewer initialValue={data.booksActivitiesOther} />
-              </div>
-            </section>
-          )}
-        </div>
-
-        {/* Sidebar */}
-        <div className={styles.sidebar}>
-          <div className={styles.sidebarCard}>
-            {data.subPhoto?.url && (
-              <div className={styles.sidebarImage}>
-                <img src={data.subPhoto.url} alt={data.name} />
-              </div>
-            )}
-            <div className={styles.sidebarInfo}>
-              <h3 className={styles.sidebarName}>{data.name}</h3>
-              <p className={styles.sidebarPosition}>세무사</p>
-              {data.oneLineIntro && (
-                <p className={styles.sidebarIntro}>{data.oneLineIntro}</p>
-              )}
-              <div className={styles.sidebarContact}>
-                {data.phoneNumber && (
-                  <div className={styles.sidebarContactItem}>
-                    <Icon type="call" size={16} />
-                    <span>{data.phoneNumber}</span>
+              <div className={styles.aboutContent}>
+                <div className={styles.aboutContentLayout}>
+                  <div className={styles.aboutFieldTitle}>
+                    전문가 소개
                   </div>
-                )}
-                {data.email && (
-                  <div className={styles.sidebarContactItem}>
-                    <Icon type="mail" size={16} />
-                    <span>{data.email}</span>
-                  </div>
-                )}
-                {data.affiliation && (
-                  <div className={styles.sidebarContactItem}>
-                    <Icon type="location" size={16} />
-                    <span>{data.affiliation}</span>
-                  </div>
-                )}
-              </div>
-              {data.workAreas && data.workAreas.length > 0 && (
-                <div className={styles.sidebarWorkAreas}>
-                  <p className={styles.sidebarWorkAreasLabel}>주요 업무 분야</p>
-                  <div className={styles.sidebarWorkAreasTags}>
-                    {data.workAreas.map((area, index) => (
-                      <span key={index} className={styles.sidebarWorkAreaTag}>
-                        {typeof area === 'string' ? area : (area?.value || String(area?.id || ''))}
-                      </span>
-                    ))}
+                  <div className={styles.aboutDivider} />
+                  <div className={styles.aboutContentInner}>
+                    <Viewer initialValue={data.expertIntro} />
                   </div>
                 </div>
+              </div>
+            </section>
+          )}
+
+          {/* Sidebar and Main Content - Two Columns */}
+          <div className={styles.aboutLayout}>
+            {/* Sidebar */}
+            <div className={styles.sidebar}>
+              <div className={styles.sidebarCard}>
+                {data.subPhoto?.url && (
+                  <div className={styles.sidebarImage}>
+                    <img src={data.subPhoto.url} alt={data.name} />
+                  </div>
+                )}
+                <div className={styles.sidebarInfo}>
+                  <div className={styles.sidebarNameRow}>
+                    <h3 className={styles.sidebarName}>{data.name}</h3>
+                    <span className={styles.sidebarPosition}>세무사</span>
+                  </div>
+                  <div className={styles.sidebarContact}>
+                    {data.affiliation && (
+                      <div className={styles.sidebarContactItem}>
+                        <Icon type="location" size={20} />
+                        <span>{data.affiliation}</span>
+                      </div>
+                    )}
+                    {data.phoneNumber && (
+                      <div className={styles.sidebarContactItem}>
+                        <Icon type="call" size={20} />
+                        <span>{data.phoneNumber}</span>
+                      </div>
+                    )}
+                    {data.email && (
+                      <div className={styles.sidebarContactItem}>
+                        <Icon type="mail" size={20} />
+                        <span>{data.email}</span>
+                      </div>
+                    )}
+                  </div>
+                  {data.workAreas && data.workAreas.length > 0 && (
+                    <div className={styles.sidebarWorkAreas}>
+                      <p className={styles.sidebarWorkAreasLabel}>주요 업무 분야</p>
+                      <div className={styles.sidebarWorkAreasTags}>
+                        {data.workAreas.map((area, index) => {
+                          const areaName = typeof area === 'string' ? area : (area?.value || String(area?.id || ''));
+                          const indicator = index === 0 ? '■■■' : index === 1 ? '■■□' : '■□□';
+                          return (
+                            <span key={index} className={styles.sidebarWorkAreaTag}>
+                              {areaName}{indicator}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content */}
+            <div className={styles.mainContent}>
+              {/* Main Cases Section */}
+              {data.mainCases && (
+                <section className={styles.section}>
+                  <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>주요 처리 사례</h2>
+                  </div>
+                  <div className={styles.sectionContent}>
+                    <ContentBox>
+                      <div className={styles.listContent}>
+                        <Viewer initialValue={data.mainCases} />
+                      </div>
+                    </ContentBox>
+                  </div>
+                </section>
+              )}
+
+              {/* Education Section */}
+              {data.education && (
+                <section className={styles.section}>
+                  <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>학력</h2>
+                  </div>
+                  <div className={styles.sectionContent}>
+                    <ContentBox>
+                      <div className={styles.listContent}>
+                        <Viewer initialValue={data.education} />
+                      </div>
+                    </ContentBox>
+                  </div>
+                </section>
+              )}
+
+              {/* Career and Awards Section */}
+              {data.careerAndAwards && (
+                <section className={styles.section}>
+                  <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>경력 및 수상 실적</h2>
+                  </div>
+                  <div className={styles.sectionContent}>
+                    <ContentBox>
+                      <div className={styles.listContent}>
+                        <Viewer initialValue={data.careerAndAwards} />
+                      </div>
+                    </ContentBox>
+                  </div>
+                </section>
+              )}
+
+              {/* Books, Activities, Other Section */}
+              {data.booksActivitiesOther && (
+                <section className={styles.section}>
+                  <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>저서·활동·기타</h2>
+                  </div>
+                  <div className={styles.sectionContent}>
+                    <ContentBox>
+                      <div className={styles.listContent}>
+                        <Viewer initialValue={data.booksActivitiesOther} />
+                      </div>
+                    </ContentBox>
+                  </div>
+                </section>
               )}
             </div>
           </div>
@@ -388,74 +432,85 @@ const ExpertDetailPage: React.FC = () => {
 
       {/* Related News Section */}
       {relatedNews.length > 0 && (
-        <div className={styles.relatedNewsSection}>
-          <div className={styles.relatedNewsContainer}>
-            <div className={styles.relatedNewsHeader}>
-              <h2 className={styles.relatedNewsTitle}>RELATED NEWS</h2>
-              <p className={styles.relatedNewsSubtitle}>관련 소식</p>
-              <div className={styles.relatedNewsNavigation}>
-                <button
-                  className={styles.newsNavButton}
-                  onClick={handleNewsPrev}
-                  disabled={newsPage === 0}
-                >
-                  <Icon type="arrow-left-white" size={24} />
-                </button>
-                <button
-                  className={styles.newsNavButton}
-                  onClick={handleNewsNext}
-                  disabled={newsPage >= Math.ceil(relatedNews.length / 4) - 1}
-                >
-                  <Icon type="arrow-right-white" size={24} />
-                </button>
-              </div>
-            </div>
-            <div className={styles.relatedNewsGrid}>
-              {Array.from({ length: Math.ceil(relatedNews.length / 4) }).map((_, pageIndex) => (
-                <div
-                  key={pageIndex}
-                  className={styles.relatedNewsPage}
-                  style={{ display: pageIndex === newsPage ? 'grid' : 'none' }}
-                >
-                  {relatedNews.slice(pageIndex * 4, (pageIndex + 1) * 4).map((news) => (
-                    <div
-                      key={news.id}
-                      className={styles.relatedNewsCard}
-                      onClick={() => router.push(`/insights/${news.id}`)}
+        <div className={styles.fullWidthSection}>
+          <div className={styles.fullWidthContainer}>
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionHeaderContent}>
+                  <div>
+                    <h2 className={styles.sectionTitle}>RELATED NEWS</h2>
+                    <p className={styles.sectionSubtitle}>관련 소식</p>
+                  </div>
+                  <div className={styles.navigationButtons}>
+                    <button
+                      className={styles.navButton}
+                      onClick={handleNewsPrev}
+                      disabled={newsPage === 0}
                     >
-                      {news.thumbnail?.url && (
-                        <div className={styles.relatedNewsImage}>
-                          <img src={news.thumbnail.url} alt={news.title} />
-                        </div>
-                      )}
-                      <div className={styles.relatedNewsContent}>
-                        {news.category && (
-                          <p className={styles.relatedNewsCategory}>
-                            {typeof news.category === 'string' 
-                              ? news.category 
-                              : (typeof news.category === 'object' && news.category?.name 
-                                ? news.category.name 
-                                : '카테고리')}
-                          </p>
-                        )}
-                        <h3 className={styles.relatedNewsTitle}>{news.title}</h3>
-                        <div className={styles.relatedNewsMeta}>
-                          {news.author && (
-                            <>
-                              <span className={styles.relatedNewsAuthor}>{news.author}</span>
-                              <span className={styles.relatedNewsSeparator}>•</span>
-                            </>
+                      <Icon type="arrow-left2-white" size={20} />
+                    </button>
+                    <button
+                      className={styles.navButton}
+                      onClick={handleNewsNext}
+                      disabled={newsPage >= Math.ceil(relatedNews.length / 4) - 1}
+                    >
+                      <Icon type="arrow-right2-white" size={20} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.newsContent}>
+                <div
+                  className={styles.newsGrid}
+                  style={{
+                    transform: `translateX(-${newsPage * 100}%)`,
+                  }}
+                >
+                  {Array.from({ length: Math.ceil(relatedNews.length / 4) }).map((_, pageIndex) => (
+                    <div key={pageIndex} className={styles.newsPage}>
+                      {relatedNews.slice(pageIndex * 4, (pageIndex + 1) * 4).map((news) => (
+                        <div
+                          key={news.id}
+                          className={styles.newsCard}
+                          onClick={() => router.push(`/insights/${news.id}`)}
+                        >
+                          {news.thumbnail?.url && (
+                            <div className={styles.newsThumbnail}>
+                              <img src={news.thumbnail.url} alt={news.title} />
+                            </div>
                           )}
-                          {news.createdAt && (
-                            <span className={styles.relatedNewsDate}>{formatDate(news.createdAt)}</span>
-                          )}
+                          <div className={styles.newsInfo}>
+                            <div className={styles.newsHeader}>
+                              {news.category && (
+                                <p className={styles.newsCategory}>
+                                  {typeof news.category === 'string' 
+                                    ? news.category 
+                                    : (typeof news.category === 'object' && news.category?.name 
+                                      ? news.category.name 
+                                      : '카테고리')}
+                                </p>
+                              )}
+                              <h3 className={styles.newsTitle}>{news.title}</h3>
+                            </div>
+                            <div className={styles.newsMeta}>
+                              {news.author && (
+                                <>
+                                  <span className={styles.newsAuthor}>{news.author}</span>
+                                  <span className={styles.newsSeparator}>•</span>
+                                </>
+                              )}
+                              {news.createdAt && (
+                                <span className={styles.newsDate}>{formatDate(news.createdAt)}</span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
                   ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            </section>
           </div>
         </div>
       )}

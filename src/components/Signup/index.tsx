@@ -9,6 +9,8 @@ import Checkbox from '@/components/common/Checkbox';
 import StepIndicator from '@/components/common/StepIndicator';
 import Button from '@/components/common/Button';
 import Icon from '@/components/common/Icon';
+import { post } from '@/lib/api';
+import { API_ENDPOINTS } from '@/config/api';
 
 type StepType = 1 | 2 | 3;
 type MemberType = 'general' | 'taxAccountant' | 'other';
@@ -78,6 +80,7 @@ const Signup: React.FC = () => {
   const [verificationCodeError, setVerificationCodeError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [passwordConfirmError, setPasswordConfirmError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -138,53 +141,76 @@ const Signup: React.FC = () => {
     setStep(2);
   };
 
-  const handleCheckUserId = useCallback(() => {
+  const handleCheckUserId = useCallback(async () => {
     if (!userId) {
       setUserIdError('아이디를 입력해주세요.');
       setIsUserIdChecked(false);
       return;
     }
-    setIsUserIdChecked(true);
-    
-    // 테스트: 특정 아이디는 중복으로 처리
-    if (userId === 'test' || userId === 'admin' || userId === 'user' || userId === 'qwe123') {
-      setIsUserIdAvailable(false);
-      setUserIdError('이미 사용중인 아이디 입니다');
-    } else {
-      setIsUserIdAvailable(true);
-      setUserIdError('');
+
+    // 아이디 형식 검증 (6-20자 영문/숫자)
+    const userIdRegex = /^[a-zA-Z0-9]{6,20}$/;
+    if (!userIdRegex.test(userId)) {
+      setUserIdError('아이디는 6~20자의 영문/숫자만 사용 가능합니다.');
+      setIsUserIdChecked(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // 회원가입 시도로 중복 확인 (실제로는 별도의 중복확인 API가 있으면 좋음)
+      // 현재는 테스트 데이터로 처리
+      setIsUserIdChecked(true);
+
+      // 테스트: 특정 아이디는 중복으로 처리
+      if (userId === 'test' || userId === 'admin' || userId === 'user' || userId === 'qwe123') {
+        setIsUserIdAvailable(false);
+        setUserIdError('이미 사용중인 아이디 입니다');
+      } else {
+        setIsUserIdAvailable(true);
+        setUserIdError('');
+      }
+    } finally {
+      setIsLoading(false);
     }
   }, [userId]);
 
-  const handleRequestVerification = useCallback(() => {
+  const handleRequestVerification = useCallback(async () => {
     if (!carrier || !phone) {
       setPhoneError('휴대폰번호를 입력해주세요');
       return;
     }
+
+    // 휴대폰 번호 형식 정리 (숫자만 추출)
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    if (cleanPhone.length < 10 || cleanPhone.length > 11) {
+      setPhoneError('올바른 휴대폰 번호를 입력해주세요');
+      return;
+    }
+
     setPhoneError('');
+
+    // API 호출 임시 비활성화 - 바로 타이머 시작
     setTimeLeft(300);
     setIsTimerActive(true);
     setError('');
   }, [phone, carrier]);
 
-  const handleVerifyCode = useCallback(() => {
+  const handleVerifyCode = useCallback(async () => {
     if (!verificationCode) {
       setVerificationCodeError('인증번호를 입력해주세요.');
       return;
     }
-    // 테스트: 특정 번호는 이미 가입된 번호로 처리
-    if (phone === '0101' || phone === '010-1234-5678') {
-      setVerificationCodeError('이미 가입 완료된 휴대폰 번호 입니다');
-      return;
-    }
-    if (verificationCode === '123456') {
+
+    // API 호출 임시 비활성화 - 인증번호 1234로 검증 (서버에서 4자리 요구)
+    if (verificationCode === '1234') {
       setIsPhoneVerified(true);
       setIsTimerActive(false);
       setVerificationCodeError('');
     } else {
-      setVerificationCodeError('인증번호가 올바르지 않습니다');
+      setVerificationCodeError('인증번호가 일치하지 않습니다.');
     }
-  }, [verificationCode, phone]);
+  }, [verificationCode]);
 
   const handleDomainSelect = (value: string) => {
     setSelectedDomainOption(value);
@@ -322,20 +348,70 @@ const Signup: React.FC = () => {
     return !hasError;
   }, [name, emailLocal, emailDomain, carrier, phone, password, passwordConfirm, validateEmail, validatePassword, validatePasswordConfirm]);
 
-  const handleStep2Submit = (e?: React.FormEvent) => {
+  const handleStep2Submit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    
+
     // 모든 필드 검증
     if (!validateAllFields()) {
       return;
     }
-    
+
     if (!isStep2Valid) {
       setError('모든 필드를 올바르게 입력해주세요.');
       return;
     }
+
+    setIsLoading(true);
     setError('');
-    setStep(3);
+
+    try {
+      // memberType 변환 (general -> GENERAL, taxAccountant -> OTHER, other -> INSURANCE)
+      const memberTypeMap: Record<MemberType, string> = {
+        general: 'GENERAL',
+        taxAccountant: 'OTHER',
+        other: 'INSURANCE',
+      };
+
+      const cleanPhone = phone.replace(/[^0-9]/g, '');
+
+      const response = await post(API_ENDPOINTS.AUTH.SIGN_UP, {
+        loginId: userId,
+        password: password,
+        passwordConfirm: passwordConfirm,
+        name: name,
+        email: fullEmail,
+        phoneNumber: cleanPhone,
+        memberType: memberTypeMap[memberType],
+        newsletters: newsletter,
+        termsAgreed: terms.terms && terms.privacy,
+      });
+
+      if (response.error) {
+        // 에러 메시지 처리
+        if (response.status === 500) {
+          setError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        } else if (response.status === 400) {
+          if (response.error.includes('ID') || response.error.includes('아이디')) {
+            setUserIdError(response.error);
+          } else if (response.error.includes('이메일')) {
+            setEmailError(response.error);
+          } else if (response.error.includes('전화번호') || response.error.includes('휴대폰')) {
+            setPhoneError(response.error);
+          } else {
+            setError(response.error);
+          }
+        } else {
+          setError(response.error);
+        }
+        return;
+      }
+
+      setStep(3);
+    } catch {
+      setError('회원가입에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderStep1 = () => (
@@ -438,11 +514,11 @@ const Signup: React.FC = () => {
               <Button
                 type="line-white"
                 size="medium"
-                disabled={!userId}
+                disabled={!userId || isLoading}
                 onClick={handleCheckUserId}
                 className="signup-check-duplicate-button"
               >
-                중복 확인
+                {isLoading ? '확인 중...' : '중복 확인'}
               </Button>
             </div>
             {isUserIdChecked && isUserIdAvailable && (
@@ -589,11 +665,11 @@ const Signup: React.FC = () => {
               <Button
                 type="line-white"
                 size="medium"
-                disabled={!carrier || !phone || isPhoneVerified}
+                disabled={!carrier || !phone || isPhoneVerified || isLoading}
                 onClick={handleRequestVerification}
                 className="signup-request-verification-button"
               >
-                인증 요청
+                {isLoading ? '발송 중...' : '인증 요청'}
               </Button>
             </div>
             {phoneError && (
@@ -626,11 +702,11 @@ const Signup: React.FC = () => {
                 <Button
                   type="line-white"
                   size="medium"
-                  disabled={!verificationCode}
+                  disabled={!verificationCode || isLoading}
                   onClick={handleVerifyCode}
                   className="signup-verify-code-button"
                 >
-                  확인
+                  {isLoading ? '확인 중...' : '확인'}
                 </Button>
               </div>
               {verificationCodeError && (
@@ -719,10 +795,10 @@ const Signup: React.FC = () => {
           type={isStep2Valid ? "primary" : "secondary"}
           size="large"
           rightIcon="arrow-right2-gray"
-          disabled={!isStep2Valid}
+          disabled={!isStep2Valid || isLoading}
           onClick={handleStep2Submit}
         >
-          다음
+          {isLoading ? '가입 중...' : '다음'}
         </Button>
       </div>
     </>

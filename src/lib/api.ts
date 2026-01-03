@@ -62,8 +62,8 @@ export const apiRequest = async <T = unknown>(
   const url = `${API_BASE_URL}${endpoint}`;
   const token = getAuthToken();
 
-  const headers: HeadersInit = {
-    ...customHeaders,
+  const headers: Record<string, string> = {
+    ...(customHeaders as Record<string, string>),
   };
 
   // GET 요청이 아니거나 body가 있을 때만 Content-Type 추가
@@ -73,7 +73,7 @@ export const apiRequest = async <T = unknown>(
   }
 
   if (token) {
-    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
   const fetchOptions: RequestInit = {

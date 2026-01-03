@@ -70,12 +70,13 @@
 }
 
 .bodyContent {
-  font-family: $font-pretendard;
-  font-weight: $font-weight-regular;
+  color: var(--grayscale-30, #d8d8d8);
+  font-family: Pretendard;
   font-size: 17px;
-  line-height: 1.5;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%; /* 25.5px */
   letter-spacing: -0.085px;
-  color: #d8d8d8;
 
   @media (max-width: $breakpoint-tablet) {
     font-size: 15px;
@@ -83,14 +84,31 @@
 
   // Toast UI Viewer 스타일 오버라이드
   :global(.toastui-editor-contents) {
-    font-family: $font-pretendard;
+    color: var(--grayscale-30, #d8d8d8);
+    font-family: Pretendard;
     font-size: 17px;
-    line-height: 1.5;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%; /* 25.5px */
     letter-spacing: -0.085px;
-    color: #d8d8d8;
 
     @media (max-width: $breakpoint-tablet) {
       font-size: 15px;
+    }
+
+    // 모든 텍스트 요소에 기본 스타일 적용
+    p, span, div, li, td, th {
+      color: var(--grayscale-30, #d8d8d8);
+      font-family: Pretendard;
+      font-size: 17px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 150%;
+      letter-spacing: -0.085px;
+
+      @media (max-width: $breakpoint-tablet) {
+        font-size: 15px;
+      }
     }
 
     p {
@@ -99,6 +117,16 @@
       &:last-child {
         margin-bottom: 0;
       }
+    }
+
+    ul,
+    ol {
+      margin: 16px 0;
+      padding-left: 24px;
+    }
+
+    li {
+      margin: 8px 0;
     }
 
     strong {
@@ -136,15 +164,33 @@
         border-color: rgba(255, 255, 255, 0.2);
       }
     }
+
+    // 이미지를 텍스트 폭만큼 꽉 차게 표시
+    img {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 16px 0;
+    }
   }
 }
 
 .sidebar {
   width: 464px;
   flex-shrink: 0;
+  position: sticky;
+  top: 100px;
+  align-self: flex-start;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
 
   @media (max-width: $breakpoint-desktop) {
     width: 100%;
+    position: relative;
+    top: 0;
+    max-height: none;
+    overflow-y: visible;
   }
 }
 
@@ -445,6 +491,98 @@
   &:hover {
     background: rgba(255, 255, 255, 0.9);
   }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+}
+
+// 승인 대기중 버튼
+.pendingButton {
+  width: 100%;
+  height: 56px;
+  background: #555555;
+  border: none;
+  border-radius: 100px;
+  color: white;
+  font-family: $font-pretendard;
+  font-weight: $font-weight-medium;
+  font-size: 17px;
+  line-height: 1.5;
+  letter-spacing: -0.085px;
+  cursor: not-allowed;
+  transition: all 0.2s ease;
+}
+
+// 모집 종료 버튼
+.closedButton {
+  width: 100%;
+  height: 56px;
+  background: #555555;
+  border: none;
+  border-radius: 100px;
+  color: white;
+  font-family: $font-pretendard;
+  font-weight: $font-weight-medium;
+  font-size: 17px;
+  line-height: 1.5;
+  letter-spacing: -0.085px;
+  cursor: not-allowed;
+  transition: all 0.2s ease;
+}
+
+// 수강 완료 버튼
+.completedButton {
+  width: 100%;
+  height: 56px;
+  background: #555555;
+  border: none;
+  border-radius: 100px;
+  color: white;
+  font-family: $font-pretendard;
+  font-weight: $font-weight-medium;
+  font-size: 17px;
+  line-height: 1.5;
+  letter-spacing: -0.085px;
+  cursor: not-allowed;
+  transition: all 0.2s ease;
+}
+
+// 신청 취소 링크
+.cancelLink {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin-top: 16px;
+  color: #fb7058;
+  font-family: $font-pretendard;
+  font-weight: $font-weight-medium;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.075px;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+// 신청마감 라벨 (회색)
+.labelGray {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px;
+  border-radius: 4px;
+  font-family: $font-pretendard;
+  font-weight: $font-weight-semibold;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.075px;
+  color: #949494;
 }
 
 .loading,

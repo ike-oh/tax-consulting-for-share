@@ -101,9 +101,9 @@ const InsightsPage: React.FC = () => {
         params.append('category', categoryFilter);
       }
       if (activeTab === 'column') {
-        params.append('type', 'column');
+        params.append('categoryId', '1');
       } else {
-        params.append('type', 'library');
+        params.append('dataRoom', 'A');
       }
 
       const response = await get<InsightResponse>(
@@ -113,6 +113,29 @@ const InsightsPage: React.FC = () => {
       if (response.data) {
         const data = response.data;
         let filteredItems = data.items || [];
+        
+        // 클라이언트 사이드 카테고리 필터링 (API 필터링이 제대로 작동하지 않는 경우를 대비)
+        // subcategory.name을 기준으로 필터링 (실제 데이터 구조에 맞춤)
+        if (categoryFilter !== 'all') {
+          filteredItems = filteredItems.filter((item) => {
+            // subcategory가 있으면 subcategory.name을 우선 사용, 없으면 category.name 사용
+            const subcategoryName = item.subcategory?.name?.toLowerCase() || '';
+            const categoryName = item.category?.name?.toLowerCase() || '';
+            const categoryType = item.category?.type?.toLowerCase();
+            
+            // 필터링할 이름 결정 (subcategory 우선)
+            const filterName = subcategoryName || categoryName;
+            
+            if (categoryFilter === 'industry') {
+              // 업종별: subcategory.name 또는 category.name에 업종이 포함되고, 컨설팅이 아닌 경우
+              return filterName.includes('업종') && !filterName.includes('컨설팅');
+            } else if (categoryFilter === 'consulting') {
+              // 컨설팅: subcategory.name 또는 category.name에 컨설팅이 포함되고, 업종별이 아닌 경우
+              return filterName.includes('컨설팅') && !filterName.includes('업종');
+            }
+            return true;
+          });
+        }
         
         // 클라이언트 사이드 검색 필터링 (API가 검색을 지원하지 않는 경우를 대비)
         if (searchQuery && searchQuery.trim()) {

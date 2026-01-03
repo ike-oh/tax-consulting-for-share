@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import styles from './DatePickerModal.module.scss';
 
 interface DatePickerModalProps {
@@ -14,11 +14,30 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({
   onConfirm,
   availableDates,
 }) => {
+  // 날짜 문자열을 정규화 (YYYY.MM.DD 형식으로 통일)
+  const normalizeDateString = (dateStr: string): string => {
+    // YYYY-MM-DD 또는 YYYY.MM.DD 형식을 YYYY.MM.DD로 변환
+    const normalized = dateStr.replace(/-/g, '.');
+    const parts = normalized.split('.');
+    if (parts.length === 3) {
+      const year = parts[0];
+      const month = parts[1].padStart(2, '0');
+      const day = parts[2].padStart(2, '0');
+      return `${year}.${month}.${day}`;
+    }
+    return dateStr;
+  };
+
+  // 정규화된 availableDates 배열 생성
+  const normalizedAvailableDates = useMemo(() => {
+    if (!availableDates || availableDates.length === 0) return [];
+    return availableDates.map(normalizeDateString);
+  }, [availableDates]);
+
   // 처음 가능한 날짜를 기준으로 초기 월 설정
   const getInitialMonth = () => {
-    if (availableDates && availableDates.length > 0) {
-      const firstAvailableDate = availableDates[0];
-      // 날짜 형식이 "YYYY.MM.DD"인 경우
+    if (normalizedAvailableDates && normalizedAvailableDates.length > 0) {
+      const firstAvailableDate = normalizedAvailableDates[0];
       const dateParts = firstAvailableDate.split('.');
       if (dateParts.length === 3) {
         const year = parseInt(dateParts[0]);
@@ -38,7 +57,7 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({
       const initialMonth = getInitialMonth();
       setCurrentMonth(initialMonth);
     }
-  }, [isOpen, availableDates]);
+  }, [isOpen, normalizedAvailableDates]);
 
   if (!isOpen) return null;
 
@@ -70,7 +89,7 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({
   // 날짜가 교육 가능한 날짜인지 확인
   const isAvailableDate = (date: Date): boolean => {
     const dateStr = formatDate(date);
-    return availableDates.includes(dateStr);
+    return normalizedAvailableDates.includes(dateStr);
   };
 
   // 날짜 선택

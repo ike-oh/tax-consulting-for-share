@@ -349,10 +349,15 @@ const HistoryPage: React.FC = () => {
           return;
         }
 
-        // 좌표가 있는 지점들만 필터링
-        const branchesWithCoords = branchesData.filter(
-          branch => branch.latitude !== null && branch.longitude !== null
-        );
+        // 좌표가 있는 지점들만 필터링 (문자열을 숫자로 변환)
+        const branchesWithCoords = branchesData
+          .filter(branch => branch.latitude !== null && branch.longitude !== null)
+          .map(branch => ({
+            ...branch,
+            lat: typeof branch.latitude === 'string' ? parseFloat(branch.latitude) : branch.latitude,
+            lng: typeof branch.longitude === 'string' ? parseFloat(branch.longitude) : branch.longitude,
+          }))
+          .filter(branch => !isNaN(branch.lat!) && !isNaN(branch.lng!));
 
         let center: any;
         if (branchesWithCoords.length === 0) {
@@ -360,8 +365,8 @@ const HistoryPage: React.FC = () => {
           center = new (window as any).naver.maps.LatLng(37.5665, 126.9780);
         } else {
           // 모든 지점의 중심점 계산
-          const avgLat = branchesWithCoords.reduce((sum, b) => sum + (b.latitude || 0), 0) / branchesWithCoords.length;
-          const avgLng = branchesWithCoords.reduce((sum, b) => sum + (b.longitude || 0), 0) / branchesWithCoords.length;
+          const avgLat = branchesWithCoords.reduce((sum, b) => sum + (b.lat || 0), 0) / branchesWithCoords.length;
+          const avgLng = branchesWithCoords.reduce((sum, b) => sum + (b.lng || 0), 0) / branchesWithCoords.length;
           center = new (window as any).naver.maps.LatLng(avgLat, avgLng);
         }
 
@@ -371,58 +376,55 @@ const HistoryPage: React.FC = () => {
           zoom: branchesWithCoords.length > 1 ? 11 : 15,
         });
 
-        // 커스텀 마커 아이콘 설정
-        const customMarkerIcon = {
-          url: '/images/education/icons/marker-custom.svg',
-          size: new (window as any).naver.maps.Size(32, 32),
-          origin: new (window as any).naver.maps.Point(0, 0),
-          anchor: new (window as any).naver.maps.Point(16, 16), // 마커 중앙이 좌표에 맞춰지도록
+        // 커스텀 마커 생성 함수 (말풍선 스타일)
+        const createCustomMarkerContent = (name: string) => {
+          return `
+            <div style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              background: white;
+              border-radius: 24px;
+              padding: 10px 16px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+              white-space: nowrap;
+              position: relative;
+            ">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" fill="#E53935"/>
+              </svg>
+              <span style="
+                font-family: 'Pretendard', sans-serif;
+                font-size: 15px;
+                font-weight: 600;
+                color: #222;
+              ">${name}</span>
+              <div style="
+                position: absolute;
+                bottom: -8px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 0;
+                height: 0;
+                border-left: 8px solid transparent;
+                border-right: 8px solid transparent;
+                border-top: 8px solid white;
+              "></div>
+            </div>
+          `;
         };
 
-        // 테스트: 서초역 마커 추가 (커스텀 아이콘 사용)
-        const seochoStation = new (window as any).naver.maps.LatLng(37.4837, 127.0324);
-        const testMarker = new (window as any).naver.maps.Marker({
-          position: seochoStation,
-          map: mapInstance,
-          title: '서초역 (테스트)',
-          icon: customMarkerIcon,
-        });
-
-        const testInfoWindow = new (window as any).naver.maps.InfoWindow({
-          content: `
-            <div style="padding: 10px; min-width: 150px;">
-              <div style="font-weight: bold; margin-bottom: 5px;">서초역 (테스트)</div>
-              <div style="font-size: 12px; color: #666;">서울특별시 서초구 서초동</div>
-            </div>
-          `,
-        });
-
-        (window as any).naver.maps.Event.addListener(testMarker, 'click', () => {
-          testInfoWindow.open(mapInstance, testMarker);
-        });
-
-        // 마커 추가 (커스텀 아이콘 사용)
+        // 마커 추가 (커스텀 말풍선 스타일)
         branchesWithCoords.forEach((branch) => {
-          if (branch.latitude !== null && branch.longitude !== null) {
+          if (branch.lat && branch.lng) {
             const marker = new (window as any).naver.maps.Marker({
-              position: new (window as any).naver.maps.LatLng(branch.latitude, branch.longitude),
+              position: new (window as any).naver.maps.LatLng(branch.lat, branch.lng),
               map: mapInstance,
               title: branch.name,
-              icon: customMarkerIcon,
-            });
-
-            // 마커 클릭 시 정보창 표시
-            const infoWindow = new (window as any).naver.maps.InfoWindow({
-              content: `
-                <div style="padding: 10px; min-width: 150px;">
-                  <div style="font-weight: bold; margin-bottom: 5px;">${branch.name}</div>
-                  <div style="font-size: 12px; color: #666;">${branch.address}</div>
-                </div>
-              `,
-            });
-
-            (window as any).naver.maps.Event.addListener(marker, 'click', () => {
-              infoWindow.open(mapInstance, marker);
+              icon: {
+                content: createCustomMarkerContent(branch.name),
+                anchor: new (window as any).naver.maps.Point(100, 50),
+              },
             });
           }
         });
@@ -490,17 +492,24 @@ const HistoryPage: React.FC = () => {
     };
   }, [activeTab, branchesData]);
 
-  const formatDate = (item: HistoryItem): string => {
-    // createdAt에서 날짜 추출, 없으면 month 사용
-    if (item.createdAt) {
-      const date = new Date(item.createdAt);
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      return `${month}.${day}`;
-    }
-    // createdAt이 없으면 month만 사용
+  const formatMonth = (item: HistoryItem): string => {
+    // month 값을 사용하여 월만 표시
     const month = item.month.toString().padStart(2, '0');
-    return `${month}.01`;
+    return month;
+  };
+
+  // content에서 \n으로 구분된 항목들을 배열로 변환
+  const parseContentItems = (content: string): string[] => {
+    return content.split('\n').filter(item => item.trim() !== '');
+  };
+
+  // URL에 http/https가 없으면 https:// 추가
+  const formatUrl = (url: string | null): string => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return `https://${url}`;
   };
 
   if (loading) {
@@ -731,46 +740,61 @@ const HistoryPage: React.FC = () => {
               {sortedData.map((yearData, yearIndex) => {
                 // 각 연도의 항목들을 displayOrder로 정렬
                 const sortedItems = [...yearData.items].sort((a, b) => a.displayOrder - b.displayOrder);
-                
-                // 날짜별로 그룹화
-                const groupedByDate = sortedItems.reduce((acc, item) => {
-                  const dateKey = formatDate(item);
-                  if (!acc[dateKey]) {
-                    acc[dateKey] = [];
+
+                // 월별로 그룹화
+                const groupedByMonth = sortedItems.reduce((acc, item) => {
+                  const monthKey = formatMonth(item);
+                  if (!acc[monthKey]) {
+                    acc[monthKey] = [];
                   }
-                  acc[dateKey].push(item);
+                  acc[monthKey].push(item);
                   return acc;
                 }, {} as Record<string, HistoryItem[]>);
-                
-                const dateGroups = Object.entries(groupedByDate);
-                
+
+                const monthGroups = Object.entries(groupedByMonth);
+
                 return (
                   <div key={yearData.year} className={styles.yearGroup}>
                     <h3 className={styles.yearTitle}>{yearData.year}</h3>
-                    
-                    {dateGroups.map(([date, items], dateIndex) => (
-                      <div key={date} className={styles.dateGroup}>
-                        {items.map((item, itemIndex) => (
-                          <div key={item.id} className={styles.historyItem}>
-                            {itemIndex === 0 && (
-                              <div className={styles.date}>{date}</div>
-                            )}
-                            {itemIndex > 0 && (
-                              <div className={styles.date}></div>
-                            )}
-                            <div className={styles.contentWrapper}>
-                              <img 
-                                src="/images/history/icons/ellipse-2808.svg" 
-                                alt="" 
-                                className={styles.dotIcon}
-                              />
-                              <div className={styles.contentText}>{item.content}</div>
+
+                    {monthGroups.map(([month, items], monthIndex) => {
+                      // 해당 월의 모든 content를 \n으로 분리하여 평탄화
+                      const allContentItems: { id: number; content: string; isFirst: boolean }[] = [];
+                      items.forEach((item, itemIdx) => {
+                        const contentParts = parseContentItems(item.content);
+                        contentParts.forEach((part, partIdx) => {
+                          allContentItems.push({
+                            id: item.id,
+                            content: part,
+                            isFirst: itemIdx === 0 && partIdx === 0,
+                          });
+                        });
+                      });
+
+                      return (
+                        <div key={month} className={styles.dateGroup}>
+                          {allContentItems.map((contentItem, contentIndex) => (
+                            <div key={`${contentItem.id}-${contentIndex}`} className={styles.historyItem}>
+                              {contentIndex === 0 && (
+                                <div className={styles.date}>{month}</div>
+                              )}
+                              {contentIndex > 0 && (
+                                <div className={styles.date}></div>
+                              )}
+                              <div className={styles.contentWrapper}>
+                                <img
+                                  src="/images/history/icons/ellipse-2808.svg"
+                                  alt=""
+                                  className={styles.dotIcon}
+                                />
+                                <div className={styles.contentText}>{contentItem.content}</div>
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                    
+                          ))}
+                        </div>
+                      );
+                    })}
+
                     <div className={styles.divider}></div>
                   </div>
                 );
@@ -1037,7 +1061,7 @@ const HistoryPage: React.FC = () => {
                             <h3 className={styles.branchName}>{branch.name}</h3>
                             <div className={styles.branchSocialLinks}>
                               {branch.blogUrl && (
-                                <a href={branch.blogUrl} target="_blank" rel="noopener noreferrer" className={styles.branchSocialLink}>
+                                <a href={formatUrl(branch.blogUrl)} target="_blank" rel="noopener noreferrer" className={styles.branchSocialLink}>
                                   <img src="/images/branches/icons/naver-blog.svg" alt="Naver Blog" />
                                 </a>
                               )}
@@ -1046,7 +1070,7 @@ const HistoryPage: React.FC = () => {
                               )}
                               {branch.youtubeUrl && (
                                 <>
-                                  <a href={branch.youtubeUrl} target="_blank" rel="noopener noreferrer" className={styles.branchSocialLink}>
+                                  <a href={formatUrl(branch.youtubeUrl)} target="_blank" rel="noopener noreferrer" className={styles.branchSocialLink}>
                                     <img src="/images/branches/icons/youtube.svg" alt="YouTube" />
                                   </a>
                                   {(branch.instagramUrl || branch.websiteUrl) && (
@@ -1056,7 +1080,7 @@ const HistoryPage: React.FC = () => {
                               )}
                               {branch.instagramUrl && (
                                 <>
-                                  <a href={branch.instagramUrl} target="_blank" rel="noopener noreferrer" className={styles.branchSocialLink}>
+                                  <a href={formatUrl(branch.instagramUrl)} target="_blank" rel="noopener noreferrer" className={styles.branchSocialLink}>
                                     <img src="/images/branches/icons/instagram.svg" alt="Instagram" />
                                   </a>
                                   {branch.websiteUrl && (
@@ -1065,7 +1089,7 @@ const HistoryPage: React.FC = () => {
                                 </>
                               )}
                               {branch.websiteUrl && (
-                                <a href={branch.websiteUrl} target="_blank" rel="noopener noreferrer" className={styles.branchSocialLink}>
+                                <a href={formatUrl(branch.websiteUrl)} target="_blank" rel="noopener noreferrer" className={styles.branchSocialLink}>
                                   <img src="/images/branches/icons/website.svg" alt="Website" />
                                 </a>
                               )}

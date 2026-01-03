@@ -17,7 +17,11 @@ export const API_ENDPOINTS = {
     ME: '/auth/me',
     PROFILE: '/auth/profile',
     CHANGE_PASSWORD: '/auth/change-password',
+    VERIFY_PASSWORD: '/auth/verify-password',
     MY_APPLICATIONS: '/auth/me/applications',
+    // 휴대폰 인증
+    PHONE_SEND: '/auth/phone/send',
+    PHONE_VERIFY: '/auth/phone/verify',
     // ID 찾기
     FIND_ID_EMAIL_SEND: '/auth/find-id/email/send',
     FIND_ID_PHONE_SEND: '/auth/find-id/phone/send',
@@ -55,6 +59,7 @@ export const API_ENDPOINTS = {
   KEY_CUSTOMERS: '/key-customers',
   BUSINESS_AREAS: '/business-areas',
   BUSINESS_AREAS_HIERARCHICAL: '/business-areas/hierarchical',
+  BUSINESS_AREAS_CATEGORIES: '/business-areas/categories',
   INSIGHTS: '/insights',
 
   // Consultations
