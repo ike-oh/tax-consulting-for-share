@@ -586,8 +586,10 @@ const InsightDetailPage: React.FC = () => {
       <div className={styles.container}>
         <div className={styles.content}>
           <div className={styles.headerSection}>
-            <div className={styles.category}>{typeof insight.subcategory?.name === 'string' ? insight.subcategory.name : (typeof insight.category?.name === 'string' ? insight.category.name : '카테고리명')}</div>
-            <h1 className={styles.title}>{insight.title}</h1>
+            <div className={styles.titleWrapper}>
+              <div className={styles.category}>{typeof insight.subcategory?.name === 'string' ? insight.subcategory.name : (typeof insight.category?.name === 'string' ? insight.category.name : '카테고리명')}</div>
+              <h1 className={styles.title}>{insight.title}</h1>
+            </div>
             <div className={styles.meta}>
               <div className={styles.metaLeft}>
                 <span className={styles.author}>작성자명</span>
@@ -595,15 +597,16 @@ const InsightDetailPage: React.FC = () => {
                 <span className={styles.date}>{formatDate(insight.createdAt)}</span>
               </div>
               <div className={styles.metaRight}>
-                <img 
-                  src="/images/insights/icons/printer.svg" 
-                  alt="프린트" 
+                <img
+                  src="/images/insights/icons/printer.svg"
+                  alt="프린트"
                   className={styles.icon}
                   onClick={handlePrint}
                 />
-                <img 
-                  src="/images/insights/icons/share.svg" 
-                  alt="공유" 
+                <span className={styles.iconDivider} />
+                <img
+                  src="/images/insights/icons/share.svg"
+                  alt="공유"
                   className={styles.icon}
                   onClick={handleShare}
                 />
@@ -748,11 +751,11 @@ const InsightDetailPage: React.FC = () => {
                   <div className={styles.navEmpty}>이전 글이 없습니다</div>
                 )}
               </div>
-              <div className={styles.navItem} onClick={handleNextClick}>
+              <div className={`${styles.navItem} ${styles.navItemNext}`} onClick={handleNextClick}>
                 {nextInsight ? (
                   <>
-                    <span className={styles.navTitle}>{nextInsight.title}</span>
                     <span className={styles.navLabel}>다음 글</span>
+                    <span className={styles.navTitle}>{nextInsight.title}</span>
                     <Icon type="arrow-right-gray" size={24} className={styles.navIcon} />
                   </>
                 ) : (

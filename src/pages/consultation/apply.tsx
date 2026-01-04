@@ -6,7 +6,7 @@ import Footer from '@/components/common/Footer';
 import PageHeader from '@/components/common/PageHeader';
 import Checkbox from '@/components/common/Checkbox';
 import Button from '@/components/common/Button';
-import { post } from '@/lib/api';
+import { get, post } from '@/lib/api';
 import { API_ENDPOINTS } from '@/config/api';
 import styles from './apply.module.scss';
 
@@ -31,6 +31,33 @@ interface ConsultationApiRequest {
   memberFlag: 'MEMBER' | 'NON_MEMBER';
 }
 
+// API 응답 타입
+interface CategoryItem {
+  id: number;
+  name: string;
+  isExposed: boolean;
+  majorCategoryId: number;
+  majorCategoryName: string;
+}
+
+interface MemberItem {
+  id: number;
+  name: string;
+  isExposed: boolean;
+}
+
+interface MembersResponse {
+  items: MemberItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
 const ConsultationApplyPage: React.FC = () => {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -43,12 +70,65 @@ const ConsultationApplyPage: React.FC = () => {
   const [searchAccountantQuery, setSearchAccountantQuery] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // 로그인 상태 확인
+  // API에서 가져온 데이터
+  const [consultationFields, setConsultationFields] = useState<SelectOption[]>([
+    { value: '', label: '선택안함' }
+  ]);
+  const [taxAccountants, setTaxAccountants] = useState<SelectOption[]>([
+    { value: '', label: '선택안함' }
+  ]);
+
+  // 로그인 상태 확인 및 API 데이터 가져오기
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     setIsLoggedIn(!!token);
+
+    // 상담 분야 (카테고리) 가져오기
+    const fetchCategories = async () => {
+      try {
+        const response = await get<CategoryItem[]>(API_ENDPOINTS.BUSINESS_AREAS_CATEGORIES);
+        if (response.data) {
+          const options: SelectOption[] = [
+            { value: '', label: '선택안함' },
+            ...response.data
+              .filter(item => item.isExposed)
+              .map(item => ({
+                value: item.id.toString(),
+                label: item.name
+              }))
+          ];
+          setConsultationFields(options);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+
+    // 담당 세무사 (멤버) 가져오기
+    const fetchMembers = async () => {
+      try {
+        const response = await get<MembersResponse>(`${API_ENDPOINTS.MEMBERS}?page=1&limit=100`);
+        if (response.data?.items) {
+          const options: SelectOption[] = [
+            { value: '', label: '선택안함' },
+            ...response.data.items
+              .filter(item => item.isExposed)
+              .map(item => ({
+                value: item.id.toString(),
+                label: item.name
+              }))
+          ];
+          setTaxAccountants(options);
+        }
+      } catch (error) {
+        console.error('Failed to fetch members:', error);
+      }
+    };
+
+    fetchCategories();
+    fetchMembers();
   }, []);
-  
+
   const [formData, setFormData] = useState<ConsultationFormData>({
     consultationField: '',
     taxAccountant: '',
@@ -61,29 +141,6 @@ const ConsultationApplyPage: React.FC = () => {
 
   const fieldDropdownRef = useRef<HTMLDivElement>(null);
   const accountantDropdownRef = useRef<HTMLDivElement>(null);
-
-  // 상담 분야 옵션
-  interface SelectOption {
-    value: string;
-    label: string;
-  }
-
-  const consultationFields: SelectOption[] = [
-    { value: '', label: '선택안함' },
-    { value: 'manufacturing', label: '제조업' },
-    { value: 'construction', label: '건설·부동산업' },
-    { value: 'retail', label: '도·소매업' },
-    { value: 'service', label: '서비스업' },
-  ];
-
-  // 담당 세무사 옵션
-  const taxAccountants: SelectOption[] = [
-    { value: '', label: '선택안함' },
-    { value: 'kang', label: '강민수' },
-    { value: 'kim', label: '김다희' },
-    { value: 'song', label: '송하준' },
-    { value: 'lim', label: '임지은' },
-  ];
 
   // 필터링된 옵션
   const filteredFields = consultationFields.filter(field =>
@@ -192,7 +249,6 @@ const ConsultationApplyPage: React.FC = () => {
     <div className={styles.consultationPage}>
       <Header
         variant="transparent"
-        size="web"
         onMenuClick={() => setIsMenuOpen(true)}
         onLogoClick={() => router.push('/')}
       />
@@ -453,7 +509,7 @@ const ConsultationApplyPage: React.FC = () => {
           </div>
         </div>
 
-        <Footer variant="web" />
+        <Footer />
       </div>
 
       {/* Success Modal */}

@@ -4,6 +4,10 @@
   min-height: 100vh;
   background-color: #151515;
   color: #fff;
+
+  @media (max-width: 767px) {
+    padding-top: 56px;
+  }
 }
 
 .pageContent {
@@ -54,8 +58,11 @@
   }
 
   @media (max-width: 768px) {
-    font-size: 48px;
-    white-space: normal;
+    font-size: 40px;
+    line-height: 110%;
+    letter-spacing: -2px;
+    text-align: left;
+    white-space: nowrap;
   }
 }
 
@@ -497,7 +504,7 @@
 
 @media (max-width: 768px) {
   .pageHeaderSection {
-    padding: 80px 20px 32px;
+    padding: 64px 20px 32px;
   }
 
   .formSection {
@@ -510,7 +517,7 @@
   }
 
   .formTitleText {
-    font-size: 60px;
+    font-size: 40px;
   }
 
   .formFields {

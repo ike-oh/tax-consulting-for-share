@@ -330,6 +330,8 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({
           </button>
         </div>
 
+        <h1 className={styles.mobileTitle}>교육/세미나 신청</h1>
+
         <div className={styles.content}>
           <div className={styles.mainContent}>
             <div className={styles.formSection}>
@@ -480,97 +482,142 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({
                 </div>
               </div>
 
-              {buttonState === 'recruitment_closed' && (
-                <button
-                  className={`${styles.applyButton} ${styles.applyButtonDisabled}`}
-                  disabled
-                >
-                  모집 종료
-                </button>
-              )}
-
-              {buttonState === 'completed' && (
-                <button
-                  className={`${styles.applyButton} ${styles.applyButtonDisabled}`}
-                  disabled
-                >
-                  수강 완료
-                </button>
-              )}
-
-              {buttonState === 'pending' && (
-                <>
+              {/* 데스크톱 버튼 */}
+              <div className={styles.buttonWrapper}>
+                {buttonState === 'recruitment_closed' && (
                   <button
                     className={`${styles.applyButton} ${styles.applyButtonDisabled}`}
                     disabled
                   >
-                    승인 대기중
+                    모집 종료
                   </button>
-                  <button
-                    className={styles.cancelButton}
-                    onClick={handleCancelApplication}
-                    disabled={isLoading}
-                  >
-                    신청 취소
-                  </button>
-                </>
-              )}
+                )}
 
-              {buttonState === 'can_apply' && (
-                <button
-                  className={`${styles.applyButton} ${!canApply || isLoading || isLoadingUser ? styles.applyButtonDisabled : ''}`}
-                  onClick={handleApply}
-                  disabled={!canApply || isLoading || isLoadingUser}
-                >
-                  {isLoading ? '신청 중...' : isLoadingUser ? '정보 불러오는 중...' : '신청하기'}
-                </button>
-              )}
+                {buttonState === 'completed' && (
+                  <button
+                    className={`${styles.applyButton} ${styles.applyButtonDisabled}`}
+                    disabled
+                  >
+                    수강 완료
+                  </button>
+                )}
+
+                {buttonState === 'pending' && (
+                  <>
+                    <button
+                      className={`${styles.applyButton} ${styles.applyButtonDisabled}`}
+                      disabled
+                    >
+                      승인 대기중
+                    </button>
+                    <button
+                      className={styles.cancelButton}
+                      onClick={handleCancelApplication}
+                      disabled={isLoading}
+                    >
+                      신청 취소
+                    </button>
+                  </>
+                )}
+
+                {buttonState === 'can_apply' && (
+                  <button
+                    className={`${styles.applyButton} ${!canApply || isLoading || isLoadingUser ? styles.applyButtonDisabled : ''}`}
+                    onClick={handleApply}
+                    disabled={!canApply || isLoading || isLoadingUser}
+                  >
+                    {isLoading ? '신청 중...' : isLoadingUser ? '정보 불러오는 중...' : '신청하기'}
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className={styles.verticalDivider} />
 
             <div className={styles.summarySection}>
-              <div className={styles.summaryImage}>
-                <img src={education.image.url} alt={education.name} />
+              <div className={styles.summaryHeader}>
+                <div className={styles.summaryImage}>
+                  <img src={education.image.url} alt={education.name} />
+                </div>
+                <div className={styles.summaryTitleWrapper}>
+                  <h3 className={styles.summaryTitle}>{education.name}</h3>
+                </div>
               </div>
-              <div className={styles.summaryContent}>
-                <h3 className={styles.summaryTitle}>{education.name}</h3>
-                <div className={styles.summaryDetails}>
-                  <div className={styles.summaryDetailItem}>
-                    <img 
-                      src="/images/education/icons/calendar-clock.svg" 
-                      alt="교육 일자" 
-                      className={styles.summaryIcon}
-                    />
-                    <span className={styles.summaryLabel}>교육 일자</span>
-                    <p className={styles.summaryValue}>
-                      {formatEducationDates(education.educationDates)}
-                    </p>
-                  </div>
-                  <div className={styles.summaryDetailItem}>
-                    <img 
-                      src="/images/education/icons/icon_16.svg" 
-                      alt="교육 시간" 
-                      className={styles.summaryIcon}
-                    />
-                    <span className={styles.summaryLabel}>교육 시간</span>
-                    <p className={styles.summaryValue}>
-                      {education.educationTimeSlots.join(', ')}
-                    </p>
-                  </div>
-                  <div className={styles.summaryDetailItem}>
-                    <img 
-                      src="/images/education/icons/marker.svg" 
-                      alt="교육 장소" 
-                      className={styles.summaryIcon}
-                    />
-                    <span className={styles.summaryLabel}>교육 장소</span>
-                    <p className={styles.summaryValue}>{education.location}</p>
-                  </div>
+              <div className={styles.summaryDetails}>
+                <div className={styles.summaryDetailItem}>
+                  <img
+                    src="/images/education/icons/calendar-clock.svg"
+                    alt="교육 일자"
+                    className={styles.summaryIcon}
+                  />
+                  <span className={styles.summaryLabel}>교육 일자</span>
+                  <p className={styles.summaryValue}>
+                    {formatEducationDates(education.educationDates)}
+                  </p>
+                </div>
+                <div className={styles.summaryDetailItem}>
+                  <img
+                    src="/images/education/icons/icon_16.svg"
+                    alt="교육 시간"
+                    className={styles.summaryIcon}
+                  />
+                  <span className={styles.summaryLabel}>교육 시간</span>
+                  <p className={styles.summaryValue}>
+                    {education.educationTimeSlots.join(', ')}
+                  </p>
+                </div>
+                <div className={styles.summaryDetailItem}>
+                  <img
+                    src="/images/education/icons/marker.svg"
+                    alt="교육 장소"
+                    className={styles.summaryIcon}
+                  />
+                  <span className={styles.summaryLabel}>교육 장소</span>
+                  <p className={styles.summaryValue}>{education.location}</p>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* 모바일 하단 고정 버튼 */}
+        <div className={styles.footer}>
+          {buttonState === 'recruitment_closed' && (
+            <button
+              className={`${styles.applyButton} ${styles.applyButtonDisabled}`}
+              disabled
+            >
+              모집 종료
+            </button>
+          )}
+
+          {buttonState === 'completed' && (
+            <button
+              className={`${styles.applyButton} ${styles.applyButtonDisabled}`}
+              disabled
+            >
+              수강 완료
+            </button>
+          )}
+
+          {buttonState === 'pending' && (
+            <button
+              className={`${styles.applyButton} ${styles.applyButtonDisabled}`}
+              disabled
+            >
+              승인 대기중
+            </button>
+          )}
+
+          {buttonState === 'can_apply' && (
+            <button
+              className={`${styles.applyButton} ${!canApply || isLoading || isLoadingUser ? styles.applyButtonDisabled : ''}`}
+              onClick={handleApply}
+              disabled={!canApply || isLoading || isLoadingUser}
+            >
+              {isLoading ? '신청 중...' : isLoadingUser ? '정보 불러오는 중...' : '신청하기'}
+            </button>
+          )}
         </div>
       </div>
 

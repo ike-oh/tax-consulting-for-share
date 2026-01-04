@@ -42,6 +42,13 @@ interface MembersResponse {
   limit?: number;
 }
 
+interface OrganizationCategory {
+  id: number;
+  name: string;
+  isExposed?: boolean;
+  children?: OrganizationCategory[];
+}
+
 const ExpertsPage: React.FC = () => {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -53,21 +60,20 @@ const ExpertsPage: React.FC = () => {
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [isLoadingExperts, setIsLoadingExperts] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [organizationData, setOrganizationData] = useState<OrganizationCategory[]>([]);
+  const [isLoadingOrganization, setIsLoadingOrganization] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const personalSubCategories = [
-    '연금 저축',
-    'IRP',
-    '건강/실손/암',
-    '상속/증여',
-  ];
-
-  const businessSubCategories = [
-    '화재',
-    '배상책임',
-    '경영자 보험',
-    '임직원 복지 보험',
-  ];
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 767);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // 분야 목록 가져오기
   useEffect(() => {
@@ -91,6 +97,25 @@ const ExpertsPage: React.FC = () => {
     };
 
     fetchCategories();
+  }, []);
+
+  // 조직도 데이터 가져오기
+  useEffect(() => {
+    const fetchOrganization = async () => {
+      setIsLoadingOrganization(true);
+      try {
+        const response = await get<OrganizationCategory[]>(API_ENDPOINTS.BUSINESS_AREAS_HIERARCHICAL);
+        if (response.data) {
+          setOrganizationData(response.data);
+        }
+      } catch (err) {
+        console.error('조직도 데이터를 불러오는 중 오류가 발생했습니다.', err);
+      } finally {
+        setIsLoadingOrganization(false);
+      }
+    };
+
+    fetchOrganization();
   }, []);
 
   // 선택된 분야에 따라 전문가 목록 가져오기
@@ -184,7 +209,6 @@ const ExpertsPage: React.FC = () => {
     <div className={styles.expertsPage}>
       <Header
         variant="transparent"
-        size="web"
         onMenuClick={() => setIsMenuOpen(true)}
         onLogoClick={() => router.push('/')}
       />
@@ -198,7 +222,7 @@ const ExpertsPage: React.FC = () => {
             breadcrumbs={[
               { label: '전문가 소개' }
             ]}
-            size="web"
+            size={isMobile ? 'mobile' : 'web'}
           />
         </div>
 
@@ -209,8 +233,7 @@ const ExpertsPage: React.FC = () => {
           </div>
           <p className={styles.heroSubtitle}>(전문가 소개)</p>
           <div className={styles.heroTitle}>
-            <span className={styles.heroTitleText}>TEAM</span>
-            <span className={styles.heroTitleText}>OF</span>
+            <span className={styles.heroTitleText}>TEAM OF</span>
             <span className={`${styles.heroTitleText} ${styles.heroTitleItalic}`}>EXPERTS</span>
           </div>
           <div className={styles.heroContent}>
@@ -307,7 +330,7 @@ const ExpertsPage: React.FC = () => {
                           tel={expert.tel || expert.phoneNumber || ''}
                           email={expert.email}
                           imageUrl={expert.imageUrl || expert.mainPhoto?.url}
-                          size="web"
+                          size={isMobile ? 'mobile' : 'web'}
                           className={styles.expertCard}
                           onClick={() => expert.id && router.push(`/experts/${expert.id}`)}
                         />
@@ -331,62 +354,17 @@ const ExpertsPage: React.FC = () => {
               <div className={styles.organizationTitle}>
                 <p>ORGANIZATION</p>
               </div>
-              <div className={styles.organizationMain}>
-                <div className={styles.organizationHeader}>
-                  <div className={styles.organizationLogo}>
-                    <img 
-                      src="http://localhost:3845/assets/3013b1c604857194385c4a02ff918ca807545dad.svg" 
-                      alt="Organization" 
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
-                  <p className={styles.organizationName}>보험단</p>
-                  <div className={styles.organizationSubtitle}>
-                    <img 
-                      src="http://localhost:3845/assets/13835885d0e277de81da96f331bcaeb085d2692c.svg" 
-                      alt="Subtitle" 
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className={styles.hierarchyDiagram}>
-                  <div className={styles.diagramMainCategories}>
-                    <div className={styles.mainCategoryWrapper}>
-                      <div className={styles.mainCategoryBox}>
-                        <p>개인 보험 컨설팅</p>
-                      </div>
-                      <div className={styles.subCategoryColumn}>
-                        {personalSubCategories.map((subCategory, index) => (
-                          <div key={index} className={styles.subCategoryBox}>
-                            <p>{subCategory}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className={styles.mainCategoryWrapper}>
-                      <div className={styles.mainCategoryBox}>
-                        <p>기업 보험 컨설팅</p>
-                      </div>
-                      <div className={styles.subCategoryColumn}>
-                        {businessSubCategories.map((subCategory, index) => (
-                          <div key={index} className={styles.subCategoryBox}>
-                            <p>{subCategory}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className={styles.organizationChart}>
+                <img
+                  src="/images/experts/organization-chart.png"
+                  alt="Organization Chart"
+                />
               </div>
             </div>
           </div>
         )}
 
-        <Footer variant="web" />
+        <Footer />
       </div>
 
       {/* Floating Buttons */}

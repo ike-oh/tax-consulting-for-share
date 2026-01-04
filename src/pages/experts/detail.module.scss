@@ -6,6 +6,10 @@
   color: white;
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 767px) {
+    padding-top: 56px;
+  }
 }
 
 .pageHeaderWrapper {
@@ -40,7 +44,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding: 0 24px;
+    padding: 0 20px;
     flex-direction: column;
     gap: 0;
   }
@@ -77,7 +81,8 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding-bottom: 40px;
+    padding-bottom: 0;
+    overflow: hidden;
   }
 }
 
@@ -107,7 +112,7 @@
     }
 
     @media (max-width: $breakpoint-tablet) {
-      padding: 0 24px;
+      padding: 0 20px;
     }
   }
 
@@ -119,6 +124,50 @@
   :global(.page-header__content) {
     gap: 0;
   }
+}
+
+// 브레드크럼 행 (브레드크럼 + 데스크탑 액션 버튼)
+.breadcrumbRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+// 데스크탑 액션 버튼
+.desktopActionButtons {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 6px 8px;
+  background: transparent;
+}
+
+.desktopActionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+
+  svg {
+    color: #C6C6C6;
+  }
+
+  &:hover {
+    opacity: 0.7;
+  }
+}
+
+.desktopActionDivider {
+  width: 1px;
+  height: 20px;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin: 0 8px;
 }
 
 .heroBackground {
@@ -135,7 +184,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    height: 250px;
+    display: none;
   }
 }
 
@@ -158,8 +207,8 @@
 
   @media (max-width: $breakpoint-tablet) {
     flex-direction: column;
-    padding: 40px 24px 0;
-    gap: 40px;
+    padding: 0;
+    gap: 0;
   }
 }
 
@@ -184,12 +233,28 @@
   @media (max-width: $breakpoint-tablet) {
     flex: none;
     width: 100%;
-    max-width: 100%;
+    max-width: none;
     min-width: unset;
-    aspect-ratio: auto;
-    height: 450px;
-    margin-top: -50px;
+    aspect-ratio: 3 / 4;
+    height: auto;
+    margin-top: 0;
     margin-left: 0;
+    margin-right: 0;
+    border-radius: 0;
+    z-index: 1;
+
+    // 하단 그라데이션 오버레이
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: linear-gradient(to bottom, transparent 0%, #151515 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
   }
 }
 
@@ -199,6 +264,11 @@
   object-fit: cover;
   object-position: center;
   border-radius: 12px;
+
+  @media (max-width: $breakpoint-tablet) {
+    border-radius: 0;
+    object-position: center top;
+  }
 }
 
 .imagePlaceholder {
@@ -240,9 +310,11 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding-top: 0;
-    padding-right: 0;
-    padding-left: 0;
+    position: relative;
+    z-index: 3;
+    margin-top: -180px;
+    padding: 0 20px;
+    padding-bottom: 24px;
   }
 }
 
@@ -253,10 +325,97 @@
   margin-bottom: 24px;
 
   @media (max-width: $breakpoint-tablet) {
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 16px;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
   }
+}
+
+// 액션 버튼 (resume, vcard, pdf, share)
+.heroActionButtons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  margin-top: 32px;
+}
+
+.heroActionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 48px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+
+  // 아이콘 사이 짧은 구분선
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 24px;
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+
+  &:last-child::after {
+    display: none;
+  }
+
+  svg {
+    color: #C6C6C6;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  &:active {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+// 모바일 인용구 섹션
+.heroQuoteMobile {
+  width: calc(100% + 40px);
+  margin-left: -20px;
+  margin-right: -20px;
+  background: linear-gradient(180deg, #133256 0%, rgba(19, 50, 86, 0.3) 100%);
+  padding: 40px 20px;
+  margin-top: 24px;
+}
+
+.heroQuoteMobileContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.quoteMarkMobile {
+  width: 28px;
+  height: 24px;
+  opacity: 0.8;
+}
+
+.heroQuoteMobileText {
+  font-family: $font-pretendard;
+  font-weight: $font-weight-light;
+  font-size: 18px;
+  line-height: 150%;
+  letter-spacing: -0.09px;
+  color: #F0F0F0;
+  text-align: center;
+  margin: 0;
+  word-break: keep-all;
 }
 
 .heroName {
@@ -289,7 +448,7 @@
   margin-bottom: 32px;
 
   @media (max-width: $breakpoint-tablet) {
-    gap: 8px;
+    gap: 12px;
     margin-bottom: 24px;
   }
 }
@@ -298,6 +457,10 @@
   display: flex;
   align-items: center;
   gap: 12px;
+
+  @media (max-width: $breakpoint-tablet) {
+    gap: 8px;
+  }
 }
 
 .heroContactLabel {
@@ -307,6 +470,15 @@
   line-height: 1.5;
   letter-spacing: -0.075px;
   color: #ffffff;
+
+  @media (max-width: $breakpoint-tablet) {
+    color: #D8D8D8;
+    font-family: $font-pretendard;
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
+  }
 }
 
 .heroWorkAreas {
@@ -315,8 +487,13 @@
 
   @media (max-width: $breakpoint-tablet) {
     margin-top: 24px;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
   }
+}
+
+.heroWorkAreasMobile {
+  margin-top: 24px;
+  margin-bottom: 24px;
 }
 
 .heroWorkAreasLabel {
@@ -375,8 +552,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    bottom: 100px;
-    height: 180px;
+    display: none;
   }
 }
 
@@ -397,7 +573,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding: 0 24px;
+    padding: 0 20px;
     gap: 8px;
     flex-direction: column;
     justify-content: center;
@@ -487,7 +663,7 @@
   padding: 0 0 120px 0;
 
   @media (max-width: $breakpoint-tablet) {
-    padding: 0 0 60px 0;
+    padding: 0 20px 60px 20px;
   }
 }
 
@@ -570,7 +746,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding: 40px 24px;
+    padding: 40px 20px;
   }
 
   &::before {
@@ -817,6 +993,29 @@
 
   @media (max-width: $breakpoint-tablet) {
     font-size: 20px;
+  }
+}
+
+// 영문 섹션 타이틀 (RELATED NEWS 등)
+.sectionTitleEn {
+  font-family: $font-montserrat;
+  font-weight: 300;
+  font-size: 72px;
+  line-height: 110%;
+  letter-spacing: -3px;
+  color: #ffffff;
+  margin: 0;
+  opacity: 0.2;
+
+  @media (max-width: $breakpoint-desktop) {
+    font-size: 56px;
+  }
+
+  @media (max-width: $breakpoint-tablet) {
+    font-size: 44px;
+    letter-spacing: -3px;
+    word-spacing: 100vw;
+    line-height: 110%;
   }
 }
 
@@ -1230,6 +1429,10 @@
   width: 100%;
   padding: 0;
   box-sizing: border-box;
+
+  @media (max-width: $breakpoint-tablet) {
+    padding: 0 20px;
+  }
 }
 
 .navigationButtons {
@@ -1237,7 +1440,7 @@
   gap: 8px;
 
   @media (max-width: $breakpoint-tablet) {
-    margin-top: 0;
+    display: none;
   }
 }
 
@@ -1272,12 +1475,33 @@
   overflow: hidden;
   width: 100%;
   margin-top: 64px;
+
+  @media (max-width: $breakpoint-tablet) {
+    overflow: visible;
+    margin-top: 24px;
+    margin-left: -20px;
+    margin-right: -20px;
+    width: calc(100% + 40px);
+  }
 }
 
 .newsGrid {
   display: flex;
   transition: transform 0.5s ease;
   width: 100%;
+
+  @media (max-width: $breakpoint-tablet) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-left: 20px;
+    padding-right: 20px;
+    transform: none !important;
+    gap: 16px;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 }
 
 .newsPage {
@@ -1293,7 +1517,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    grid-template-columns: 1fr;
+    display: contents;
   }
 }
 
@@ -1312,6 +1536,13 @@
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  @media (max-width: $breakpoint-tablet) {
+    width: 213px;
+    min-width: 213px;
+    flex-shrink: 0;
+    gap: 16px;
   }
 }
 

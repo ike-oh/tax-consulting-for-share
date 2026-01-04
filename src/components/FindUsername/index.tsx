@@ -165,7 +165,12 @@ const FindUsername: React.FC = () => {
               />
             )}
 
-            {error && <p className="auth-error-message">{error}</p>}
+            {error && (
+              <p className="auth-error-message">
+                <img src="/images/common/error-icon.svg" alt="" width={16} height={16} />
+                {error}
+              </p>
+            )}
           </div>
         </form>
       </div>
@@ -243,6 +248,7 @@ const FindUsername: React.FC = () => {
                 maxLength={6}
                 timer={isTimerActive ? timeLeft : undefined}
                 fullWidth
+                error={!!error}
               />
               {activeTab === 'email' && (
                 <button
@@ -261,7 +267,10 @@ const FindUsername: React.FC = () => {
 
       {error && (
         <div className="find-username-error-wrapper">
-          <p className="auth-error-message">{error}</p>
+          <p className="auth-error-message">
+            <img src="/images/common/error-icon.svg" alt="" width={16} height={16} />
+            {error}
+          </p>
         </div>
       )}
 
@@ -305,7 +314,7 @@ const FindUsername: React.FC = () => {
       <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       <section className="auth-content-section">
         <h1 className="auth-page-title">FIND USERNAME</h1>
-        {step === 'input' && (
+        {(step === 'input' || step === 'verification') && (
           <>
             <p className="auth-page-subtitle">이름 및 인증번호 인증 완료 시<br />아이디를 찾을 수 있습니다.</p>
             <div className="find-username-tab-wrapper">

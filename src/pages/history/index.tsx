@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Header from '@/components/common/Header';
 import Menu from '@/components/Menu';
@@ -86,7 +86,7 @@ const HistoryPage: React.FC = () => {
   
   // URL 쿼리 파라미터에서 탭 읽기
   const tabFromQuery = router.query.tab as string;
-  const validTabs = ['intro', 'history', 'awards', 'ci', 'branches', 'customers'];
+  const validTabs = ['intro', 'history', 'awards', 'branches', 'customers', 'ci'];
   const initialTab = tabFromQuery && validTabs.includes(tabFromQuery) ? tabFromQuery : 'intro';
   const [activeTab, setActiveTab] = useState(initialTab);
   
@@ -112,6 +112,56 @@ const HistoryPage: React.FC = () => {
   const [branchesError, setBranchesError] = useState<string | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<BranchItem | null>(null);
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
+
+  // Swipe handling for mobile philosophy cards
+  const touchStartX = useRef<number>(0);
+  const touchStartY = useRef<number>(0);
+  const isSwiping = useRef<boolean>(false);
+
+  const cardOrder: ('professionalism' | 'consulting' | 'trust')[] = ['professionalism', 'consulting', 'trust'];
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    isSwiping.current = false;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStartX.current) return;
+
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const diffX = Math.abs(currentX - touchStartX.current);
+    const diffY = Math.abs(currentY - touchStartY.current);
+
+    // If horizontal movement is greater than vertical, it's a swipe
+    if (diffX > diffY && diffX > 10) {
+      isSwiping.current = true;
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!isSwiping.current) return;
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const distance = touchStartX.current - touchEndX;
+    const minSwipeDistance = 30; // Reduced for better sensitivity
+
+    if (Math.abs(distance) > minSwipeDistance) {
+      setActiveCard((prev) => {
+        const currentIndex = cardOrder.indexOf(prev);
+        if (distance > 0) {
+          // Swipe left -> next card
+          return cardOrder[(currentIndex + 1) % cardOrder.length];
+        } else {
+          // Swipe right -> previous card
+          return cardOrder[(currentIndex - 1 + cardOrder.length) % cardOrder.length];
+        }
+      });
+    }
+
+    isSwiping.current = false;
+  }, []);
 
   const cardImages = {
     professionalism: '/images/intro/meeting.jpg',
@@ -207,9 +257,9 @@ const HistoryPage: React.FC = () => {
     { id: 'intro', label: '소개' },
     { id: 'history', label: '연혁' },
     { id: 'awards', label: '수상/인증' },
-    { id: 'ci', label: 'CI가이드' },
-    { id: 'branches', label: '본점 지점 안내' },
+    { id: 'branches', label: '본점/지점 안내' },
     { id: 'customers', label: '주요 고객' },
+    { id: 'ci', label: 'CI가이드' },
   ];
 
   useEffect(() => {
@@ -584,15 +634,48 @@ const HistoryPage: React.FC = () => {
                     <h2>CORPORATE</h2>
                     <h2>PHILOSOPHY</h2>
                   </div>
-                  <div className={styles.introPhilosophyDescription}>
+                  {/* Mobile: Swipe area containing image and description */}
+                  <div
+                    className={styles.introPhilosophySwipeArea}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    <div className={styles.introPhilosophyMobileImage}>
+                      <img src={cardImages[activeCard]} alt={cardContents[activeCard].title} />
+                    </div>
+                    <div className={styles.introPhilosophyDescription}>
+                      <h3 className={styles.introPhilosophySubtitle}>{cardContents[activeCard].title}</h3>
+                      <div className={styles.introPhilosophyText}>
+                        {cardContents[activeCard].content}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Desktop: Description only (not in swipe area) */}
+                  <div className={styles.introPhilosophyDescriptionDesktop}>
                     <h3 className={styles.introPhilosophySubtitle}>{cardContents[activeCard].title}</h3>
                     <div className={styles.introPhilosophyText}>
                       {cardContents[activeCard].content}
                     </div>
                   </div>
+                  {/* Mobile: Pagination dots */}
+                  <div className={styles.introPhilosophyPagination}>
+                    <div
+                      className={`${styles.introPhilosophyPaginationDot} ${activeCard === 'professionalism' ? styles.active : ''}`}
+                      onClick={() => setActiveCard('professionalism')}
+                    />
+                    <div
+                      className={`${styles.introPhilosophyPaginationDot} ${activeCard === 'consulting' ? styles.active : ''}`}
+                      onClick={() => setActiveCard('consulting')}
+                    />
+                    <div
+                      className={`${styles.introPhilosophyPaginationDot} ${activeCard === 'trust' ? styles.active : ''}`}
+                      onClick={() => setActiveCard('trust')}
+                    />
+                  </div>
                 </div>
                 <div className={styles.introPhilosophyRight}>
-                  <div 
+                  <div
                     className={`${styles.introPhilosophyCard} ${activeCard === 'professionalism' ? styles.introPhilosophyCardActive : styles.introPhilosophyCardInactive}`}
                     onClick={() => setActiveCard('professionalism')}
                   >
@@ -601,7 +684,7 @@ const HistoryPage: React.FC = () => {
                       <img src="/images/intro/meeting.jpg" alt="Professionalism" />
                     </div>
                   </div>
-                  <div 
+                  <div
                     className={`${styles.introPhilosophyCard} ${activeCard === 'consulting' ? styles.introPhilosophyCardActive : styles.introPhilosophyCardInactive}`}
                     onClick={() => setActiveCard('consulting')}
                   >
@@ -610,7 +693,7 @@ const HistoryPage: React.FC = () => {
                       <img src="/images/intro/building.jpg" alt="Integrated Consulting" />
                     </div>
                   </div>
-                  <div 
+                  <div
                     className={`${styles.introPhilosophyCard} ${activeCard === 'trust' ? styles.introPhilosophyCardActive : styles.introPhilosophyCardInactive}`}
                     onClick={() => setActiveCard('trust')}
                   >
@@ -808,6 +891,12 @@ const HistoryPage: React.FC = () => {
 
         {activeTab === 'awards' && (
           <div className={styles.awardsSection}>
+            {/* Mobile Header */}
+            <div className={styles.awardsMobileHeader}>
+              <h2 className={styles.awardsMobileTitle}>AWARDS</h2>
+              <p className={styles.awardsMobileSubtitle}>수상/인증</p>
+            </div>
+            {/* Desktop Header */}
             <div className={styles.awardsTitleSection}>
               <h2 className={styles.awardsMainTitle}>AWARDS &</h2>
             </div>
@@ -833,11 +922,13 @@ const HistoryPage: React.FC = () => {
                     const sortedItems = [...yearData.items]
                       .filter(item => item.isMainExposed)
                       .sort((a, b) => a.displayOrder - b.displayOrder);
-                    
+
                     if (sortedItems.length === 0) return null;
 
                     return (
                       <div key={yearData.year} className={styles.awardsYearGroup}>
+                        {/* Divider above each year section */}
+                        <div className={styles.awardsYearDivider} />
                         <div className={`${styles.awardsYearTitle} ${index === 0 ? styles.awardsYearTitleFirst : ''}`}>
                           <h3>{yearData.year}</h3>
                         </div>
@@ -847,8 +938,8 @@ const HistoryPage: React.FC = () => {
                               <div className={styles.awardCardImage}>
                                 <div className={styles.awardCardImageBg} />
                                 <div className={styles.awardCardImageContent}>
-                                  <img 
-                                    src={item.image.url} 
+                                  <img
+                                    src={item.image.url}
                                     alt={item.name}
                                     className={styles.awardCardImageInner}
                                   />
@@ -898,9 +989,11 @@ const HistoryPage: React.FC = () => {
                   </div>
                   <div className={styles.ciColorGuideDivider} />
                   <p className={styles.ciColorGuideText}>
-                    세무법인 함께 컬러는,<span className={styles.ciColorGuideHighlight}> 신뢰</span>, <span className={styles.ciColorGuideHighlight}>전문성</span>, <span className={styles.ciColorGuideHighlight}>안정감</span>을 상징합니다.
+                    세무법인 함께 컬러는,<br />
+                    <span className={styles.ciColorGuideHighlight}>신뢰</span>, <span className={styles.ciColorGuideHighlight}>전문성</span>, <span className={styles.ciColorGuideHighlight}>안정감</span>을 상징합니다.
                   </p>
                 </div>
+                <div className={styles.ciColorGuideItemsDivider} />
                 <div className={styles.ciColorGuideItems}>
                   <div className={styles.ciColorGuideItem}>
                     <div className={styles.ciColorGuideIcon}>
@@ -952,26 +1045,27 @@ const HistoryPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className={styles.ciLogoSection}>
-                <div className={styles.ciSectionHeader}>
-                  <h3 className={styles.ciSectionTitle}>로고</h3>
-                  <div className={styles.ciSectionDivider} />
-                  <div className={styles.ciLogoItems}>
-                    <div className={styles.ciLogoItem}>
-                      <div className={styles.ciLogoBox}>
-                        <img src="/images/logo/logo-hd.png" alt="Logo Horizontal" className={styles.ciLogoImage} />
+              <div className={styles.ciCardsWrapper}>
+                <div className={styles.ciLogoSection}>
+                  <div className={styles.ciSectionHeader}>
+                    <h3 className={styles.ciSectionTitle}>로고</h3>
+                    <div className={styles.ciSectionDivider} />
+                    <div className={styles.ciLogoItems}>
+                      <div className={styles.ciLogoItem}>
+                        <div className={styles.ciLogoBox}>
+                          <img src="/images/logo/logo-hd.png" alt="Logo Horizontal" className={styles.ciLogoImage} />
+                        </div>
                       </div>
-                    </div>
-                    <div className={styles.ciLogoItem}>
-                      <div className={styles.ciLogoBox}>
-                        <img src="/images/logo/logo_s.png" alt="Logo Vertical" className={styles.ciLogoImage} />
+                      <div className={styles.ciLogoItem}>
+                        <div className={styles.ciLogoBox}>
+                          <img src="/images/logo/logo_s.png" alt="Logo Vertical" className={styles.ciLogoImage} />
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className={styles.ciColorPaletteSection}>
+                <div className={styles.ciColorPaletteSection}>
                 <div className={styles.ciSectionHeader}>
                   <h3 className={styles.ciSectionTitle}>컬러</h3>
                   <div className={styles.ciSectionDivider} />
@@ -1022,6 +1116,7 @@ const HistoryPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                </div>
                 </div>
               </div>
             </div>

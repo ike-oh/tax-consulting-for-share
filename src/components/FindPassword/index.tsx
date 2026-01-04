@@ -173,7 +173,12 @@ const FindPassword: React.FC = () => {
               />
             )}
 
-            {error && <p className="auth-error-message">{error}</p>}
+            {error && (
+              <p className="auth-error-message">
+                <img src="/images/common/error-icon.svg" alt="" width={16} height={16} />
+                {error}
+              </p>
+            )}
           </div>
         </form>
       </div>
@@ -251,6 +256,7 @@ const FindPassword: React.FC = () => {
                 maxLength={6}
                 timer={isTimerActive ? timeLeft : undefined}
                 fullWidth
+                error={!!error}
               />
               {activeTab === 'email' && (
                 <button
@@ -269,7 +275,10 @@ const FindPassword: React.FC = () => {
 
       {error && (
         <div className="find-username-error-wrapper">
-          <p className="auth-error-message">{error}</p>
+          <p className="auth-error-message">
+            <img src="/images/common/error-icon.svg" alt="" width={16} height={16} />
+            {error}
+          </p>
         </div>
       )}
 
@@ -292,7 +301,7 @@ const FindPassword: React.FC = () => {
       <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       <section className="auth-content-section">
         <h1 className="auth-page-title">FORGOT PASSWORD</h1>
-        {step === 'input' && (
+        {(step === 'input' || step === 'verification') && (
           <>
             <p className="auth-page-subtitle">사용중인 아이디를 인증 완료 시<br />비밀번호를 재설정할 수 있습니다.</p>
             <div className="find-username-tab-wrapper">

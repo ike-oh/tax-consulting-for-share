@@ -79,6 +79,17 @@ const ExpertDetailPage: React.FC = () => {
   const [relatedNews, setRelatedNews] = useState<InsightItem[]>([]);
   const [newsPage, setNewsPage] = useState(0);
   const [imageError, setImageError] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 767);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -160,6 +171,30 @@ const ExpertDetailPage: React.FC = () => {
     }
   };
 
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareTitle = `${data?.name} 세무사 - 세무법인 함께`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // 사용자가 공유를 취소한 경우
+      }
+    } else {
+      // 공유 API를 지원하지 않는 경우 클립보드에 복사
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        alert('링크가 클립보드에 복사되었습니다.');
+      } catch (err) {
+        console.error('클립보드 복사 실패:', err);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className={styles.page}>
@@ -204,11 +239,57 @@ const ExpertDetailPage: React.FC = () => {
         {/* Breadcrumb */}
         <div className={styles.heroBreadcrumb}>
           <div className={styles.container}>
-            <PageHeader
-              title=""
-              breadcrumbs={breadcrumbs}
-              size="web"
-            />
+            <div className={styles.breadcrumbRow}>
+              <PageHeader
+                title=""
+                breadcrumbs={breadcrumbs}
+                size="web"
+              />
+              {/* 데스크탑 액션 버튼 */}
+              {!isMobile && (
+                <div className={styles.desktopActionButtons}>
+                  <button
+                    className={styles.desktopActionButton}
+                    onClick={() => router.push(`/experts/${id}`)}
+                    aria-label="이력서 보기"
+                  >
+                    <Icon type="resume" size={20} />
+                  </button>
+                  <span className={styles.desktopActionDivider} />
+                  {data.vcard?.url && (
+                    <>
+                      <button
+                        className={styles.desktopActionButton}
+                        onClick={handleDownloadVCard}
+                        aria-label="연락처 저장"
+                      >
+                        <Icon type="vcard" size={20} />
+                      </button>
+                      <span className={styles.desktopActionDivider} />
+                    </>
+                  )}
+                  {data.pdf?.url && (
+                    <>
+                      <button
+                        className={styles.desktopActionButton}
+                        onClick={handleDownloadPDF}
+                        aria-label="PDF 다운로드"
+                      >
+                        <Icon type="pdf" size={20} />
+                      </button>
+                      <span className={styles.desktopActionDivider} />
+                    </>
+                  )}
+                  <button
+                    className={styles.desktopActionButton}
+                    onClick={handleShare}
+                    aria-label="공유하기"
+                  >
+                    <Icon type="share" size={20} />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className={styles.heroBackground} />
@@ -253,8 +334,9 @@ const ExpertDetailPage: React.FC = () => {
                 </div>
               )}
             </div>
+            {/* 주요 업무 분야 */}
             {data.workAreas && data.workAreas.length > 0 && (
-              <div className={styles.heroWorkAreas}>
+              <div className={`${styles.heroWorkAreas} ${isMobile ? styles.heroWorkAreasMobile : ''}`}>
                 <p className={styles.heroWorkAreasLabel}>주요 업무 분야</p>
                 <div className={styles.heroWorkAreasTags}>
                   {data.workAreas.map((area, index) => {
@@ -262,16 +344,62 @@ const ExpertDetailPage: React.FC = () => {
                     const indicator = index === 0 ? '■■■' : index === 1 ? '■■□' : '■□□';
                     return (
                       <span key={index} className={styles.heroWorkAreaTag}>
-                        {areaName}{indicator}
+                        {areaName} {indicator}
                       </span>
                     );
                   })}
                 </div>
               </div>
             )}
+            {/* 모바일 액션 버튼 - 주요 업무 분야 아래 */}
+            {isMobile && (
+              <div className={styles.heroActionButtons}>
+                <button
+                  className={styles.heroActionButton}
+                  onClick={() => router.push(`/experts/${id}`)}
+                  aria-label="이력서 보기"
+                >
+                  <Icon type="resume" size={20} />
+                </button>
+                {data.vcard?.url && (
+                  <button
+                    className={styles.heroActionButton}
+                    onClick={handleDownloadVCard}
+                    aria-label="연락처 저장"
+                  >
+                    <Icon type="vcard" size={20} />
+                  </button>
+                )}
+                {data.pdf?.url && (
+                  <button
+                    className={styles.heroActionButton}
+                    onClick={handleDownloadPDF}
+                    aria-label="PDF 다운로드"
+                  >
+                    <Icon type="pdf" size={20} />
+                  </button>
+                )}
+                <button
+                  className={styles.heroActionButton}
+                  onClick={handleShare}
+                  aria-label="공유하기"
+                >
+                  <Icon type="share" size={20} />
+                </button>
+              </div>
+            )}
+            {/* 모바일 인용구 - 아이콘 아래 */}
+            {isMobile && data.oneLineIntro && (
+              <div className={styles.heroQuoteMobile}>
+                <div className={styles.heroQuoteMobileContent}>
+                  <img src="/images/experts/icons/quote-right.svg" alt="" className={styles.quoteMarkMobile} />
+                  <p className={styles.heroQuoteMobileText}>{data.oneLineIntro}</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-        {data.oneLineIntro && (
+        {!isMobile && data.oneLineIntro && (
           <div className={styles.heroQuote}>
             <div className={styles.heroQuoteContent}>
               <img src="/images/experts/icons/quote-right.svg" alt="" className={`${styles.quoteMark} ${styles.quoteMarkLeft}`} />
@@ -289,7 +417,7 @@ const ExpertDetailPage: React.FC = () => {
           {data.expertIntro && (
             <section className={styles.aboutSection}>
               <div className={styles.aboutHeader}>
-                <h2 className={styles.aboutTitle}>About the Expert</h2>
+                <h2 className={styles.aboutTitle}>About<br />the Expert</h2>
               </div>
               <div className={styles.aboutContent}>
                 <div className={styles.aboutContentLayout}>
@@ -307,58 +435,60 @@ const ExpertDetailPage: React.FC = () => {
 
           {/* Sidebar and Main Content - Two Columns */}
           <div className={styles.aboutLayout}>
-            {/* Sidebar */}
-            <div className={styles.sidebar}>
-              <div className={styles.sidebarCard}>
-                {data.subPhoto?.url && (
-                  <div className={styles.sidebarImage}>
-                    <img src={data.subPhoto.url} alt={data.name} />
-                  </div>
-                )}
-                <div className={styles.sidebarInfo}>
-                  <div className={styles.sidebarNameRow}>
-                    <h3 className={styles.sidebarName}>{data.name}</h3>
-                    <span className={styles.sidebarPosition}>세무사</span>
-                  </div>
-                  <div className={styles.sidebarContact}>
-                    {data.affiliation && (
-                      <div className={styles.sidebarContactItem}>
-                        <Icon type="location" size={20} />
-                        <span>{data.affiliation}</span>
-                      </div>
-                    )}
-                    {data.phoneNumber && (
-                      <div className={styles.sidebarContactItem}>
-                        <Icon type="call" size={20} />
-                        <span>{data.phoneNumber}</span>
-                      </div>
-                    )}
-                    {data.email && (
-                      <div className={styles.sidebarContactItem}>
-                        <Icon type="mail" size={20} />
-                        <span>{data.email}</span>
-                      </div>
-                    )}
-                  </div>
-                  {data.workAreas && data.workAreas.length > 0 && (
-                    <div className={styles.sidebarWorkAreas}>
-                      <p className={styles.sidebarWorkAreasLabel}>주요 업무 분야</p>
-                      <div className={styles.sidebarWorkAreasTags}>
-                        {data.workAreas.map((area, index) => {
-                          const areaName = typeof area === 'string' ? area : (area?.value || String(area?.id || ''));
-                          const indicator = index === 0 ? '■■■' : index === 1 ? '■■□' : '■□□';
-                          return (
-                            <span key={index} className={styles.sidebarWorkAreaTag}>
-                              {areaName}{indicator}
-                            </span>
-                          );
-                        })}
-                      </div>
+            {/* Sidebar - 모바일에서는 숨김 (Hero에서 표시) */}
+            {!isMobile && (
+              <div className={styles.sidebar}>
+                <div className={styles.sidebarCard}>
+                  {data.subPhoto?.url && (
+                    <div className={styles.sidebarImage}>
+                      <img src={data.subPhoto.url} alt={data.name} />
                     </div>
                   )}
+                  <div className={styles.sidebarInfo}>
+                    <div className={styles.sidebarNameRow}>
+                      <h3 className={styles.sidebarName}>{data.name}</h3>
+                      <span className={styles.sidebarPosition}>세무사</span>
+                    </div>
+                    <div className={styles.sidebarContact}>
+                      {data.affiliation && (
+                        <div className={styles.sidebarContactItem}>
+                          <Icon type="location" size={20} />
+                          <span>{data.affiliation}</span>
+                        </div>
+                      )}
+                      {data.phoneNumber && (
+                        <div className={styles.sidebarContactItem}>
+                          <Icon type="call" size={20} />
+                          <span>{data.phoneNumber}</span>
+                        </div>
+                      )}
+                      {data.email && (
+                        <div className={styles.sidebarContactItem}>
+                          <Icon type="mail" size={20} />
+                          <span>{data.email}</span>
+                        </div>
+                      )}
+                    </div>
+                    {data.workAreas && data.workAreas.length > 0 && (
+                      <div className={styles.sidebarWorkAreas}>
+                        <p className={styles.sidebarWorkAreasLabel}>주요 업무 분야</p>
+                        <div className={styles.sidebarWorkAreasTags}>
+                          {data.workAreas.map((area, index) => {
+                            const areaName = typeof area === 'string' ? area : (area?.value || String(area?.id || ''));
+                            const indicator = index === 0 ? '■■■' : index === 1 ? '■■□' : '■□□';
+                            return (
+                              <span key={index} className={styles.sidebarWorkAreaTag}>
+                                {areaName}{indicator}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Main Content */}
             <div className={styles.mainContent}>
@@ -438,7 +568,7 @@ const ExpertDetailPage: React.FC = () => {
               <div className={styles.sectionHeader}>
                 <div className={styles.sectionHeaderContent}>
                   <div>
-                    <h2 className={styles.sectionTitle}>RELATED NEWS</h2>
+                    <h2 className={styles.sectionTitleEn}>RELATED NEWS</h2>
                     <p className={styles.sectionSubtitle}>관련 소식</p>
                   </div>
                   <div className={styles.navigationButtons}>

@@ -512,21 +512,48 @@ $color-card-bg: #1e1e1e;
     }
 
     &.card--mobile {
+      .card__content {
+        padding-top: 16px;
+        gap: 16px;
+      }
+
+      .card__profile-info {
+        gap: 16px;
+      }
+
       .card__profile-name {
-        font-size: 21px;
+        font-size: 17px;
+        font-weight: 600;
+        line-height: 1.5;
+        letter-spacing: -0.085px;
       }
 
       .card__profile-position {
-        font-size: 15px;
+        font-size: 13px;
+        font-weight: 400;
+        line-height: 1.5;
+        letter-spacing: -0.065px;
+      }
+
+      .card__profile-contact {
+        gap: 8px;
       }
 
       .card__profile-row {
         font-size: 13px;
+        gap: 8px;
+        letter-spacing: -0.065px;
+      }
+
+      .card__profile-label {
+        min-width: 32px;
+        font-weight: 600;
       }
 
       .card__profile-tag {
         font-size: 13px;
         padding: 6px;
+        letter-spacing: -0.065px;
       }
     }
   }

@@ -180,6 +180,11 @@
 .signup-member-type-group {
   display: flex;
   gap: 8px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 12px;
+  }
 }
 
 .signup-member-type-button {
@@ -203,6 +208,11 @@
 
   &.is-selected {
     background: rgba(255, 255, 255, 0.15);
+  }
+
+  @media (max-width: 768px) {
+    justify-content: flex-start;
+    padding: 16px 20px;
   }
 }
 
@@ -238,11 +248,21 @@
   align-items: flex-end;
   gap: 12px;
   margin-bottom: 8px;
+
+  @media (max-width: 768px) {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 }
 
 .signup-email-input-wrapper {
   width: 148px;
   flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    flex: 1;
+    width: auto;
+  }
 }
 
 .signup-at-sign {
@@ -288,7 +308,13 @@
   height: 48px;
   flex: 1;
   min-width: 0;
-  
+
+  @media (max-width: 768px) {
+    width: 100%;
+    flex: none;
+    margin-top: 12px;
+  }
+
   .select__trigger {
     background: transparent;
     border: none;
@@ -436,18 +462,32 @@
   display: flex;
   align-items: flex-end;
   gap: 12px;
+
+  @media (max-width: 768px) {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 }
 
 .signup-carrier-select-wrapper {
   position: relative;
   width: 148px;
   flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 }
 
 .signup-carrier-select {
   width: 222px; // 148px * 1.5 = 222px
   flex-shrink: 0;
   height: 48px;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    margin-bottom: 8px;
+  }
   
   .select__trigger {
     background: transparent;

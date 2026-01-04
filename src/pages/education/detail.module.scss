@@ -6,6 +6,11 @@
   color: white;
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 767px) {
+    padding-top: 56px;
+    padding-bottom: 80px; // 하단 고정 버튼 공간
+  }
 }
 
 .container {
@@ -27,13 +32,22 @@
 
 .content {
   padding: 80px 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 464px;
+  grid-template-rows: auto auto;
   gap: 24px;
   width: 100%;
 
   @media (max-width: $breakpoint-desktop) {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     padding: 60px 0;
+  }
+
+  @media (max-width: $breakpoint-tablet) {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding: 24px 0;
   }
 }
 
@@ -50,6 +64,16 @@
 
 .imageSection {
   width: 100%;
+  grid-column: 1;
+  grid-row: 1;
+
+  @media (max-width: $breakpoint-tablet) {
+    grid-column: auto;
+    grid-row: auto;
+    margin-left: -24px;
+    margin-right: -24px;
+    width: calc(100% + 48px);
+  }
 }
 
 .imageWrapper {
@@ -57,6 +81,10 @@
   aspect-ratio: 400 / 300;
   border-radius: 12px;
   overflow: hidden;
+
+  @media (max-width: $breakpoint-tablet) {
+    border-radius: 0;
+  }
 
   img {
     width: 100%;
@@ -67,6 +95,13 @@
 
 .bodySection {
   width: 100%;
+  grid-column: 1;
+  grid-row: 2;
+
+  @media (max-width: $breakpoint-tablet) {
+    grid-column: auto;
+    grid-row: auto;
+  }
 }
 
 .bodyContent {
@@ -184,6 +219,8 @@
   align-self: flex-start;
   max-height: calc(100vh - 120px);
   overflow-y: auto;
+  grid-column: 2;
+  grid-row: 1 / 3;
 
   @media (max-width: $breakpoint-desktop) {
     width: 100%;
@@ -191,6 +228,13 @@
     top: 0;
     max-height: none;
     overflow-y: visible;
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  @media (max-width: $breakpoint-tablet) {
+    grid-column: auto;
+    grid-row: auto;
   }
 }
 
@@ -204,7 +248,10 @@
   gap: 28px;
 
   @media (max-width: $breakpoint-tablet) {
-    padding: 24px 20px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
     gap: 24px;
   }
 }
@@ -213,6 +260,10 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
+
+  @media (max-width: $breakpoint-tablet) {
+    gap: 20px;
+  }
 }
 
 .labels {
@@ -231,6 +282,11 @@
   line-height: 1.5;
   letter-spacing: -0.075px;
   color: #fb7058;
+
+  @media (max-width: $breakpoint-tablet) {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
 }
 
 .labelWhite {
@@ -243,6 +299,11 @@
   line-height: 1.5;
   letter-spacing: -0.075px;
   color: #f8f8fc;
+
+  @media (max-width: $breakpoint-tablet) {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
 }
 
 .cardTitle {
@@ -334,8 +395,9 @@
   align-items: flex-start;
 
   @media (max-width: $breakpoint-tablet) {
-    flex-direction: column;
-    gap: 12px;
+    flex-direction: row;
+    gap: 16px;
+    align-items: flex-start;
   }
 }
 
@@ -347,7 +409,7 @@
   min-width: 100px;
 
   @media (max-width: $breakpoint-tablet) {
-    min-width: auto;
+    min-width: 80px;
   }
 }
 
@@ -400,9 +462,12 @@
   padding-bottom: 20px;
 
   @media (max-width: $breakpoint-tablet) {
-    flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: none;
+    padding-bottom: 0;
   }
 }
 
@@ -412,6 +477,12 @@
   gap: 8px;
   align-items: center;
 
+  @media (max-width: $breakpoint-tablet) {
+    gap: 6px;
+    border-bottom: 1px solid #555;
+    padding-bottom: 12px;
+  }
+
   p {
     font-family: $font-pretendard;
     font-weight: $font-weight-regular;
@@ -420,6 +491,10 @@
     letter-spacing: -0.085px;
     color: #717171;
     margin: 0;
+
+    @media (max-width: $breakpoint-tablet) {
+      font-size: 13px;
+    }
   }
 }
 
@@ -427,6 +502,11 @@
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+
+  @media (max-width: $breakpoint-tablet) {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .dateButton {
@@ -444,6 +524,12 @@
   transition: all 0.2s ease;
   white-space: nowrap;
 
+  @media (max-width: $breakpoint-tablet) {
+    padding: 8px 12px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
   &:hover {
     background: rgba(255, 255, 255, 0.1);
   }
@@ -455,7 +541,9 @@
   padding: 12px 0;
 
   @media (max-width: $breakpoint-tablet) {
-    justify-content: center;
+    justify-content: flex-end;
+    border-bottom: 1px solid #555;
+    padding-bottom: 20px;
   }
 
   p {
@@ -583,6 +671,37 @@
   line-height: 1.5;
   letter-spacing: -0.075px;
   color: #949494;
+
+  @media (max-width: $breakpoint-tablet) {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+}
+
+// 데스크톱 버튼 (모바일에서 숨김)
+.actionButtonDesktop {
+  display: block;
+
+  @media (max-width: $breakpoint-tablet) {
+    display: none;
+  }
+}
+
+// 모바일 하단 고정 버튼
+.stickyButtonWrapper {
+  display: none;
+
+  @media (max-width: $breakpoint-tablet) {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px 24px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    background: #151515;
+    z-index: 100;
+  }
 }
 
 .loading,

@@ -6,7 +6,8 @@
       "Bash(npm run dev:*)",
       "Bash(git push:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: 지점 상세 모달 기능 추가\n\n- BranchDetailModal 컴포넌트 생성\n- 지점 클릭 시 상세 정보 모달 표시\n- 네이버 지도 연동 및 커스텀 마커 표시\n- 교통 정보 \\(버스, 지하철, 택시\\) 표시\n- 소셜 링크 \\(네이버 블로그, 유튜브, 인스타그램, 웹사이트\\) 연동\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: 지점 상세 모달 기능 추가\n\n- BranchDetailModal 컴포넌트 생성\n- 지점 클릭 시 상세 정보 모달 표시\n- 네이버 지도 연동 및 커스텀 마커 표시\n- 교통 정보 \\(버스, 지하철, 택시\\) 표시\n- 소셜 링크 \\(네이버 블로그, 유튜브, 인스타그램, 웹사이트\\) 연동\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: 모바일 반응형 디자인 개선 및 UI 업데이트\n\n- 각 페이지 모바일 브레이크포인트 스타일 최적화\n- 히스토리 페이지 모바일 스와이프 및 페이지네이션 개선\n- 전문가, 인사이트, 교육 페이지 모바일 레이아웃 조정\n- 상담 신청, 마이페이지 모바일 UI 개선\n- SVG 아이콘 및 이미지 파일 추가/업데이트\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }

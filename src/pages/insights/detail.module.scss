@@ -6,6 +6,10 @@
   color: white;
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 767px) {
+    padding-top: 56px;
+  }
 }
 
 .container {
@@ -38,8 +42,8 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding: 40px 0 80px;
-    gap: 60px;
+    padding: 100px 0 0;
+    gap: 64px;
   }
 }
 
@@ -84,6 +88,15 @@
   }
 }
 
+// Category + Title wrapper for mobile
+.titleWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+  width: 100%;
+}
+
 .category {
   font-family: $font-pretendard;
   font-weight: $font-weight-semibold;
@@ -91,6 +104,11 @@
   line-height: 1.5;
   letter-spacing: -0.095px;
   color: #94b9e3;
+
+  @media (max-width: $breakpoint-tablet) {
+    font-size: 15px;
+    letter-spacing: -0.075px;
+  }
 }
 
 .title {
@@ -105,7 +123,14 @@
   max-width: 1120px;
 
   @media (max-width: $breakpoint-tablet) {
-    font-size: 28px;
+    font-size: 25px;
+    letter-spacing: -0.125px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 64px;
   }
 }
 
@@ -138,9 +163,9 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    flex-direction: column;
-    gap: 16px;
-    padding: 24px 0;
+    flex-direction: row;
+    gap: 12px;
+    padding: 12px 0;
   }
 }
 
@@ -170,12 +195,27 @@
   line-height: 1.5;
   letter-spacing: -0.075px;
   color: #d8d8d8;
+
+  @media (max-width: $breakpoint-tablet) {
+    font-weight: $font-weight-regular;
+    font-size: 13px;
+    letter-spacing: -0.065px;
+    line-height: 1.4;
+  }
 }
 
 .metaRight {
   display: flex;
   align-items: center;
   gap: 16px;
+  padding: 8px;
+}
+
+.iconDivider {
+  width: 1px;
+  height: 20px;
+  background-color: rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
 }
 
 .icon {
@@ -231,6 +271,12 @@
   line-height: 1.5;
   letter-spacing: -0.075px;
   color: #8e8e8e;
+
+  @media (max-width: $breakpoint-tablet) {
+    font-weight: $font-weight-regular;
+    font-size: 13px;
+    letter-spacing: -0.065px;
+  }
 }
 
 // Body Section
@@ -241,7 +287,7 @@
   width: 100%;
 
   @media (max-width: $breakpoint-tablet) {
-    gap: 48px;
+    gap: 56px;
   }
 }
 
@@ -271,6 +317,14 @@
   max-width: 1120px;
   margin: 0 auto;
 
+  @media (max-width: $breakpoint-tablet) {
+    font-family: $font-pretendard;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: -0.075px;
+  }
+
   // Toast UI Viewer 스타일 오버라이드
   :global(.toastui-editor-contents) {
     color: var(--grayscale-0, #FFF) !important;
@@ -283,6 +337,14 @@
     line-height: 150%; /* 25.5px */
     letter-spacing: -0.085px;
 
+    @media (max-width: $breakpoint-tablet) {
+      font-family: $font-pretendard !important;
+      font-size: 15px !important;
+      font-weight: 400 !important;
+      line-height: 1.5 !important;
+      letter-spacing: -0.075px !important;
+    }
+
     p, span, div, li, td, th {
       color: var(--grayscale-0, #FFF) !important;
       font-family: "IBM Plex Mono";
@@ -291,6 +353,14 @@
       font-weight: 400;
       line-height: 150%;
       letter-spacing: -0.085px;
+
+      @media (max-width: $breakpoint-tablet) {
+        font-family: $font-pretendard !important;
+        font-size: 15px !important;
+        font-weight: 400 !important;
+        line-height: 1.5 !important;
+        letter-spacing: -0.075px !important;
+      }
     }
 
     p {
@@ -298,6 +368,10 @@
 
       &:last-child {
         margin-bottom: 0;
+      }
+
+      @media (max-width: $breakpoint-tablet) {
+        margin: 0 0 12px 0;
       }
     }
 
@@ -337,7 +411,7 @@
 
     table {
       border-color: rgba(255, 255, 255, 0.2);
-      
+
       th, td {
         border-color: rgba(255, 255, 255, 0.2);
         color: var(--grayscale-0, #FFF) !important;
@@ -468,8 +542,10 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    height: 36px;
-    padding: 0 10px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
   }
 }
 
@@ -480,6 +556,10 @@
   line-height: 1.5;
   letter-spacing: -0.075px;
   color: white;
+
+  @media (max-width: $breakpoint-tablet) {
+    display: none;
+  }
 }
 
 .downloadIcon {
@@ -758,7 +838,8 @@
   align-items: center;
 
   @media (max-width: $breakpoint-tablet) {
-    gap: 40px;
+    gap: 48px;
+    padding-bottom: 80px;
   }
 }
 
@@ -772,6 +853,7 @@
   @media (max-width: $breakpoint-tablet) {
     flex-direction: column;
     gap: 24px;
+    align-items: stretch;
   }
 }
 
@@ -797,10 +879,42 @@
 
   @media (max-width: $breakpoint-tablet) {
     width: 100%;
-    justify-content: center;
-    
+    justify-content: flex-start;
+    gap: 24px;
+
     &:last-child {
       margin-left: 0;
+    }
+  }
+}
+
+// 다음 글 - 데스크톱에서는 title이 먼저, 모바일에서는 label이 먼저
+.navItemNext {
+  .navLabel {
+    order: 2;
+  }
+
+  .navTitle {
+    order: 1;
+    text-align: right;
+  }
+
+  .navIcon {
+    order: 3;
+  }
+
+  @media (max-width: $breakpoint-tablet) {
+    .navLabel {
+      order: 1;
+    }
+
+    .navTitle {
+      order: 2;
+      text-align: left;
+    }
+
+    .navIcon {
+      order: 3;
     }
   }
 }
@@ -809,6 +923,10 @@
   width: 24px;
   height: 24px;
   flex-shrink: 0;
+
+  @media (max-width: $breakpoint-tablet) {
+    display: none;
+  }
 }
 
 .navContent {
@@ -841,6 +959,10 @@
   white-space: nowrap;
   flex: 1;
   min-width: 0;
+
+  @media (max-width: $breakpoint-tablet) {
+    flex: 1;
+  }
 }
 
 .navEmpty {

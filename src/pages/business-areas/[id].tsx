@@ -474,31 +474,81 @@ const BusinessAreaDetailPage: React.FC = () => {
 
       {/* Fixed Overview Banner - Shows when Overview section is not visible */}
       {isOverviewPassed && data.overview && (
-        <div 
+        <div
           className={`${styles.overviewFixedBanner} ${isOverviewBannerExpanded ? styles.expanded : ''}`}
           onClick={() => setIsOverviewBannerExpanded(!isOverviewBannerExpanded)}
         >
           <div className={styles.overviewFixedBannerContent}>
-            <div className={styles.overviewFixedBannerTitle}>OVERVIEW</div>
+            {/* 모바일 헤더 (OVERVIEW + 토글) */}
+            <div className={styles.overviewFixedBannerHeader}>
+              <div className={styles.overviewFixedBannerTitle}>OVERVIEW</div>
+              <div className={styles.overviewFixedBannerToggle}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d={isOverviewBannerExpanded ? "M5 12.5L10 7.5L15 12.5" : "M5 7.5L10 12.5L15 7.5"}
+                    stroke="#FFF"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            </div>
+            {/* 데스크탑 타이틀 */}
+            <div className={styles.overviewFixedBannerTitleDesktop}>OVERVIEW</div>
             <div className={styles.overviewFixedBannerDivider} />
             <div className={`${styles.overviewFixedBannerBody} ${!isOverviewBannerExpanded ? styles.collapsed : ''}`}>
               <div className={styles.overviewContentInner}>
                 <Viewer initialValue={data.overview} />
               </div>
             </div>
-            <div className={styles.overviewFixedBannerToggle}>
+            {/* 데스크탑 토글 */}
+            <div className={styles.overviewFixedBannerToggleDesktop}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path 
-                  d={isOverviewBannerExpanded ? "M5 12.5L10 7.5L15 12.5" : "M5 7.5L10 12.5L15 7.5"} 
-                  stroke="#FFF" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
+                <path
+                  d={isOverviewBannerExpanded ? "M5 12.5L10 7.5L15 12.5" : "M5 7.5L10 12.5L15 7.5"}
+                  stroke="#FFF"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Mobile Sticky Tab Navigation - Shows when scrolled past overview */}
+      {isOverviewPassed && (
+        <nav className={styles.mobileStickyNav}>
+          {data.majorCategory.sections.includes('체크포인트') && (
+            <button
+              className={`${styles.mobileTabItem} ${activeSection === 'checkpoint' ? styles.mobileTabItemActive : ''}`}
+              onClick={() => document.getElementById('checkpoint')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              {activeSection === 'checkpoint' && <span className={styles.mobileTabDot} />}
+              <span>체크포인트</span>
+            </button>
+          )}
+          {data.majorCategory.sections.includes('함께 실행방안') && (
+            <button
+              className={`${styles.mobileTabItem} ${activeSection === 'execution' ? styles.mobileTabItemActive : ''}`}
+              onClick={() => document.getElementById('execution')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              {activeSection === 'execution' && <span className={styles.mobileTabDot} />}
+              <span>함께 실행방안</span>
+            </button>
+          )}
+          {data.majorCategory.sections.includes('케이스') && (
+            <button
+              className={`${styles.mobileTabItem} ${activeSection === 'cases' ? styles.mobileTabItemActive : ''}`}
+              onClick={() => document.getElementById('cases')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              {activeSection === 'cases' && <span className={styles.mobileTabDot} />}
+              <span>케이스</span>
+            </button>
+          )}
+        </nav>
       )}
 
       {/* Overview Section - Below Hero Image */}
@@ -508,6 +558,9 @@ const BusinessAreaDetailPage: React.FC = () => {
             <section id="overview" className={styles.overviewSection}>
               <div className={styles.overviewHeader}>
                 <h2 className={styles.overviewTitle}>OVERVIEW</h2>
+                <svg className={styles.overviewHeaderToggle} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
               <div className={styles.overviewContent}>
                 <div className={styles.overviewContentLayout}>

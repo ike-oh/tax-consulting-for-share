@@ -9,7 +9,7 @@ import Checkbox from '@/components/common/Checkbox';
 import StepIndicator from '@/components/common/StepIndicator';
 import Button from '@/components/common/Button';
 import Icon from '@/components/common/Icon';
-import { post } from '@/lib/api';
+import { get, post } from '@/lib/api';
 import { API_ENDPOINTS } from '@/config/api';
 
 type StepType = 1 | 2 | 3;
@@ -142,6 +142,8 @@ const Signup: React.FC = () => {
   };
 
   const handleCheckUserId = useCallback(async () => {
+    console.log('[DEBUG] handleCheckUserId 호출됨, userId:', userId);
+
     if (!userId) {
       setUserIdError('아이디를 입력해주세요.');
       setIsUserIdChecked(false);
@@ -157,19 +159,45 @@ const Signup: React.FC = () => {
     }
 
     setIsLoading(true);
+    setUserIdError('');
+
     try {
-      // 회원가입 시도로 중복 확인 (실제로는 별도의 중복확인 API가 있으면 좋음)
-      // 현재는 테스트 데이터로 처리
+      const apiUrl = `${API_ENDPOINTS.AUTH.CHECK_ID}?loginId=${encodeURIComponent(userId)}`;
+      console.log('[DEBUG] API 호출 URL:', apiUrl);
+
+      // 아이디 중복 확인 API 호출 (응답: { exists: boolean })
+      const response = await get<{ exists: boolean }>(apiUrl);
+      console.log('[DEBUG] API 응답:', response);
+
       setIsUserIdChecked(true);
 
-      // 테스트: 특정 아이디는 중복으로 처리
-      if (userId === 'test' || userId === 'admin' || userId === 'user' || userId === 'qwe123') {
-        setIsUserIdAvailable(false);
-        setUserIdError('이미 사용중인 아이디 입니다');
+      if (response.error) {
+        // API 에러 처리
+        if (response.status === 409 || response.error.includes('이미') || response.error.includes('중복')) {
+          setIsUserIdAvailable(false);
+          setUserIdError('이미 사용중인 아이디 입니다');
+        } else {
+          setIsUserIdAvailable(false);
+          setUserIdError(response.error);
+        }
+      } else if (response.data !== undefined) {
+        // API 응답에 따라 처리 (exists: false면 사용 가능, true면 이미 존재)
+        if (response.data.exists === false) {
+          setIsUserIdAvailable(true);
+          setUserIdError('');
+        } else {
+          setIsUserIdAvailable(false);
+          setUserIdError('이미 사용중인 아이디 입니다');
+        }
       } else {
-        setIsUserIdAvailable(true);
-        setUserIdError('');
+        // 응답이 없는 경우
+        setIsUserIdAvailable(false);
+        setUserIdError('아이디 확인에 실패했습니다.');
       }
+    } catch {
+      setIsUserIdChecked(false);
+      setIsUserIdAvailable(false);
+      setUserIdError('아이디 확인 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }

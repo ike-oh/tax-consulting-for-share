@@ -49,6 +49,10 @@ export type IconType =
   | 'document'
   | 'download'
   | 'download-white'
+  | 'vcard'
+  | 'pdf'
+  | 'share'
+  | 'resume'
   // Eye
   | 'eye'
   | 'eye-white'
@@ -90,7 +94,7 @@ const Icon: React.FC<IconProps> = ({ type, size = 24, className = '', onClick, s
   // 16px 전용 아이콘들
   const is16pxIcon = ['info', 'info-gray', 'error', 'map', 'map-green', 'calendar'].includes(type);
   // 20px 전용 아이콘들
-  const is20pxIcon = ['arrow-up', 'arrow-up-white', 'arrow-down', 'arrow-down-white', 'arrow-right', 'arrow-right-gray', 'arrow-left', 'arrow-left-gray', 'chevron-down', 'chevron-down-white', 'check', 'check-gray', 'check-white', 'check-blue', 'check-gray-light', 'plus', 'plus-gray', 'minus', 'minus-gray', 'call', 'location', 'mail', 'document', 'download', 'download-white', 'error-white', 'search'].includes(type);
+  const is20pxIcon = ['arrow-up', 'arrow-up-white', 'arrow-down', 'arrow-down-white', 'arrow-right', 'arrow-right-gray', 'arrow-left', 'arrow-left-gray', 'chevron-down', 'chevron-down-white', 'check', 'check-gray', 'check-white', 'check-blue', 'check-gray-light', 'plus', 'plus-gray', 'minus', 'minus-gray', 'call', 'location', 'mail', 'document', 'download', 'download-white', 'error-white', 'search', 'vcard', 'pdf', 'share', 'resume'].includes(type);
   // 24px 전용 아이콘들 (arrow-right2 시리즈)
   const is24pxIcon = ['arrow-right2-gray', 'arrow-right2-white', 'arrow-right2-green', 'arrow-left2-gray', 'arrow-left2-white', 'arrow-left2-green'].includes(type);
 
@@ -285,6 +289,46 @@ const Icon: React.FC<IconProps> = ({ type, size = 24, className = '', onClick, s
             <path d="M9.5 11.3359L6.16602 7.96387C5.92357 7.7186 5.92606 7.32279 6.1709 7.08008C6.41631 6.83749 6.81201 6.83969 7.05469 7.08496L9.33887 9.39551L9.33887 1.45605C9.33887 1.11088 9.61869 0.831054 9.96387 0.831054C10.309 0.831098 10.5889 1.1109 10.5889 1.45605L10.5889 9.35645L12.833 7.08496C13.0757 6.83953 13.4713 6.83744 13.7168 7.08008C13.962 7.32276 13.9643 7.71846 13.7217 7.96387L10.3887 11.3359L9.94434 11.7852L9.5 11.3359Z" fill="white"/>
             <path d="M3.33203 8.40625V17.5112H16.6654V8.40625" stroke="white" strokeWidth="1.25" strokeLinecap="round"/>
           </>
+        );
+
+      // VCard (연락처 저장) - resume_1388261 1.svg
+      case 'vcard':
+        return (
+          <>
+            <path d="M17.1445 5.91406H13.5898C12.7269 5.91406 12.0273 5.21449 12.0273 4.35156V0.796875" stroke="white" strokeWidth="1.3" strokeMiterlimit="10" strokeLinejoin="round" fill="none"/>
+            <path d="M17.1441 5.91449V17.668C17.1441 18.5309 16.4446 19.2305 15.5816 19.2305H4.41406C3.55113 19.2305 2.85156 18.5309 2.85156 17.668V2.35547C2.85156 1.4925 3.55113 0.792971 4.41406 0.792971H12.0486L17.1441 5.91449Z" stroke="white" strokeWidth="1.3" strokeMiterlimit="10" fill="none"/>
+            <path d="M5.23438 16.1055H14.8047" stroke="white" strokeWidth="1.3" strokeMiterlimit="10"/>
+            <path d="M6.01562 13.7227C6.01562 12.2125 7.23984 10.9883 8.75 10.9883C10.2602 10.9883 11.4844 12.2125 11.4844 13.7227" stroke="white" strokeWidth="1.3" strokeMiterlimit="10" strokeLinejoin="round" fill="none"/>
+            <path d="M7.22656 9.42578C7.22656 8.56281 7.92613 7.86328 8.78906 7.86328C9.65199 7.86328 10.3516 8.56281 10.3516 9.42578C10.3516 10.2888 9.65199 10.9883 8.78906 10.9883C7.92613 10.9883 7.22656 10.2888 7.22656 9.42578Z" stroke="white" strokeWidth="1.3" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+          </>
+        );
+
+      // PDF (PDF 다운로드) - resume_1388261 2.svg
+      case 'pdf':
+        return (
+          <>
+            <path d="M17.1445 5.91406H13.5898C12.7269 5.91406 12.0273 5.21449 12.0273 4.35156V0.796875" stroke="white" strokeWidth="1.3" strokeMiterlimit="10" strokeLinejoin="round" fill="none"/>
+            <path d="M17.1441 5.91449V17.668C17.1441 18.5309 16.4446 19.2305 15.5816 19.2305H4.41406C3.55113 19.2305 2.85156 18.5309 2.85156 17.668V2.35547C2.85156 1.4925 3.55113 0.792971 4.41406 0.792971H12.0486L17.1441 5.91449Z" stroke="white" strokeWidth="1.3" strokeMiterlimit="10" fill="none"/>
+            <path d="M5.4375 15.8928V11.8125H6.44973C7.00877 11.8125 7.46193 12.2657 7.46193 12.8247C7.46193 13.3837 7.00874 13.8369 6.44973 13.8369H5.4375" stroke="white" strokeWidth="1.008" strokeMiterlimit="10" fill="none"/>
+            <path d="M14.6845 13.8359H12.6602" stroke="white" strokeWidth="1.008" strokeMiterlimit="10"/>
+            <path d="M10.063 15.3888H9.05078V11.8125H10.063C10.622 11.8125 11.0752 12.2657 11.0752 12.8247V14.3766C11.0752 14.9356 10.622 15.3888 10.063 15.3888Z" stroke="white" strokeWidth="1.008" strokeMiterlimit="10" fill="none"/>
+            <path d="M12.6602 15.8928V11.8125H15.1886" stroke="white" strokeWidth="1.008" strokeMiterlimit="10" fill="none"/>
+          </>
+        );
+
+      // Share (공유하기/업로드) - icon_24_5.svg
+      case 'share':
+        return (
+          <>
+            <path d="M10.3867 1.28516L13.7207 4.65723C13.9632 4.90251 13.9607 5.2983 13.7158 5.54102C13.4704 5.7836 13.0747 5.7814 12.832 5.53613L10.5479 3.22559V11.1641C10.5479 11.5092 10.268 11.7891 9.92285 11.7891C9.57773 11.789 9.29785 11.5092 9.29785 11.1641V3.26465L7.05371 5.53613C6.81105 5.78156 6.41539 5.78365 6.16992 5.54102C5.92467 5.29834 5.92246 4.90264 6.16504 4.65723L9.49805 1.28516L9.94238 0.835938L10.3867 1.28516Z" fill="white"/>
+            <path d="M3.33203 8.41406V17.519H16.6654V8.41406" stroke="white" strokeWidth="1.3" strokeLinecap="round" fill="none"/>
+          </>
+        );
+
+      // Resume (이력서) - Frame 1321319662.svg
+      case 'resume':
+        return (
+          <path d="M2.92943 1C2.57638 1.00141 2.29051 1.28728 2.28906 1.64036V18.3596C2.29047 18.7127 2.57634 18.9986 2.92943 19L13.2176 18.995C13.388 18.9963 13.5519 18.9299 13.6734 18.8104L17.5268 14.957C17.6481 14.8364 17.7163 14.6724 17.7164 14.5013V1.64036C17.7149 1.28728 17.4291 1.00141 17.076 1L2.92943 1ZM3.57481 2.28696H16.4294V13.8559H13.2176C12.8607 13.8545 12.5709 14.1442 12.5723 14.5012V17.7092L3.57481 17.7142V2.28696ZM6.75767 6.14409C5.9003 6.18523 5.96186 7.47219 6.81919 7.43105H13.2176C14.075 7.43105 14.075 6.14409 13.2176 6.14409H6.81919C6.79866 6.14313 6.77824 6.14313 6.75767 6.14409ZM6.71123 8.71676C5.91682 8.81033 5.97303 9.98061 6.77274 9.99745H13.1611C14.0904 10.0759 14.0904 8.63829 13.1611 8.71676H6.77274C6.75221 8.7158 6.7318 8.7158 6.71123 8.71676ZM6.78656 11.2832C6.43118 11.2832 6.14306 11.5713 6.14306 11.9267C6.14306 12.2821 6.43114 12.5702 6.78656 12.5702H9.99959C10.355 12.5702 10.6431 12.2821 10.6431 11.9267C10.6431 11.5713 10.355 11.2832 9.99959 11.2832H6.78656ZM13.858 15.1416H15.5216L13.858 16.804V15.1416Z" fill="white"/>
         );
 
       // Eye icons

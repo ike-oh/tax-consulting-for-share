@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
-import Header, { HeaderVariant, HeaderSize } from '@/components/common/Header';
+import Header, { HeaderVariant } from '@/components/common/Header';
 import Menu from '@/components/Menu';
 import Footer from '@/components/common/Footer';
 
@@ -123,7 +123,6 @@ const EXPERTS_CARDS = [
 
 const Home: React.FC = () => {
   const [headerVariant, setHeaderVariant] = useState<HeaderVariant>('white');
-  const [headerSize, setHeaderSize] = useState<HeaderSize>('web');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -220,18 +219,6 @@ const Home: React.FC = () => {
   const finalContentRef = useRef<HTMLDivElement>(null);
 
   // 반응형 슬라이드 너비 업데이트
-  // 헤더 크기 업데이트 (리사이즈)
-  useEffect(() => {
-    const updateHeaderSize = () => {
-      const isMobile = window.innerWidth <= 768;
-      setHeaderSize(isMobile ? 'mobile' : 'web');
-    };
-
-    updateHeaderSize();
-    window.addEventListener('resize', updateHeaderSize);
-    return () => window.removeEventListener('resize', updateHeaderSize);
-  }, []);
-
   useEffect(() => {
     const updateSlideWidth = () => {
       const vw = window.innerWidth;
@@ -342,9 +329,6 @@ const Home: React.FC = () => {
   useEffect(() => {
     const ctx = gsap.context(() => {
       const isMobile = window.innerWidth <= 768;
-      
-      // 헤더 크기 설정
-      setHeaderSize(isMobile ? 'mobile' : 'web');
 
       // ===== HERO SECTION =====
       // 초기 상태 설정 - 모두 숨김 및 위치 설정
@@ -719,9 +703,8 @@ const Home: React.FC = () => {
 
   return (
     <div className="home-container" ref={containerRef}>
-      <Header 
-        variant={headerVariant} 
-        size={headerSize}
+      <Header
+        variant={headerVariant}
         onMenuClick={() => setIsMenuOpen(true)}
         isFixed={true}
       />

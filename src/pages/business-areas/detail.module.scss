@@ -6,6 +6,10 @@
   color: white;
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 767px) {
+    padding-top: 56px; // 모바일 고정 헤더 높이
+  }
 }
 
 .pageHeaderWrapper {
@@ -18,7 +22,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding-top: 60px;
+    padding-top: 64px;
     padding-bottom: 12px;
   }
 }
@@ -41,7 +45,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding: 0 24px;
+    padding: 0 20px;
     flex-direction: column;
     gap: 0;
   }
@@ -139,6 +143,73 @@
   transition: font-weight 0.3s ease, color 0.3s ease;
 }
 
+// 모바일 스티키 탭 네비게이션
+.mobileStickyNav {
+  display: none;
+  position: fixed;
+  top: 56px; // 모바일 헤더(56px) 아래
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: #151515;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 15px;
+  gap: 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  scrollbar-width: none;
+
+  @media (max-width: $breakpoint-tablet) {
+    display: flex;
+  }
+}
+
+.mobileStickyNavVisible {
+  @media (max-width: $breakpoint-tablet) {
+    display: flex;
+  }
+}
+
+.mobileTabItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px 0;
+  font-family: $font-pretendard;
+  font-weight: $font-weight-semibold;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.075px;
+  color: $gray-50;
+  background: none;
+  border: none;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    color: #ffffff;
+  }
+}
+
+.mobileTabItemActive {
+  color: #ffffff;
+  border-bottom-color: #ffffff;
+}
+
+.mobileTabDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #D11F00;
+}
+
 .mainContent {
   flex: 1;
   min-width: 0;
@@ -175,7 +246,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    height: 300px;
+    height: 335px;
     margin-top: 40px;
   }
 }
@@ -244,8 +315,8 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding: 0 24px;
-    padding-top: 292px; // PRACTICE AREAS 하단(100px + 72px)에서 120px 간격
+    padding: 0 20px;
+    padding-top: 338px; // heroTitle(72px + 106px) + 48px gap + heroTitleRow offset(160px) - heroSubtitle margin(48px)
   }
 }
 
@@ -266,10 +337,10 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    font-size: 17px;
+    font-size: 15px;
     top: 40px; // 40px 올림 (80px - 40px)
   }
-  
+
   left: 50%;
   transform: translateX(-50%);
   z-index: 3;
@@ -325,7 +396,10 @@
 
   @media (max-width: $breakpoint-tablet) {
     font-size: 48px;
-    top: 60px; // 40px 올림 (100px - 40px), 업무 분야로부터 20px (40px + 20px)
+    top: 72px;
+    white-space: normal;
+    word-spacing: 100vw; // PRACTICE AREAS → 두 줄
+    line-height: 1.1;
   }
 }
 
@@ -346,7 +420,8 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    font-size: 24px;
+    font-size: 21px;
+    margin-top: 48px;
   }
 }
 
@@ -362,8 +437,9 @@
   margin-top: 0; // 20px 올림 (20px - 20px)
 
   @media (max-width: $breakpoint-tablet) {
-    font-size: 15px;
-    margin-top: 20px; // 20px 올림 (40px - 20px)
+    font-size: 13px;
+    font-weight: $font-weight-regular;
+    margin-top: -8px;
   }
 }
 
@@ -417,9 +493,11 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding: 0 24px;
-    min-height: 100px;
-    max-height: 100px;
+    padding: 0 20px;
+    min-height: auto;
+    max-height: none;
+    height: auto;
+    top: 111px; // 헤더(56px) + 스티키탭(55px)
   }
 }
 
@@ -445,14 +523,40 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    gap: 32px;
+    gap: 8px;
     padding: 15px 0;
     flex-direction: column;
-    min-height: 100px;
+    min-height: auto;
+  }
+}
+
+.overviewFixedBannerHeader {
+  display: none;
+
+  @media (max-width: $breakpoint-tablet) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
   }
 }
 
 .overviewFixedBannerTitle {
+  color: #fff;
+  font-family: $font-montserrat;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 300;
+  line-height: 110%;
+  letter-spacing: -3px;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.overviewFixedBannerTitleDesktop {
   color: #fff;
   font-family: $font-montserrat;
   font-size: 32px;
@@ -471,7 +575,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    font-size: 24px;
+    display: none;
   }
 }
 
@@ -482,8 +586,7 @@
   flex-shrink: 0;
 
   @media (max-width: $breakpoint-tablet) {
-    width: 100%;
-    height: 1px;
+    display: none;
   }
 }
 
@@ -496,6 +599,17 @@
     max-height: 72px; // 약 3줄 정도의 높이
     mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
     -webkit-mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+
+    @media (max-width: $breakpoint-tablet) {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-height: none;
+      mask-image: none;
+      -webkit-mask-image: none;
+    }
   }
 
   @media (max-width: $breakpoint-tablet) {
@@ -512,9 +626,20 @@
   justify-content: center;
   cursor: pointer;
   transition: transform 0.3s ease;
+}
+
+.overviewFixedBannerToggleDesktop {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.3s ease;
 
   @media (max-width: $breakpoint-tablet) {
-    align-self: flex-end;
+    display: none;
   }
 }
 
@@ -551,6 +676,9 @@
 }
 
 .overviewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 56px;
   opacity: 0.2;
   max-width: 1440px;
@@ -558,6 +686,24 @@
   margin-right: auto;
   padding: 0;
   box-sizing: border-box;
+
+  @media (max-width: $breakpoint-tablet) {
+    padding-left: 20px;
+    padding-right: 20px;
+    margin-bottom: 24px;
+  }
+}
+
+.overviewHeaderToggle {
+  display: none;
+  width: 24px;
+  height: 24px;
+  color: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+
+  @media (max-width: $breakpoint-tablet) {
+    display: block;
+  }
 }
 
 .overviewTitle {
@@ -591,7 +737,9 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding: 40px 24px;
+    padding: 40px 20px;
+    margin-left: 20px;
+    margin-right: 20px;
   }
 
   // 배경 이미지
@@ -631,7 +779,7 @@
 
   @media (max-width: $breakpoint-tablet) {
     flex-direction: column;
-    gap: 32px;
+    gap: 24px;
     flex-wrap: wrap;
   }
 }
@@ -641,6 +789,10 @@
   flex-shrink: 0;
   flex-grow: 0;
   flex-basis: 179px;
+
+  @media (max-width: $breakpoint-tablet) {
+    flex-basis: auto;
+  }
 }
 
 .overviewFieldTitle {
@@ -670,6 +822,9 @@
   @media (max-width: $breakpoint-tablet) {
     font-size: 24px;
     width: 100%;
+    height: auto;
+    min-height: 0;
+    flex-basis: auto;
   }
 }
 
@@ -689,9 +844,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    width: 100%;
-    height: 1px;
-    min-height: 1px;
+    display: none;
   }
 }
 
@@ -833,6 +986,8 @@
   @media (max-width: $breakpoint-tablet) {
     font-size: 48px;
     letter-spacing: -2px;
+    word-spacing: 100vw;
+    line-height: 1.1;
   }
 }
 
@@ -851,6 +1006,7 @@
 
   @media (max-width: $breakpoint-tablet) {
     font-size: 18px;
+    margin-top: 16px;
   }
 }
 
@@ -858,6 +1014,11 @@
   display: flex;
   flex-direction: column;
   gap: 40px;
+
+  @media (max-width: $breakpoint-tablet) {
+    gap: 24px;
+    margin-top: 8px;
+  }
 }
 
 .subSectionTitle {
@@ -875,6 +1036,7 @@
 
   @media (max-width: $breakpoint-tablet) {
     font-size: 18px;
+    margin-bottom: 16px;
   }
 }
 
@@ -1062,8 +1224,11 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding: 40px 24px;
+    padding: 40px 20px;
     min-height: 250px;
+    margin-left: 20px;
+    margin-right: 20px;
+    width: calc(100% - 40px);
   }
 
   // 배경 이미지
@@ -1094,9 +1259,9 @@
 
   @media (max-width: $breakpoint-tablet) {
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     gap: 32px;
-    text-align: center;
+    text-align: left;
   }
 }
 
@@ -1184,8 +1349,9 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    font-size: 16px;
-    padding: 12px 24px;
+    font-size: 15px;
+    padding: 10px 20px;
+    height: auto;
   }
 }
 
@@ -1193,6 +1359,10 @@
 .navigationButtons {
   display: flex;
   gap: 8px;
+
+  @media (max-width: $breakpoint-tablet) {
+    display: none;
+  }
 }
 
 .navButton {
@@ -1235,12 +1405,33 @@
   overflow: hidden;
   width: 100%;
   margin-top: 64px;
+
+  @media (max-width: $breakpoint-tablet) {
+    overflow: visible;
+    margin-top: 24px;
+    margin-left: -20px;
+    margin-right: -20px;
+    width: calc(100% + 40px);
+  }
 }
 
 .expertsGrid {
   display: flex;
   transition: transform 0.5s ease;
   width: 100%;
+
+  @media (max-width: $breakpoint-tablet) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-left: 20px;
+    padding-right: 20px;
+    transform: none !important;
+    gap: 16px; // 모든 카드 사이에 일정한 간격
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 }
 
 .expertsPage {
@@ -1256,7 +1447,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    grid-template-columns: 1fr;
+    display: contents; // 페이지 컨테이너를 없애고 카드들만 표시
   }
 }
 
@@ -1274,8 +1465,10 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    align-items: center;
-    text-align: center;
+    width: 213px;
+    min-width: 213px;
+    flex-shrink: 0;
+    gap: 16px;
   }
 }
 
@@ -1298,6 +1491,10 @@
   flex-direction: column;
   gap: 32px;
   width: 100%;
+
+  @media (max-width: $breakpoint-tablet) {
+    gap: 16px;
+  }
 }
 
 .expertNameRow {
@@ -1314,6 +1511,10 @@
   letter-spacing: -0.125px;
   color: #ffffff;
   margin: 0;
+
+  @media (max-width: $breakpoint-tablet) {
+    font-size: 17px;
+  }
 }
 
 .expertPositionLabel {
@@ -1324,12 +1525,20 @@
   letter-spacing: -0.095px;
   color: #d8d8d8;
   margin: 0;
+
+  @media (max-width: $breakpoint-tablet) {
+    font-size: 13px;
+  }
 }
 
 .expertContact {
   display: flex;
   flex-direction: column;
   gap: 16px;
+
+  @media (max-width: $breakpoint-tablet) {
+    gap: 8px;
+  }
 }
 
 .expertContactItem {
@@ -1339,6 +1548,11 @@
   font-size: 15px;
   line-height: 1.5;
   letter-spacing: -0.075px;
+
+  @media (max-width: $breakpoint-tablet) {
+    font-size: 11px;
+    gap: 8px;
+  }
 }
 
 .expertContactLabel {
@@ -1347,6 +1561,10 @@
   color: #94b9e3;
   width: 44px;
   flex-shrink: 0;
+
+  @media (max-width: $breakpoint-tablet) {
+    width: auto;
+  }
 }
 
 .expertContactValue {
@@ -1359,6 +1577,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+
+  @media (max-width: $breakpoint-tablet) {
+    gap: 4px;
+  }
 }
 
 .expertTag {
@@ -1371,6 +1593,11 @@
   background-color: #2d2d2d;
   padding: 8px;
   border-radius: 4px;
+
+  @media (max-width: $breakpoint-tablet) {
+    font-size: 11px;
+    padding: 4px 6px;
+  }
 }
 
 .expertTel {
@@ -1387,12 +1614,33 @@
   overflow: hidden;
   width: 100%;
   margin-top: 64px;
+
+  @media (max-width: $breakpoint-tablet) {
+    overflow: visible;
+    margin-top: 24px;
+    margin-left: -20px;
+    margin-right: -20px;
+    width: calc(100% + 40px);
+  }
 }
 
 .youtubeGrid {
   display: flex;
   transition: transform 0.5s ease;
   width: 100%;
+
+  @media (max-width: $breakpoint-tablet) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-left: 20px;
+    padding-right: 20px;
+    transform: none !important;
+    gap: 16px;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 }
 
 .youtubePage {
@@ -1408,7 +1656,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    grid-template-columns: 1fr;
+    display: contents;
   }
 }
 
@@ -1422,6 +1670,13 @@
 
   &:hover {
     opacity: 0.8;
+  }
+
+  @media (max-width: $breakpoint-tablet) {
+    width: 213px;
+    min-width: 213px;
+    flex-shrink: 0;
+    gap: 16px;
   }
 }
 
@@ -1492,12 +1747,33 @@
   overflow: hidden;
   width: 100%;
   margin-top: 64px;
+
+  @media (max-width: $breakpoint-tablet) {
+    overflow: visible;
+    margin-top: 24px;
+    margin-left: -20px;
+    margin-right: -20px;
+    width: calc(100% + 40px);
+  }
 }
 
 .newsGrid {
   display: flex;
   transition: transform 0.5s ease;
   width: 100%;
+
+  @media (max-width: $breakpoint-tablet) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-left: 20px;
+    padding-right: 20px;
+    transform: none !important;
+    gap: 16px;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 }
 
 .newsPage {
@@ -1513,7 +1789,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    grid-template-columns: 1fr;
+    display: contents;
   }
 }
 
@@ -1532,6 +1808,13 @@
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  @media (max-width: $breakpoint-tablet) {
+    width: 213px;
+    min-width: 213px;
+    flex-shrink: 0;
+    gap: 16px;
   }
 }
 
@@ -1554,6 +1837,10 @@
   display: flex;
   flex-direction: column;
   gap: 48px;
+
+  @media (max-width: $breakpoint-tablet) {
+    padding: 0 20px 40px 20px;
+  }
 }
 
 .newsHeader {
@@ -1669,6 +1956,10 @@
   width: 100%;
   padding: 0;
   box-sizing: border-box;
+
+  @media (max-width: $breakpoint-tablet) {
+    padding: 0 20px;
+  }
 }
 
 // Floating Buttons

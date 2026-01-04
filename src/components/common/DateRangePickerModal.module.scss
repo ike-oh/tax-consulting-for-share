@@ -18,6 +18,14 @@
   z-index: 1001;
   padding: 24px 8px 24px;
   width: 323px;
+
+  @media (max-width: 767px) {
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    right: auto !important;
+    bottom: auto !important;
+  }
 }
 
 .content {

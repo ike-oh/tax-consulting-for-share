@@ -326,19 +326,14 @@ const EducationDetailPage: React.FC = () => {
       
       <div className={styles.container}>
         <div className={styles.content}>
-          <div className={styles.mainSection}>
-            <div className={styles.imageSection}>
-              <div className={styles.imageWrapper}>
-                <img src={education.image?.url || '/images/education/default-thumbnail.png'} alt={education.name} />
-              </div>
-            </div>
-            <div className={styles.bodySection}>
-              <div className={styles.bodyContent}>
-                <Viewer initialValue={education.body} />
-              </div>
+          {/* 이미지 섹션 */}
+          <div className={styles.imageSection}>
+            <div className={styles.imageWrapper}>
+              <img src={education.image?.url || '/images/education/default-thumbnail.png'} alt={education.name} />
             </div>
           </div>
 
+          {/* 강의 정보 */}
           <div className={styles.sidebar}>
             <div className={styles.sidebarCard}>
               <div className={styles.cardHeader}>
@@ -462,10 +457,24 @@ const EducationDetailPage: React.FC = () => {
                 <p>0원</p>
               </div>
 
-              {renderActionButton()}
+              <div className={styles.actionButtonDesktop}>
+                {renderActionButton()}
+              </div>
+            </div>
+          </div>
+
+          {/* 설명 섹션 */}
+          <div className={styles.bodySection}>
+            <div className={styles.bodyContent}>
+              <Viewer initialValue={education.body} />
             </div>
           </div>
         </div>
+      </div>
+
+      {/* 모바일 하단 고정 버튼 */}
+      <div className={styles.stickyButtonWrapper}>
+        {renderActionButton()}
       </div>
 
       <Footer />

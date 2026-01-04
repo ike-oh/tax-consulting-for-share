@@ -224,8 +224,6 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const currentSubItems = MENU_ITEMS.find(item => item.id === selectedItem)?.subItems || [];
-
   const wrapperClass = `menu-wrapper ${hasBeenOpened || isOpen ? 'is-visible' : ''}`;
   const overlayClass = `menu-overlay ${isOpen && !isClosing ? 'is-open' : ''} ${isClosing ? 'is-closing' : ''}`;
   const containerClass = `menu-container ${isOpen && !isClosing ? 'is-open' : ''} ${isClosing ? 'is-closing' : ''}`;
@@ -234,18 +232,38 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose }) => {
     <div className={wrapperClass}>
       <div className={overlayClass} onClick={handleClose} />
       <nav className={containerClass}>
+        {/* 헤더: 로고(모바일) + 닫기 버튼 */}
         <div className="menu-header">
+          {/* 로고 - 모바일에서만 표시 */}
+          <div className="menu-logo menu-logo--mobile" onClick={() => { handleClose(); setTimeout(() => router.push('/'), 500); }}>
+            <img src="/images/logo/logo-hd_w.png" alt="MODOO CONSULTING" />
+          </div>
+
+          {/* 햄버거 메뉴 - 모바일에서만 표시 */}
+          <button className="menu-toggle menu-toggle--mobile" onClick={handleClose} aria-label="메뉴 닫기">
+            <span className="menu-toggle-line" />
+            <span className="menu-toggle-line" />
+            <span className="menu-toggle-line" />
+          </button>
+
+          {/* X 버튼 - 데스크탑에서만 표시 */}
+          <button className="menu-close menu-close--desktop" onClick={handleClose} aria-label="메뉴 닫기">
+            <span className="menu-close-line" />
+            <span className="menu-close-line" />
+          </button>
+        </div>
+
+        {/* 인증 링크 */}
+        <div className="menu-auth">
           {isAuthenticated ? (
-            <div className="auth-links">
-              <button className="auth-link my-page-link" onClick={handleMyPageClick}>
-                <img 
-                  src="/images/common/user-icon-white.svg" 
-                  alt="My Page" 
-                  className="my-page-icon"
-                />
-                <span>My Page</span>
-              </button>
-            </div>
+            <button className="auth-link my-page-link" onClick={handleMyPageClick}>
+              <img
+                src="/images/common/user-icon-white.svg"
+                alt="My Page"
+                className="my-page-icon"
+              />
+              <span>My Page</span>
+            </button>
           ) : (
             <div className="auth-links">
               <button className="auth-link" onClick={handleLoginClick}>로그인</button>
@@ -253,15 +271,10 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose }) => {
               <button className="auth-link" onClick={handleSignupClick}>회원가입</button>
             </div>
           )}
-          <button className="close-button" onClick={handleClose}>
-            <div className="close-icon">
-              <span />
-              <span />
-            </div>
-          </button>
         </div>
 
         <div className="menu-content">
+          {/* 메인 메뉴 */}
           <ul className="menu-list">
             {MENU_ITEMS.map((item) => (
               <li
@@ -271,27 +284,52 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose }) => {
                 onMouseEnter={() => setHoveredItem(item.id)}
                 onMouseLeave={() => setHoveredItem(null)}
               >
-                <h2 className="menu-title">{item.title}</h2>
-                <div className={`menu-underline ${selectedItem === item.id ? 'is-visible' : ''}`} />
+                <div className="menu-title-wrapper">
+                  <h2 className="menu-title">{item.title}</h2>
+                  <div className={`menu-underline ${selectedItem === item.id ? 'is-visible' : ''}`} />
+                </div>
+                {/* 모바일: 서브메뉴를 각 항목 아래에 표시 */}
+                {selectedItem === item.id && item.subItems.length > 0 && (
+                  <ul className="sub-menu-list sub-menu-list--mobile" onClick={(e) => e.stopPropagation()}>
+                    {item.subItems.map((subItem, index) => (
+                      <li
+                        key={index}
+                        className={`sub-menu-item ${selectedSubItem === index ? 'is-active' : ''}`}
+                        onClick={() => handleSubItemClick(subItem, index)}
+                      >
+                        {subItem}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
             ))}
           </ul>
 
-          <ul className="sub-menu-list">
-            {currentSubItems.map((subItem, index) => (
-              <li 
-                key={index} 
-                className={`sub-menu-item ${selectedSubItem === index ? 'is-active' : ''}`}
-                onClick={() => handleSubItemClick(subItem, index)}
-              >
-                {subItem}
-              </li>
-            ))}
-          </ul>
+          {/* 데스크탑: 서브메뉴를 오른쪽에 표시 */}
+          {(() => {
+            const selectedMenuItem = MENU_ITEMS.find(item => item.id === selectedItem);
+            if (selectedMenuItem && selectedMenuItem.subItems.length > 0) {
+              return (
+                <ul className="sub-menu-list sub-menu-list--desktop">
+                  {selectedMenuItem.subItems.map((subItem, index) => (
+                    <li
+                      key={index}
+                      className={`sub-menu-item ${selectedSubItem === index ? 'is-active' : ''}`}
+                      onClick={() => handleSubItemClick(subItem, index)}
+                    >
+                      {subItem}
+                    </li>
+                  ))}
+                </ul>
+              );
+            }
+            return null;
+          })()}
         </div>
 
         <div className="menu-footer">
-          <button className="footer-button">구성원신청</button>
+          <button className="footer-button" onClick={() => { handleClose(); setTimeout(() => router.push('/consultation/apply'), 500); }}>구성원신청</button>
         </div>
       </nav>
     </div>

@@ -20,6 +20,7 @@ const EducationPage: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<'education' | 'newsletter'>('education');
   const [educationList, setEducationList] = useState<EducationItem[]>([]);
+  const [newEducationList, setNewEducationList] = useState<EducationItem[]>([]); // 신규 교육용 별도 목록
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<EducationType | 'ALL'>('ALL');
@@ -119,7 +120,27 @@ const EducationPage: React.FC = () => {
     { id: 'newsletter', label: '뉴스레터' },
   ];
 
-  // 교육 세미나 목록 가져오기
+  // 신규 교육 목록 가져오기 (필터 무관, 최초 1회)
+  useEffect(() => {
+    if (activeSubTab === 'education') {
+      fetchNewEducationList();
+    }
+  }, [activeSubTab]);
+
+  const fetchNewEducationList = async () => {
+    try {
+      const response = await get<EducationListResponse>(
+        `${API_ENDPOINTS.TRAINING_SEMINARS}?page=1&limit=9`
+      );
+      if (response.data) {
+        setNewEducationList(response.data.items);
+      }
+    } catch (err) {
+      console.error('신규 교육 목록 로딩 실패:', err);
+    }
+  };
+
+  // 전체 교육 목록 가져오기 (필터 적용)
   useEffect(() => {
     if (activeSubTab === 'education') {
       setCurrentPage(1); // 타입 변경 시 첫 페이지로 리셋
@@ -135,7 +156,7 @@ const EducationPage: React.FC = () => {
   const fetchEducationList = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
@@ -161,7 +182,6 @@ const EducationPage: React.FC = () => {
           totalPages: calculatedTotalPages,
           items: response.data.items.length
         });
-        setNewEducationIndex(0); // Reset carousel index when list changes
       } else if (response.error) {
         setError(response.error);
       }
@@ -172,13 +192,13 @@ const EducationPage: React.FC = () => {
     }
   };
 
-  // 신규 교육 캐러셀 로직
+  // 신규 교육 캐러셀 로직 (newEducationList 사용)
   const itemsPerPage = 3;
-  const maxIndex = Math.max(0, Math.ceil(educationList.length / itemsPerPage) - 1);
+  const maxIndex = Math.max(0, Math.ceil(newEducationList.length / itemsPerPage) - 1);
   const startIndex = newEducationIndex * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const newEducations = educationList.slice(startIndex, endIndex);
-  const hasEducationData = educationList.length > 0;
+  const newEducations = newEducationList.slice(startIndex, endIndex);
+  const hasNewEducationData = newEducationList.length > 0;
   
   const handlePrevEducation = () => {
     setNewEducationIndex((prev) => Math.max(0, prev - 1));
@@ -235,8 +255,7 @@ const EducationPage: React.FC = () => {
               <p className={styles.heroLabel}>(교육/세미나)</p>
               <div className={styles.heroTitle}>
                 <h2>EDUCATION</h2>
-                <h2 className={styles.heroTitleItalic}>&</h2>
-                <h2>SEMINARS</h2>
+                <h2><span className={styles.heroTitleItalic}>&</span> SEMINARS</h2>
               </div>
               <div className={styles.heroContent}>
                 <div className={styles.heroDescription}>
@@ -244,7 +263,9 @@ const EducationPage: React.FC = () => {
                     기업의 성장을 돕는 <span className={styles.heroDescriptionItalic}>가장 확실한 방법!</span>
                   </p>
                   <p className={styles.heroDescriptionSub}>
-                    세무법인 함께의 <strong>전문가 교육</strong>은 기업의 <strong>성공적인 내일</strong>을 만듭니다.
+                    세무법인 함께의 <strong>전문가 교육</strong>은
+                    <br className={styles.mobileBreak} />
+                    기업의 <strong>성공적인 내일</strong>을 만듭니다.
                   </p>
                 </div>
               </div>
@@ -272,9 +293,9 @@ const EducationPage: React.FC = () => {
                       </div>
                       <h4 className={styles.sectionTitle}>신규 교육</h4>
                     </div>
-                    {hasEducationData && educationList.length > itemsPerPage && (
+                    {hasNewEducationData && newEducationList.length > itemsPerPage && (
                       <div className={styles.sectionNav}>
-                        <button 
+                        <button
                           className={styles.navButton}
                           onClick={handlePrevEducation}
                           disabled={newEducationIndex === 0}
@@ -283,7 +304,7 @@ const EducationPage: React.FC = () => {
                             <path d="M12.5 5L7.5 10L12.5 15" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </button>
-                        <button 
+                        <button
                           className={styles.navButton}
                           onClick={handleNextEducation}
                           disabled={newEducationIndex >= maxIndex}
@@ -295,9 +316,9 @@ const EducationPage: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  {newEducations.length > 0 ? (
+                  {newEducationList.length > 0 ? (
                     <div className={styles.educationGrid}>
-                      {newEducations.map((item) => {
+                      {newEducationList.map((item) => {
                         const daysLeft = getDaysUntilDeadline(item.recruitmentEndDate);
                         return (
                           <div
@@ -366,24 +387,28 @@ const EducationPage: React.FC = () => {
                         className={`${styles.sidebarTab} ${selectedType === 'VOD' ? styles.sidebarTabActive : ''}`}
                         onClick={() => setSelectedType('VOD')}
                       >
+                        {selectedType === 'VOD' && <span className={styles.sidebarDot} />}
                         <span>VOD</span>
                       </div>
                       <div
                         className={`${styles.sidebarTab} ${selectedType === 'TRAINING' ? styles.sidebarTabActive : ''}`}
                         onClick={() => setSelectedType('TRAINING')}
                       >
+                        {selectedType === 'TRAINING' && <span className={styles.sidebarDot} />}
                         <span>교육</span>
                       </div>
                       <div
                         className={`${styles.sidebarTab} ${selectedType === 'LECTURE' ? styles.sidebarTabActive : ''}`}
                         onClick={() => setSelectedType('LECTURE')}
                       >
+                        {selectedType === 'LECTURE' && <span className={styles.sidebarDot} />}
                         <span>강연</span>
                       </div>
                       <div
                         className={`${styles.sidebarTab} ${selectedType === 'SEMINAR' ? styles.sidebarTabActive : ''}`}
                         onClick={() => setSelectedType('SEMINAR')}
                       >
+                        {selectedType === 'SEMINAR' && <span className={styles.sidebarDot} />}
                         <span>세미나</span>
                       </div>
                     </div>

@@ -6,6 +6,10 @@
   color: white;
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 767px) {
+    padding-top: 56px; // 모바일 고정 헤더 높이
+  }
 }
 
 .container {
@@ -20,7 +24,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding: 60px 24px 40px;
+    padding: 64px 20px 40px;
   }
 }
 
@@ -55,7 +59,7 @@
 
   @media (max-width: $breakpoint-tablet) {
     flex-direction: column;
-    gap: 24px;
+    gap: 0;
   }
 }
 
@@ -64,6 +68,10 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+
+  @media (max-width: $breakpoint-tablet) {
+    width: 100%;
+  }
 }
 
 .rightColumn {
@@ -71,6 +79,10 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+
+  @media (max-width: $breakpoint-tablet) {
+    width: 100%;
+  }
 }
 
 .categoryColumn {
@@ -91,16 +103,20 @@
   &:hover {
     background-color: rgba(255, 255, 255, 0.05);
   }
+
+  @media (max-width: $breakpoint-tablet) {
+    padding: 24px 20px;
+  }
 }
 
 .categoryHeaderExpanded {
   background-color: rgba(255, 255, 255, 0.05);
   border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
 
-  .categoryToggle {
-    background-color: #003675;
-    border-color: #003675;
-  }
+.categoryToggleExpanded {
+  background-color: #003675 !important;
+  border-color: #003675 !important;
 }
 
 .categoryName {
@@ -111,6 +127,11 @@
   letter-spacing: -0.125px;
   color: white;
   flex: 1;
+
+  @media (max-width: $breakpoint-tablet) {
+    font-size: 21px;
+    letter-spacing: -0.105px;
+  }
 }
 
 .categoryToggle {
@@ -129,6 +150,11 @@
   &:hover {
     background-color: rgba(255, 255, 255, 0.1);
   }
+
+  @media (max-width: $breakpoint-tablet) {
+    width: 32px;
+    height: 32px;
+  }
 }
 
 .chevronIcon {
@@ -146,6 +172,11 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+
+  @media (max-width: $breakpoint-tablet) {
+    padding: 16px 20px 24px;
+    gap: 4px;
+  }
 }
 
 .categoryItem {

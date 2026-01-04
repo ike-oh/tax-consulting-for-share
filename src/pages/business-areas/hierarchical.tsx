@@ -180,7 +180,14 @@ const HierarchicalPage: React.FC = () => {
                         onClick={() => toggleCategory(minorCategory.id)}
                       >
                         <span className={styles.categoryName}>{minorCategory.name}</span>
-                        <button className={styles.categoryToggle}>
+                        <button
+                          type="button"
+                          className={`${styles.categoryToggle} ${isExpanded ? styles.categoryToggleExpanded : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleCategory(minorCategory.id);
+                          }}
+                        >
                           <svg
                             width="24"
                             height="24"
@@ -231,7 +238,14 @@ const HierarchicalPage: React.FC = () => {
                         onClick={() => toggleCategory(minorCategory.id)}
                       >
                         <span className={styles.categoryName}>{minorCategory.name}</span>
-                        <button className={styles.categoryToggle}>
+                        <button
+                          type="button"
+                          className={`${styles.categoryToggle} ${isExpanded ? styles.categoryToggleExpanded : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleCategory(minorCategory.id);
+                          }}
+                        >
                           <svg
                             width="24"
                             height="24"

@@ -138,6 +138,49 @@ $color-breadcrumb: #bebec7;
       width: 6px;
       height: 6px;
     }
+
+    // 모바일 반응형
+    @media (max-width: 768px) {
+      gap: 24px;
+
+      .page-header__content {
+        gap: 24px;
+      }
+
+      .page-header__breadcrumb {
+        height: 24px;
+
+        svg {
+          width: 16px;
+          height: 16px;
+        }
+      }
+
+      .page-header__breadcrumb-home {
+        width: 24px;
+        height: 24px;
+      }
+
+      .page-header__breadcrumb-item {
+        font-size: 13px;
+        font-weight: 400;
+        line-height: 1.5;
+        letter-spacing: -0.065px;
+        padding: 0 2px;
+      }
+
+      .page-header__title {
+        font-size: 40px;
+        font-weight: 600;
+        line-height: 1.45;
+        letter-spacing: 1px;
+        white-space: nowrap; // 한 줄로 유지
+      }
+
+      .page-header__tabs {
+        display: none;
+      }
+    }
   }
 
   // ========================================
@@ -176,6 +219,7 @@ $color-breadcrumb: #bebec7;
       font-size: 40px;
       font-weight: 600;
       line-height: 1.45;
+      white-space: nowrap; // 한 줄로 유지
     }
 
     .page-header__tabs {
@@ -196,3 +240,4 @@ $color-breadcrumb: #bebec7;
     }
   }
 }
+

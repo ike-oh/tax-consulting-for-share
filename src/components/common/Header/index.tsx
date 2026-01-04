@@ -3,11 +3,9 @@ import { useRouter } from 'next/router';
 import styles from './styles.module.scss';
 
 export type HeaderVariant = 'transparent' | 'white' | 'black';
-export type HeaderSize = 'web' | 'mobile';
 
 export interface HeaderProps {
   variant?: HeaderVariant;
-  size?: HeaderSize;
   onMenuClick?: () => void;
   onLogoClick?: () => void;
   className?: string;
@@ -34,7 +32,6 @@ const MenuIconDark: React.FC = () => (
 
 const Header: React.FC<HeaderProps> = ({
   variant = 'transparent',
-  size = 'web',
   onMenuClick,
   onLogoClick,
   className = '',
@@ -42,11 +39,11 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const router = useRouter();
   const isWhite = variant === 'white';
-  
+
   // variant에 따라 고해상도 로고 이미지 선택
   // white → 빨간색 로고 (logo-hd.png)
   // transparent/black → 흰색 로고 (logo-hd_w.png)
-  const logoSrc = isWhite 
+  const logoSrc = isWhite
     ? '/images/logo/logo-hd.png'  // 흰색 배경 → 빨간색 로고 (고해상도)
     : '/images/logo/logo-hd_w.png'; // 어두운 배경 → 흰색 로고 (고해상도)
 
@@ -61,19 +58,19 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <header
-      className={`${styles.header} ${styles[`header--${variant}`]} ${styles[`header--${size}`]} ${isFixed ? styles['header--fixed'] : ''} ${className}`}
+      className={`${styles.header} ${styles[`header--${variant}`]} ${isFixed ? styles['header--fixed'] : ''} ${className}`}
     >
       <div className={styles['header__inner']}>
-        <div 
-          className={`${styles['header__logo']} ${styles[`header__logo--${size}`]}`} 
+        <div
+          className={styles['header__logo']}
           onClick={handleLogoClick}
           style={{ cursor: 'pointer' }}
         >
           <img src={logoSrc} alt="MODOO CONSULTING" className={styles['header__logo-image']} />
         </div>
-        <button 
-          className={`${styles['header__menu']} ${styles[`header__menu--${size}`]}`} 
-          onClick={onMenuClick} 
+        <button
+          className={styles['header__menu']}
+          onClick={onMenuClick}
           aria-label="메뉴 열기"
         >
           {isWhite ? <MenuIconDark /> : <MenuIconWhite />}

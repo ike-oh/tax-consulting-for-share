@@ -6,11 +6,28 @@ $color-white: #ffffff;
 $color-black: #151515;
 $color-gray-80: #2d2d2d;
 
+// Breakpoint
+$breakpoint-mobile: 767px;
+
 .header {
   position: relative;
   width: 100%;
   font-family: 'Pretendard', sans-serif;
   z-index: 1000;
+
+  // 기본값: 웹 스타일
+  height: 80px;
+  padding: 0 40px;
+
+  @media (max-width: $breakpoint-mobile) {
+    height: 56px;
+    padding: 0 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: #151515;
+  }
 
   &--fixed {
     position: fixed;
@@ -35,16 +52,13 @@ $color-gray-80: #2d2d2d;
     overflow: hidden;
     display: flex;
     align-items: center;
-  }
+    height: 58px;
+    width: 168px;
 
-  &__logo--web {
-    height: 58px;  // Figma 디자인에 맞게
-    width: 168px;  // Figma 디자인에 맞게
-  }
-
-  &__logo--mobile {
-    height: 38px;  // Figma 디자인에 맞게
-    width: 110px;  // Figma 디자인에 맞게
+    @media (max-width: $breakpoint-mobile) {
+      height: 38px;
+      width: 110px;
+    }
   }
 
   &__logo-image {
@@ -63,41 +77,22 @@ $color-gray-80: #2d2d2d;
     border: none;
     cursor: pointer;
     padding: 0;
+    width: 48px;
+    height: 48px;
+
+    @media (max-width: $breakpoint-mobile) {
+      width: 40px;
+      height: 40px;
+
+      svg {
+        width: 32px;
+        height: 32px;
+      }
+    }
 
     &:hover {
       opacity: 0.8;
     }
-  }
-
-  &__menu--web {
-    width: 48px;
-    height: 48px;
-  }
-
-  &__menu--mobile {
-    width: 40px;
-    height: 40px;
-
-    svg {
-      width: 32px;
-      height: 32px;
-    }
-  }
-
-  // ========================================
-  // Size: Web
-  // ========================================
-  &--web {
-    height: 80px;
-    padding: 0 40px;
-  }
-
-  // ========================================
-  // Size: Mobile
-  // ========================================
-  &--mobile {
-    height: 60px;
-    padding: 0 20px;
   }
 
   // ========================================
@@ -105,6 +100,10 @@ $color-gray-80: #2d2d2d;
   // ========================================
   &--transparent {
     background-color: transparent;
+
+    @media (max-width: $breakpoint-mobile) {
+      background-color: #151515;
+    }
   }
 
   // ========================================

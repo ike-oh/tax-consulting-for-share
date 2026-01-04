@@ -6,6 +6,10 @@
   overflow-x: hidden;
   // overflow-y: auto; // Lenis가 스크롤을 제어하므로 제거
   background-color: $white;
+
+  @media (max-width: 767px) {
+    padding-top: 56px;
+  }
 }
 
 // ==================== Hero Section ====================

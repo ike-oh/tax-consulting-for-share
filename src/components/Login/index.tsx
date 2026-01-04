@@ -164,7 +164,12 @@ const Login: React.FC = () => {
             </div>
           </div>
 
-          {error && <p className="auth-error-message">{error}</p>}
+          {error && (
+            <p className="auth-error-message">
+              <img src="/images/common/error-icon.svg" alt="" width={16} height={16} />
+              {error}
+            </p>
+          )}
 
           <Button
             type="primary"

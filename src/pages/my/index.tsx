@@ -71,7 +71,7 @@ interface ConsultationApiResponse {
   content: string;
   status: string;
   createdAt: string;
-  reply?: string;
+  answer?: string;
 }
 
 interface MyApplicationsResponse {
@@ -97,6 +97,7 @@ const MyPage: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'applications'>('profile');
   const [activeSubTab, setActiveSubTab] = useState<'training' | 'member'>('training');
+  const [mobileView, setMobileView] = useState<'main' | 'profile' | 'applications'>('main');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [applicationSummary, setApplicationSummary] = useState<ApplicationSummary>({
     seminarTotal: 0,
@@ -133,7 +134,12 @@ const MyPage: React.FC = () => {
   const [passwordVerify, setPasswordVerify] = useState('');
   const [passwordVerifyError, setPasswordVerifyError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  
+
+  // 모바일 드롭다운 상태
+  const [isEmailDomainDropdownOpen, setIsEmailDomainDropdownOpen] = useState(false);
+  const [isCarrierDropdownOpen, setIsCarrierDropdownOpen] = useState(false);
+  const [isPhoneCarrierDropdownOpen, setIsPhoneCarrierDropdownOpen] = useState(false);
+
   // 회원정보 수정 폼 상태
   const [editForm, setEditForm] = useState({
     name: '',
@@ -300,7 +306,7 @@ const MyPage: React.FC = () => {
       field: item.consultingField,
       consultant: item.assignedTaxAccountant,
       status: mapStatus(item.status),
-      reply: item.reply,
+      reply: item.answer,
     };
   };
 
@@ -763,11 +769,799 @@ const MyPage: React.FC = () => {
     newsletterSubscribed: false,
   };
 
+  // Mobile back handler
+  const handleMobileBack = () => {
+    if (showPasswordVerify || isPasswordVerified || showChangePasswordForm || showChangePhoneForm) {
+      setShowPasswordVerify(false);
+      setIsPasswordVerified(false);
+      setShowChangePasswordForm(false);
+      setShowChangePhoneForm(false);
+      setPasswordVerify('');
+      setPasswordVerifyError('');
+    }
+    setMobileView('main');
+  };
+
+  // Mobile menu item click handler
+  const handleMobileMenuClick = (menu: 'profile' | 'applications') => {
+    setMobileView(menu);
+    setActiveTab(menu);
+  };
+
   return (
     <div className={styles.page}>
       <Header variant="transparent" onMenuClick={() => setIsMenuOpen(true)} />
       <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-      
+
+      {/* Mobile Layout */}
+      <div className={styles.mobileMyPage}>
+        {mobileView === 'main' && (
+          <>
+            {/* Mobile Profile Card */}
+            <div className={styles.mobileProfileCard}>
+              <div className={styles.mobileProfileHeader}>
+                <div className={styles.mobileProfileAvatar}>
+                  <img src="/images/my/icons/profile-avatar.png" alt="프로필" />
+                </div>
+                <div className={styles.mobileProfileInfo}>
+                  <div className={styles.mobileProfileGreeting}>
+                    <p className={styles.mobileProfileName}>{displayProfile.name}님,</p>
+                    <p className={styles.mobileProfileWelcome}>방문을 환영합니다</p>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.mobileProfileDivider} />
+              <div className={styles.mobileMemberTypeCard}>
+                <div className={styles.mobileMemberTypeLabel}>
+                  <img
+                    src="/images/common/user-icon.svg"
+                    alt="회원 유형"
+                    className={styles.mobileMemberTypeIcon}
+                  />
+                  <p>회원 유형</p>
+                </div>
+                <div className={styles.mobileMemberTypeBadge}>
+                  <p>{displayProfile.memberType || '일반'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Menu List */}
+            <div className={styles.mobileMenuList}>
+              <button
+                className={styles.mobileMenuItem}
+                onClick={() => handleMobileMenuClick('profile')}
+              >
+                <span>회원 정보 관리</span>
+                <img src="/images/common/arrow-right-gray.svg" alt="" />
+              </button>
+              <button
+                className={styles.mobileMenuItem}
+                onClick={() => handleMobileMenuClick('applications')}
+              >
+                <span>신청 내역</span>
+                <img src="/images/common/arrow-right-gray.svg" alt="" />
+              </button>
+            </div>
+
+            {/* Mobile Logout Button */}
+            <button className={styles.mobileLogoutButton} onClick={handleLogout}>
+              로그아웃
+            </button>
+          </>
+        )}
+
+        {mobileView === 'profile' && (
+          <>
+            {/* Mobile Header with Back Button */}
+            <div className={styles.mobileHeader}>
+              <button className={styles.mobileBackButton} onClick={handleMobileBack}>
+                <img src="/images/common/arrow-left-white.svg" alt="뒤로" />
+              </button>
+              <h1 className={styles.mobileTitle}>
+                {showChangePasswordForm ? '비밀번호 변경' :
+                 showChangePhoneForm ? '휴대폰 번호 변경' :
+                 showPasswordVerify || isPasswordVerified ? '회원 정보 수정' : '회원 정보 관리'}
+              </h1>
+            </div>
+
+            {/* Mobile Profile Info Display */}
+            {!showPasswordVerify && !isPasswordVerified && !showChangePasswordForm && !showChangePhoneForm && (
+              <div className={styles.mobileProfileContent}>
+                <div className={styles.mobileProfileForm}>
+                  <div className={styles.mobileFormRow}>
+                    <p className={styles.mobileFormLabel}>아이디</p>
+                    <p className={styles.mobileFormValue}>{displayProfile.loginId}</p>
+                  </div>
+                  <div className={styles.mobileFormRow}>
+                    <p className={styles.mobileFormLabel}>비밀번호</p>
+                    <p className={styles.mobileFormValue}>**********</p>
+                  </div>
+                  <div className={styles.mobileFormDivider} />
+                  <div className={styles.mobileFormRow}>
+                    <p className={styles.mobileFormLabel}>이름</p>
+                    <p className={styles.mobileFormValue}>{displayProfile.name}</p>
+                  </div>
+                  <div className={styles.mobileFormRow}>
+                    <p className={styles.mobileFormLabel}>휴대폰 번호</p>
+                    <p className={styles.mobileFormValue}>{displayProfile.phoneNumber || '-'}</p>
+                  </div>
+                  <div className={styles.mobileFormRow}>
+                    <p className={styles.mobileFormLabel}>이메일</p>
+                    <p className={styles.mobileFormValue}>{displayProfile.email || '-'}</p>
+                  </div>
+                  <div className={styles.mobileFormRow}>
+                    <p className={styles.mobileFormLabel}>간편 로그인</p>
+                    <p className={styles.mobileFormValue}>
+                      {displayProfile.oauthProvider ?
+                        (displayProfile.oauthProvider === 'google' ? '구글(Google)' :
+                         displayProfile.oauthProvider === 'kakao' ? '카카오(Kakao)' :
+                         displayProfile.oauthProvider === 'naver' ? '네이버(Naver)' : displayProfile.oauthProvider)
+                        : '-'}
+                    </p>
+                  </div>
+                  <div className={styles.mobileNewsletterRow}>
+                    <p className={styles.mobileFormLabel}>뉴스레터 구독</p>
+                    <div className={styles.mobileNewsletterBadge}>
+                      <p>{displayProfile.newsletterSubscribed ? '구독 중' : '미구독'}</p>
+                    </div>
+                  </div>
+                  <button className={styles.mobileWithdrawButton}>탈퇴하기</button>
+                  <div className={styles.mobileFormFooterDivider} />
+                  <button
+                    className={styles.mobileEditButton}
+                    onClick={() => {
+                      setShowPasswordVerify(true);
+                      setPasswordVerify('');
+                      setPasswordVerifyError('');
+                    }}
+                  >
+                    회원 정보 수정
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Mobile Password Verify */}
+            {showPasswordVerify && !isPasswordVerified && (
+              <div className={styles.mobilePasswordVerifySection}>
+                <div className={styles.mobilePasswordVerifyBox}>
+                  <p className={styles.mobilePasswordVerifyDescription}>
+                    개인정보 보호를 위해<br />
+                    비밀번호를 입력해 주세요
+                  </p>
+                  <div className={styles.mobilePasswordVerifyField}>
+                    <TextField
+                      variant="line"
+                      label="비밀번호"
+                      required
+                      type="password"
+                      placeholder="비밀번호를 입력해주세요"
+                      value={passwordVerify}
+                      onChange={setPasswordVerify}
+                      error={!!passwordVerifyError}
+                      errorMessage={passwordVerifyError}
+                      disabled={isVerifying}
+                      fullWidth
+                      showPasswordToggle
+                    />
+                  </div>
+                </div>
+                <button
+                  className={`${styles.mobilePasswordVerifyButton} ${passwordVerify ? styles.mobilePasswordVerifyButtonActive : ''}`}
+                  onClick={handlePasswordVerify}
+                  disabled={!passwordVerify || isVerifying}
+                >
+                  확인
+                </button>
+              </div>
+            )}
+
+            {/* Mobile Edit Profile Form */}
+            {isPasswordVerified && !showChangePasswordForm && !showChangePhoneForm && mobileView === 'profile' && (
+              <div className={styles.mobileEditProfileSection}>
+                <div className={styles.mobileEditProfileBox}>
+                  {/* 아이디 */}
+                  <div className={styles.mobileEditFormField}>
+                    <TextField
+                      variant="line"
+                      label="아이디"
+                      required
+                      value={displayProfile.loginId}
+                      readOnly
+                      disabled
+                      fullWidth
+                    />
+                  </div>
+
+                  {/* 비밀번호 */}
+                  <div className={styles.mobileEditFormField}>
+                    <div className={styles.mobileEditFormFieldRow}>
+                      <TextField
+                        variant="line"
+                        label="비밀번호"
+                        required
+                        type="password"
+                        value="**********"
+                        readOnly
+                        disabled
+                        fullWidth
+                      />
+                      <button
+                        className={styles.mobileChangeButton}
+                        onClick={() => setShowChangePasswordForm(true)}
+                      >
+                        비밀번호 변경
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 이름 */}
+                  <div className={styles.mobileEditFormField}>
+                    <TextField
+                      variant="line"
+                      label="이름"
+                      required
+                      placeholder="이름을 입력해주세요"
+                      value={editForm.name}
+                      onChange={(value) => setEditForm({ ...editForm, name: value })}
+                      fullWidth
+                    />
+                  </div>
+
+                  {/* 이메일 */}
+                  <div className={styles.mobileEditFormField}>
+                    <div className={styles.mobileEmailRow}>
+                      <TextField
+                        variant="line"
+                        label="이메일"
+                        required
+                        type="email"
+                        placeholder="이메일"
+                        value={editForm.email}
+                        onChange={(value) => setEditForm({ ...editForm, email: value })}
+                        showClear={false}
+                      />
+                      <span className={styles.mobileEmailAt}>@</span>
+                      <TextField
+                        variant="line"
+                        placeholder="naver.com"
+                        value={editForm.emailDomain}
+                        onChange={(value) => setEditForm({ ...editForm, emailDomain: value })}
+                        showClear={false}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 이메일 선택 */}
+                  <div className={styles.mobileEditFormField}>
+                    <div className={styles.mobileDropdownWrapper}>
+                      <button
+                        className={styles.mobileEmailDomainSelect}
+                        onClick={() => setIsEmailDomainDropdownOpen(!isEmailDomainDropdownOpen)}
+                      >
+                        <span>{editForm.emailDomain || '이메일 선택'}</span>
+                        <img
+                          src="/images/common/arrow-down.svg"
+                          alt=""
+                          style={{
+                            width: 20,
+                            height: 20,
+                            transform: isEmailDomainDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s ease'
+                          }}
+                        />
+                      </button>
+                      {isEmailDomainDropdownOpen && (
+                        <div className={styles.mobileDropdownMenu}>
+                          {['naver.com', 'gmail.com', 'daum.net', 'hanmail.net', 'nate.com', '직접입력'].map((domain) => (
+                            <button
+                              key={domain}
+                              className={styles.mobileDropdownItem}
+                              onClick={() => {
+                                if (domain === '직접입력') {
+                                  setEditForm({ ...editForm, emailDomain: '' });
+                                } else {
+                                  setEditForm({ ...editForm, emailDomain: domain });
+                                }
+                                setIsEmailDomainDropdownOpen(false);
+                              }}
+                            >
+                              {domain}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 휴대폰 번호 */}
+                  <div className={styles.mobileEditFormField}>
+                    <p className={styles.mobileFormLabel}>휴대폰 번호 <span style={{ color: '#f35064' }}>*</span></p>
+                    <div className={styles.mobileDropdownWrapper}>
+                      <button
+                        className={styles.mobileCarrierSelect}
+                        onClick={() => setIsCarrierDropdownOpen(!isCarrierDropdownOpen)}
+                      >
+                        <span>{editForm.phoneCarrier || '통신사 선택'}</span>
+                        <img
+                          src="/images/common/arrow-down.svg"
+                          alt=""
+                          style={{
+                            width: 20,
+                            height: 20,
+                            transform: isCarrierDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s ease'
+                          }}
+                        />
+                      </button>
+                      {isCarrierDropdownOpen && (
+                        <div className={styles.mobileDropdownMenu}>
+                          {['SKT', 'KT', 'LG U+', '알뜰폰'].map((carrier) => (
+                            <button
+                              key={carrier}
+                              className={styles.mobileDropdownItem}
+                              onClick={() => {
+                                setEditForm({ ...editForm, phoneCarrier: carrier });
+                                setIsCarrierDropdownOpen(false);
+                              }}
+                            >
+                              {carrier}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className={styles.mobileEditFormField}>
+                    <div className={styles.mobilePhoneRow}>
+                      <TextField
+                        variant="line"
+                        type="tel"
+                        placeholder="010-0000-0000"
+                        value={editForm.phoneNumber}
+                        onChange={(value) => setEditForm({ ...editForm, phoneNumber: value })}
+                        fullWidth
+                      />
+                      <button
+                        className={styles.mobileChangeButton}
+                        onClick={() => {
+                          setShowChangePhoneForm(true);
+                          setPhoneChangeForm({
+                            phoneCarrier: editForm.phoneCarrier,
+                            phoneNumber: editForm.phoneNumber,
+                          });
+                        }}
+                      >
+                        휴대폰 번호 변경
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  className={styles.mobileConfirmButton}
+                  onClick={handleSaveProfile}
+                  disabled={isSaving}
+                >
+                  확인
+                </button>
+              </div>
+            )}
+
+            {/* Mobile Password Change Form */}
+            {showChangePasswordForm && (
+              <div className={styles.mobilePasswordChangeSection}>
+                <div className={styles.mobilePasswordChangeBox}>
+                  <div className={styles.mobilePasswordChangeField}>
+                    <TextField
+                      variant="line"
+                      label="현재 비밀번호"
+                      required
+                      type="password"
+                      placeholder="현재 비밀번호를 입력해주세요"
+                      value={passwordForm.currentPassword}
+                      onChange={(value) => setPasswordForm({ ...passwordForm, currentPassword: value })}
+                      error={!!passwordErrors.currentPassword}
+                      errorMessage={passwordErrors.currentPassword}
+                      fullWidth
+                      showPasswordToggle
+                    />
+                  </div>
+                  <div className={styles.mobilePasswordChangeField}>
+                    <TextField
+                      variant="line"
+                      label="새 비밀번호"
+                      required
+                      type="password"
+                      placeholder="새로운 비밀번호를 입력해주세요"
+                      value={passwordForm.newPassword}
+                      onChange={(value) => setPasswordForm({ ...passwordForm, newPassword: value })}
+                      error={!!passwordErrors.newPassword}
+                      errorMessage={passwordErrors.newPassword}
+                      fullWidth
+                      showPasswordToggle
+                    />
+                  </div>
+                  <div className={styles.mobilePasswordChangeField}>
+                    <TextField
+                      variant="line"
+                      label="새 비밀번호 확인"
+                      required
+                      type="password"
+                      placeholder="새로운 비밀번호를 다시 입력해주세요"
+                      value={passwordForm.confirmPassword}
+                      onChange={(value) => setPasswordForm({ ...passwordForm, confirmPassword: value })}
+                      error={!!passwordErrors.confirmPassword}
+                      errorMessage={passwordErrors.confirmPassword}
+                      fullWidth
+                      showPasswordToggle
+                    />
+                  </div>
+                </div>
+                <button
+                  className={`${styles.mobilePasswordChangeButton} ${
+                    passwordForm.currentPassword && passwordForm.newPassword && passwordForm.confirmPassword
+                      ? styles.mobilePasswordChangeButtonActive
+                      : ''
+                  }`}
+                  onClick={handleChangePassword}
+                  disabled={!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword || isChangingPassword}
+                >
+                  비밀번호 변경
+                </button>
+              </div>
+            )}
+
+            {/* Mobile Phone Change Form */}
+            {showChangePhoneForm && (
+              <div className={styles.mobilePhoneChangeSection}>
+                <div className={styles.mobilePhoneChangeBox}>
+                  <div className={styles.mobilePhoneChangeField}>
+                    <p className={styles.mobilePhoneChangeLabel}>휴대폰 번호 <span style={{ color: '#f35064' }}>*</span></p>
+                    <div className={styles.mobileDropdownWrapper}>
+                      <button
+                        className={styles.mobilePhoneCarrierSelect}
+                        onClick={() => setIsPhoneCarrierDropdownOpen(!isPhoneCarrierDropdownOpen)}
+                      >
+                        <span>{phoneChangeForm.phoneCarrier || '통신사 선택'}</span>
+                        <img
+                          src="/images/common/arrow-down.svg"
+                          alt=""
+                          style={{
+                            width: 20,
+                            height: 20,
+                            transform: isPhoneCarrierDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s ease'
+                          }}
+                        />
+                      </button>
+                      {isPhoneCarrierDropdownOpen && (
+                        <div className={styles.mobileDropdownMenu}>
+                          {['SKT', 'KT', 'LG U+', '알뜰폰'].map((carrier) => (
+                            <button
+                              key={carrier}
+                              className={styles.mobileDropdownItem}
+                              onClick={() => {
+                                setPhoneChangeForm({ ...phoneChangeForm, phoneCarrier: carrier });
+                                setIsPhoneCarrierDropdownOpen(false);
+                              }}
+                            >
+                              {carrier}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className={styles.mobilePhoneChangeField}>
+                    <div className={styles.mobilePhoneInputRow}>
+                      <TextField
+                        variant="line"
+                        type="tel"
+                        placeholder="휴대폰 번호를 입력해주세요"
+                        value={phoneChangeForm.phoneNumber}
+                        onChange={(value) => setPhoneChangeForm({ ...phoneChangeForm, phoneNumber: value })}
+                        error={!!phoneChangeError}
+                        errorMessage={phoneChangeError}
+                        fullWidth
+                      />
+                      <button
+                        className={styles.mobileVerifyRequestButton}
+                        onClick={handleRequestPhoneVerification}
+                        disabled={!phoneChangeForm.phoneNumber || isRequestingVerification}
+                      >
+                        인증 요청
+                      </button>
+                    </div>
+                  </div>
+                  {isVerificationRequested && (
+                    <div className={styles.mobileVerificationField}>
+                      <p className={styles.mobilePhoneChangeLabel}>인증번호 <span style={{ color: '#f35064' }}>*</span></p>
+                      <div className={styles.mobileVerificationInputRow}>
+                        <TextField
+                          variant="line"
+                          type="text"
+                          placeholder="인증번호 입력"
+                          value={verificationCode}
+                          onChange={setVerificationCode}
+                          fullWidth
+                        />
+                        {timeLeft > 0 && (
+                          <span className={styles.mobileVerificationTimer}>
+                            {String(Math.floor(timeLeft / 60)).padStart(2, '0')}:{String(timeLeft % 60).padStart(2, '0')}
+                          </span>
+                        )}
+                        <button
+                          className={styles.mobileVerifyCodeButton}
+                          onClick={handleVerifyPhoneCode}
+                          disabled={!verificationCode || isVerifyingCode}
+                        >
+                          인증 확인
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <button
+                  className={`${styles.mobilePhoneChangeButton} ${
+                    isCodeVerified ? styles.mobilePhoneChangeButtonActive : ''
+                  }`}
+                  onClick={handleChangePhoneNumber}
+                  disabled={!isCodeVerified || isChangingPhone}
+                >
+                  휴대폰 번호 변경
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {mobileView === 'applications' && (
+          <>
+            {/* Mobile Header with Back Button */}
+            <div className={styles.mobileHeader}>
+              <button className={styles.mobileBackButton} onClick={handleMobileBack}>
+                <img src="/images/common/arrow-left-white.svg" alt="뒤로" />
+              </button>
+              <h1 className={styles.mobileTitle}>신청 내역</h1>
+            </div>
+
+            {/* Mobile Tab Buttons */}
+            <div className={styles.mobileApplicationTabs}>
+              <button
+                className={`${styles.mobileAppTab} ${activeSubTab === 'training' ? styles.mobileAppTabActive : ''}`}
+                onClick={() => setActiveSubTab('training')}
+              >
+                {activeSubTab === 'training' && <span className={styles.mobileTabDot} />}
+                교육/세미나
+              </button>
+              <button
+                className={`${styles.mobileAppTab} ${activeSubTab === 'member' ? styles.mobileAppTabActive : ''}`}
+                onClick={() => setActiveSubTab('member')}
+              >
+                {activeSubTab === 'member' && <span className={styles.mobileTabDot} />}
+                구성원
+              </button>
+            </div>
+
+            {/* Divider below tabs */}
+            <div className={styles.mobileTabDivider} />
+
+            {activeSubTab === 'training' && (
+              <div className={styles.mobileTrainingContent}>
+                {/* Date Filter Section */}
+                <div className={styles.mobileDateFilter}>
+                  <div className={styles.mobilePeriodRow}>
+                    <span className={styles.mobilePeriodLabel}>조회기간</span>
+                    <div className={styles.mobilePeriodTabs}>
+                      {['오늘', '7일', '15일', '1개월', '6개월'].map((period) => (
+                        <button
+                          key={period}
+                          className={`${styles.mobilePeriodTab} ${period === '7일' ? styles.mobilePeriodTabActive : ''}`}
+                        >
+                          {period}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className={styles.mobileDateInputRow}>
+                    <div
+                      className={styles.mobileDateInputWrapper}
+                      onClick={() => {
+                        setDatePickerType('start');
+                        setIsDatePickerOpen(true);
+                      }}
+                    >
+                      <input
+                        type="text"
+                        className={styles.mobileDateInput}
+                        value={startDate || '2025. 05. 19'}
+                        readOnly
+                      />
+                      <img src="/images/common/calendar-white.svg" alt="" className={styles.mobileDateIcon} />
+                    </div>
+                    <span className={styles.mobileDateSeparator}>~</span>
+                    <div
+                      className={styles.mobileDateInputWrapper}
+                      onClick={() => {
+                        setDatePickerType('end');
+                        setIsDatePickerOpen(true);
+                      }}
+                    >
+                      <input
+                        type="text"
+                        className={styles.mobileDateInput}
+                        value={endDate || '2025. 05. 26'}
+                        readOnly
+                      />
+                      <img src="/images/common/calendar-white.svg" alt="" className={styles.mobileDateIcon} />
+                    </div>
+                    <button className={styles.mobileSearchButton}>
+                      <img src="/images/common/search-icon.svg" alt="검색" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Results Summary */}
+                <div className={styles.mobileResultsSummary}>
+                  <p className={styles.mobileResultsCount}>
+                    총 <span className={styles.mobileCountHighlight}>{trainingTotal}</span>건
+                  </p>
+                  <p className={styles.mobileResultsDate}>
+                    {startDate || '2025. 05. 19'} - {endDate || '2025.05.26'}
+                  </p>
+                </div>
+
+                {/* Card Grid */}
+                {trainingLoading ? (
+                  <div className={styles.loading}>로딩 중...</div>
+                ) : trainingApplications.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    <p>신청 내역이 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className={styles.mobileCardGrid}>
+                    {trainingApplications.map((item) => (
+                      <div
+                        key={item.id}
+                        className={styles.mobileEducationCard}
+                        onClick={() => router.push(`/education/${item.seminarId}`)}
+                      >
+                        <div className={styles.mobileCardImage}>
+                          <img src={item.image?.url || '/images/common/default-thumbnail.jpg'} alt={item.name} />
+                        </div>
+                        <div className={styles.mobileCardContent}>
+                          <div className={styles.mobileCardLabels}>
+                            <span className={styles.mobileCardLabelStatus}>{item.statusLabel}</span>
+                            <span className={styles.mobileCardLabelType}>{item.typeLabel}</span>
+                          </div>
+                          <h3 className={styles.mobileCardTitle}>{item.name}</h3>
+                          <p className={styles.mobileCardLocation}>{item.location || '온라인'}</p>
+                          <div className={styles.mobileCardDate}>
+                            <img src="/images/common/calendar-icon.svg" alt="" />
+                            <span>{item.participationDate} 종료</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeSubTab === 'member' && (
+              <div className={styles.mobileTrainingContent}>
+                {/* Date Filter Section */}
+                <div className={styles.mobileDateFilter}>
+                  <div className={styles.mobilePeriodRow}>
+                    <span className={styles.mobilePeriodLabel}>조회기간</span>
+                    <div className={styles.mobilePeriodTabs}>
+                      {['오늘', '7일', '15일', '1개월', '6개월'].map((period) => (
+                        <button
+                          key={period}
+                          className={`${styles.mobilePeriodTab} ${period === '7일' ? styles.mobilePeriodTabActive : ''}`}
+                        >
+                          {period}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className={styles.mobileDateInputRow}>
+                    <div
+                      className={styles.mobileDateInputWrapper}
+                      onClick={() => {
+                        setDatePickerType('start');
+                        setIsDatePickerOpen(true);
+                      }}
+                    >
+                      <input
+                        type="text"
+                        className={styles.mobileDateInput}
+                        value={startDate || '2025. 05. 19'}
+                        readOnly
+                      />
+                      <img src="/images/common/calendar-white.svg" alt="" className={styles.mobileDateIcon} />
+                    </div>
+                    <span className={styles.mobileDateSeparator}>~</span>
+                    <div
+                      className={styles.mobileDateInputWrapper}
+                      onClick={() => {
+                        setDatePickerType('end');
+                        setIsDatePickerOpen(true);
+                      }}
+                    >
+                      <input
+                        type="text"
+                        className={styles.mobileDateInput}
+                        value={endDate || '2025. 05. 26'}
+                        readOnly
+                      />
+                      <img src="/images/common/calendar-white.svg" alt="" className={styles.mobileDateIcon} />
+                    </div>
+                    <button className={styles.mobileSearchButton}>
+                      <img src="/images/common/search-icon.svg" alt="검색" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Results Summary */}
+                <div className={styles.mobileResultsSummary}>
+                  <p className={styles.mobileResultsCount}>
+                    총 <span className={styles.mobileCountHighlight}>{consultationTotal}</span>건
+                  </p>
+                  <p className={styles.mobileResultsDate}>
+                    {startDate || '2025. 05. 19'} - {endDate || '2025.05.26'}
+                  </p>
+                </div>
+
+                {consultationLoading ? (
+                  <div className={styles.loading}>로딩 중...</div>
+                ) : consultationApplications.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    <p>상담 신청 내역이 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className={styles.mobileMemberList}>
+                    {consultationApplications.map((item, index) => (
+                      <React.Fragment key={item.id}>
+                        <div
+                          className={styles.mobileMemberCard}
+                          onClick={() => handleConsultationClick(item)}
+                        >
+                          <div className={styles.mobileMemberCardHeader}>
+                            <span className={styles.mobileMemberCardField}>{item.field}</span>
+                            <span className={`${styles.mobileMemberCardStatus} ${
+                              item.status === 'completed' ? styles.mobileMemberCardStatusCompleted :
+                              item.status === 'waiting' || item.status === 'pending' ? styles.mobileMemberCardStatusWaiting :
+                              styles.mobileMemberCardStatusReceived
+                            }`}>
+                              {getStatusLabel(item.status)}
+                            </span>
+                          </div>
+                          <p className={styles.mobileMemberCardContent}>{item.content}</p>
+                          <div className={styles.mobileMemberCardTags}>
+                            <span className={styles.mobileMemberCardTag}>담당 세무사</span>
+                            <span className={styles.mobileMemberCardTagDivider}>|</span>
+                            <span className={styles.mobileMemberCardTagValue}>{item.consultant}</span>
+                          </div>
+                          <div className={styles.mobileMemberCardFooter}>
+                            <span className={styles.mobileMemberCardNo}>NO.{index + 1}</span>
+                            <span className={styles.mobileMemberCardDivider}>|</span>
+                            <span className={styles.mobileMemberCardDate}>{item.date}</span>
+                          </div>
+                        </div>
+                        <div className={styles.mobileMemberCardSeparator} />
+                      </React.Fragment>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
       <div className={styles.container}>
         <div className={styles.pageHeaderWrapper}>
           <PageHeader
@@ -1713,26 +2507,23 @@ const MyPage: React.FC = () => {
               </div>
               <div className={styles.modalConsultantCard}>
                 <div className={styles.consultantInfo}>
-                  <p className={styles.consultantLabel}>담당 세무사</p>
-                  <img 
-                    src="/images/common/red-dot.svg" 
-                    alt="" 
-                    className={styles.redDot}
+                  <img
+                    src="/images/common/user-icon-white.svg"
+                    alt=""
+                    className={styles.consultantIcon}
                   />
+                  <p className={styles.consultantLabel}>담당 세무사</p>
                 </div>
                 <p className={styles.consultantName}>{selectedConsultation.consultant}</p>
               </div>
-              {selectedConsultation.status === 'completed' && selectedConsultation.reply && (
-                <>
-                  <div className={styles.modalDivider} />
-                  <div className={styles.modalReplySection}>
-                    <div className={styles.modalReplyHeader}>
-                      <h3 className={styles.modalReplyTitle}>답변</h3>
-                      <div className={styles.modalDivider} />
-                    </div>
-                    <p className={styles.modalReplyContent}>{selectedConsultation.reply}</p>
+              {selectedConsultation.reply && (
+                <div className={styles.modalReplySection}>
+                  <div className={styles.modalReplyHeader}>
+                    <h3 className={styles.modalReplyTitle}>답변</h3>
+                    <div className={styles.modalReplyDivider} />
                   </div>
-                </>
+                  <p className={styles.modalReplyContent}>{selectedConsultation.reply}</p>
+                </div>
               )}
             </div>
             <div className={styles.modalFooter}>

@@ -6,6 +6,10 @@
   color: white;
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 767px) {
+    padding-top: 56px;
+  }
 }
 
 .container {
@@ -35,7 +39,7 @@
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding-top: 60px;
+    padding-top: 64px;
     padding-bottom: 12px;
   }
 }
@@ -1308,29 +1312,24 @@
   background-color: rgba(255, 255, 255, 0.02);
   border: 1px solid #2d2d2d;
   border-radius: 12px;
-  padding: 40px;
+  padding: 40px 40px 48px;
   display: flex;
   flex-direction: column;
   gap: 40px;
   width: 100%;
-  margin-top: 0;
-}
-
-.modalReplySection + .modalDivider,
-.modalConsultantCard + .modalDivider {
   margin-top: 80px;
-  margin-bottom: 80px;
 }
 
 .modalReplyHeader {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 24px;
 }
 
-.modalReplyHeader .modalDivider {
-  margin-top: 0;
-  margin-bottom: 10px;
+.modalReplyDivider {
+  width: 100%;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .modalReplyTitle {
@@ -1346,6 +1345,178 @@
   margin: 0;
   line-height: 1.5;
   white-space: pre-wrap;
+}
+
+// Mobile Modal Styles
+@media (max-width: 767px) {
+  .modalOverlay {
+    padding: 0;
+    align-items: flex-start;
+    background-color: #151515;
+    z-index: 9999;
+  }
+
+  .modalContent {
+    border-radius: 0;
+    border: none;
+    max-width: 100%;
+    min-height: 100vh;
+    max-height: 100vh;
+    background-color: #151515;
+    z-index: 10000;
+  }
+
+  .modalHeader {
+    padding: 12px 20px;
+    height: auto;
+    background-color: #151515;
+  }
+
+  .modalClose {
+    font-size: 24px;
+    color: white;
+  }
+
+  .modalBody {
+    padding: 24px 20px;
+    padding-bottom: 120px;
+    background-color: #151515;
+    flex: 1;
+  }
+
+  .modalStatusRow {
+    padding-top: 0;
+    margin-bottom: 24px;
+  }
+
+  .statusBadge {
+    padding: 7px;
+    @include pretendard-13-semibold;
+  }
+
+  .statusReceived {
+    background-color: #003675;
+    color: #f8f8fc;
+  }
+
+  .modalDate {
+    @include pretendard-13-regular;
+    color: #8e8e8e;
+  }
+
+  .modalField {
+    margin-bottom: 24px;
+  }
+
+  .modalFieldLabel {
+    @include pretendard-15-semibold;
+    color: #94b9e3;
+  }
+
+  .modalMainContent {
+    background-color: transparent;
+    border-radius: 0;
+    padding: 0;
+    margin-top: 0;
+  }
+
+  .modalTitle {
+    @include pretendard-21-semibold;
+    color: white;
+    margin-bottom: 24px;
+  }
+
+  .modalDivider {
+    background-color: rgba(255, 255, 255, 0.2);
+    margin-bottom: 32px;
+  }
+
+  .modalDescription {
+    @include pretendard-15-regular;
+    color: #d8d8d8;
+    margin-bottom: 40px;
+    line-height: 1.5;
+  }
+
+  .modalConsultantCard {
+    background-color: #1f1f1f;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 16px;
+    border-radius: 8px;
+  }
+
+  .consultantInfo {
+    gap: 8px;
+  }
+
+  .consultantIcon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .consultantLabel {
+    @include pretendard-15-semibold;
+    color: white;
+  }
+
+  .consultantName {
+    @include pretendard-15-regular;
+    color: #d8d8d8;
+  }
+
+  .modalReplySection {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid #2d2d2d;
+    border-radius: 12px;
+    padding: 32px 20px 48px;
+    gap: 24px;
+    margin-top: 32px;
+  }
+
+  .modalReplyHeader {
+    gap: 24px;
+  }
+
+  .modalReplyTitle {
+    @include pretendard-19-semibold;
+    color: white;
+    margin-bottom: 0;
+  }
+
+  .modalReplyDivider {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .modalReplyContent {
+    @include pretendard-15-regular;
+    color: #d8d8d8;
+    line-height: 1.5;
+  }
+
+  .modalFooter {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #151515;
+    padding: 12px 20px 40px;
+  }
+
+  .modalConfirmButton {
+    width: 100%;
+    height: 56px;
+    border: none;
+    background-color: white;
+    color: #151515;
+    border-radius: 100px;
+
+    @include pretendard-17-medium;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+  }
 }
 
 // 비밀번호 확인 모달
@@ -1993,5 +2164,1175 @@
       background-color: rgba(255, 255, 255, 0.9);
     }
   }
+}
+
+// Mobile Layout Styles
+.mobileMyPage {
+  display: none;
+
+  @media (max-width: 767px) {
+    display: flex;
+    flex-direction: column;
+    padding: 24px 20px 40px;
+  }
+}
+
+.mobileHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.mobileBackButton {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+
+  img {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.mobileTitle {
+  @include pretendard-21-semibold;
+  color: white;
+  margin: 0;
+  flex: 1;
+}
+
+.mobileProfileCard {
+  background-color: #2d2d2d;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.mobileProfileHeader {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.mobileProfileAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  background-color: #000;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.mobileProfileInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobileProfileGreeting {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobileProfileName {
+  @include pretendard-19-semibold;
+  color: #f0f0f0;
+  margin: 0;
+}
+
+.mobileProfileWelcome {
+  @include pretendard-15-regular;
+  color: #d8d8d8;
+  margin: 0;
+}
+
+.mobileProfileDivider {
+  width: 100%;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.mobileMemberTypeCard {
+  background-color: #1f1f1f;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobileMemberTypeLabel {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  p {
+    @include pretendard-15-semibold;
+    color: white;
+    margin: 0;
+  }
+}
+
+.mobileMemberTypeIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.mobileMemberTypeBadge {
+  background: #BFD8F3;
+  border-radius: 4px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  p {
+    @include pretendard-13-semibold;
+    color: #151515;
+    margin: 0;
+    white-space: nowrap;
+  }
+}
+
+.mobileMenuList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.mobileMenuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    opacity: 0.7;
+  }
+
+  span {
+    @include pretendard-17-medium;
+    color: #f0f0f0;
+  }
+
+  img {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.mobileLogoutButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  margin-top: 24px;
+
+  @include pretendard-15-regular;
+  color: #8e8e8e;
+  text-decoration: underline;
+
+  &:hover {
+    color: white;
+  }
+}
+
+// Hide desktop layout on mobile
+.pageHeaderWrapper {
+  @media (max-width: 767px) {
+    display: none;
+  }
+}
+
+.profileSection {
+  @media (max-width: 767px) {
+    display: none;
+  }
+}
+
+.tabSection {
+  @media (max-width: 767px) {
+    display: none;
+  }
+}
+
+// Mobile Profile Content
+.mobileProfileContent {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mobileProfileForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: transparent;
+  padding: 24px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
+
+.mobileFormRow {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 0;
+
+  &:first-child {
+    padding-top: 0;
+  }
+}
+
+.mobileFormDivider {
+  width: 100%;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin: 8px 0;
+}
+
+.mobileFormLabel {
+  @include pretendard-13-regular;
+  color: #8e8e8e;
+  margin: 0;
+  width: 72px;
+  flex-shrink: 0;
+}
+
+.mobileFormValue {
+  @include pretendard-15-regular;
+  color: #f0f0f0;
+  margin: 0;
+  flex: 1;
+}
+
+.mobileNewsletterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.mobileNewsletterBadge {
+  background-color: #2d2d2d;
+  border-radius: 4px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  p {
+    @include pretendard-13-semibold;
+    color: #f8f8fc;
+    margin: 0;
+  }
+}
+
+.mobileWithdrawButton {
+  @include pretendard-13-regular;
+  color: #e54343;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 12px 0 0;
+  margin: 0;
+  text-align: left;
+
+  &:hover {
+    color: #ff6666;
+  }
+}
+
+.mobileFormFooterDivider {
+  width: 100%;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin: 24px 0 0;
+}
+
+.mobileEditButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(50% - 16px);
+  padding: 8px 12px;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 24px;
+
+  @include pretendard-15-regular;
+  color: white;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+// Mobile Password Verify
+.mobilePasswordVerifySection {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mobilePasswordVerifyBox {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 24px 20px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
+
+.mobilePasswordVerifyDescription {
+  @include pretendard-15-regular;
+  color: white;
+  text-align: left;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.mobilePasswordVerifyField {
+  width: 100%;
+}
+
+.mobilePasswordVerifyButton {
+  width: 50%;
+  height: 44px;
+  border-radius: 100px;
+  background-color: #555;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  transition: all 0.2s ease;
+
+  @include pretendard-15-regular;
+  color: #8e8e8e;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  &.mobilePasswordVerifyButtonActive {
+    background-color: white;
+    color: #151515;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+  }
+}
+
+// Mobile Edit Profile Form
+.mobileEditProfileSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.mobileEditProfileBox {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 20px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
+
+.mobileEditFormField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.mobileEditFormFieldRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.mobileChangeButton {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+
+  @include pretendard-13-regular;
+  color: white;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.mobileEmailRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.mobileEmailAt {
+  @include pretendard-15-regular;
+  color: white;
+  margin: 0;
+  padding-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.mobileEmailDomainSelect {
+  width: 100%;
+  border-bottom: 1px solid #555;
+  padding: 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  cursor: pointer;
+
+  @include pretendard-15-regular;
+  color: #8e8e8e;
+}
+
+.mobilePhoneRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.mobileCarrierSelect {
+  width: 100%;
+  border-bottom: 1px solid #555;
+  padding: 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  cursor: pointer;
+
+  @include pretendard-15-regular;
+  color: #f0f0f0;
+}
+
+.mobileDropdownWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.mobileDropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #2a2a2a;
+  border: 1px solid #555;
+  border-radius: 8px;
+  z-index: 100;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.mobileDropdownItem {
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+
+  @include pretendard-15-regular;
+  color: #f0f0f0;
+
+  &:hover {
+    background: #3a3a3a;
+  }
+
+  &:not(:last-child) {
+    border-bottom: 1px solid #444;
+  }
+}
+
+.mobileConfirmButton {
+  width: 50%;
+  height: 44px;
+  border-radius: 100px;
+  background-color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 24px auto 0;
+  transition: all 0.2s ease;
+
+  @include pretendard-15-regular;
+  color: #151515;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+
+  &:disabled {
+    background-color: #555;
+    color: #8e8e8e;
+    cursor: not-allowed;
+  }
+}
+
+// Mobile Password Change Form
+.mobilePasswordChangeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mobilePasswordChangeBox {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 20px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
+
+.mobilePasswordChangeField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.mobilePasswordChangeButton {
+  width: 50%;
+  height: 44px;
+  border-radius: 100px;
+  background-color: #555;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  transition: all 0.2s ease;
+
+  @include pretendard-15-regular;
+  color: #8e8e8e;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  &.mobilePasswordChangeButtonActive {
+    background-color: white;
+    color: #151515;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+  }
+}
+
+// Mobile Phone Change Form
+.mobilePhoneChangeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mobilePhoneChangeBox {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 20px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
+
+.mobilePhoneChangeField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.mobilePhoneChangeLabel {
+  @include pretendard-13-regular;
+  color: #8e8e8e;
+  margin: 0;
+}
+
+.mobilePhoneCarrierSelect {
+  width: 100%;
+  border-bottom: 1px solid #555;
+  padding: 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  cursor: pointer;
+
+  @include pretendard-15-regular;
+  color: #f0f0f0;
+}
+
+.mobilePhoneInputRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.mobileVerifyRequestButton {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+
+  @include pretendard-13-regular;
+  color: white;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &:disabled {
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: not-allowed;
+  }
+}
+
+.mobileVerificationField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.mobileVerificationInputRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  width: 100%;
+  position: relative;
+}
+
+.mobileVerificationTimer {
+  position: absolute;
+  right: 100px;
+  bottom: 12px;
+  @include pretendard-13-regular;
+  color: #bfd8f3;
+}
+
+.mobileVerifyCodeButton {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+
+  @include pretendard-13-regular;
+  color: white;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &:disabled {
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: not-allowed;
+  }
+}
+
+.mobilePhoneChangeButton {
+  width: 50%;
+  height: 44px;
+  border-radius: 100px;
+  background-color: #555;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  transition: all 0.2s ease;
+
+  @include pretendard-15-regular;
+  color: #8e8e8e;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  &.mobilePhoneChangeButtonActive {
+    background-color: white;
+    color: #151515;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+  }
+}
+
+// Mobile Application History Styles
+.mobileApplicationTabs {
+  display: flex;
+  gap: 12px;
+  padding: 0 20px;
+  margin-bottom: 0;
+}
+
+.mobileTabDivider {
+  width: 100%;
+  height: 1px;
+  background-color: #555;
+  margin: 24px 0;
+}
+
+.mobileAppTab {
+  padding: 8px 10px;
+  border-radius: 2px;
+  border: none;
+  cursor: pointer;
+  background-color: #2d2d2d;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  @include pretendard-13-semibold;
+  color: #8e8e8e;
+
+  &.mobileAppTabActive {
+    background-color: white;
+    color: #151515;
+  }
+}
+
+.mobileTabDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #fb7058;
+}
+
+.mobileTrainingContent {
+  padding: 0 20px;
+}
+
+.mobileDateFilter {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mobilePeriodRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.mobilePeriodLabel {
+  @include pretendard-13-semibold;
+  color: white;
+  width: 52px;
+  text-align: center;
+}
+
+.mobilePeriodTabs {
+  display: flex;
+  background-color: #2d2d2d;
+  border-radius: 100px;
+}
+
+.mobilePeriodTab {
+  padding: 8px 10px;
+  border-radius: 100px;
+  border: none;
+  cursor: pointer;
+  background-color: transparent;
+
+  @include pretendard-13-regular;
+  color: #d8d8d8;
+
+  &.mobilePeriodTabActive {
+    background-color: white;
+    color: #151515;
+  }
+}
+
+.mobileDateInputRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.mobileDateInputWrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.mobileDateIcon {
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.mobileDateInput {
+  width: 100%;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-bottom: 1px solid #555;
+  background: transparent;
+  cursor: pointer;
+
+  @include pretendard-13-regular;
+  color: #f0f0f0;
+
+  &:focus {
+    outline: none;
+    border-bottom-color: white;
+  }
+}
+
+.mobileDateSeparator {
+  @include pretendard-17-semibold;
+  color: white;
+}
+
+.mobileSearchButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  img {
+    width: 20px;
+    height: 20px;
+    filter: invert(1);
+  }
+}
+
+.mobileDivider {
+  width: 100%;
+  height: 1px;
+  background-color: #555;
+  margin: 32px 0;
+}
+
+.mobileResultsSummary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.mobileResultsCount {
+  @include pretendard-13-regular;
+  color: #8e8e8e;
+  margin: 0;
+}
+
+.mobileCountHighlight {
+  @include pretendard-13-semibold;
+  color: #94b9e3;
+}
+
+.mobileResultsDate {
+  @include pretendard-13-regular;
+  color: #8e8e8e;
+  margin: 0;
+  text-align: right;
+}
+
+.mobileCardGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.mobileEducationCard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  cursor: pointer;
+  padding-bottom: 16px;
+}
+
+.mobileCardImage {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 4px;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.mobileCardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mobileCardLabels {
+  display: flex;
+  gap: 4px;
+}
+
+.mobileCardLabelStatus {
+  padding: 7px;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+
+  @include pretendard-13-semibold;
+  color: #fb7058;
+}
+
+.mobileCardLabelType {
+  padding: 7px;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+
+  @include pretendard-13-semibold;
+  color: #f8f8fc;
+}
+
+.mobileCardTitle {
+  @include pretendard-15-semibold;
+  color: white;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 38px;
+}
+
+.mobileCardLocation {
+  @include pretendard-13-regular;
+  color: #d8d8d8;
+  margin: 0;
+}
+
+.mobileCardDate {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  img {
+    width: 16px;
+    height: 16px;
+  }
+
+  span {
+    @include pretendard-13-regular;
+    color: #d8d8d8;
+  }
+}
+
+.mobileMemberList {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mobileMemberCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.mobileMemberCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mobileMemberCardField {
+  @include pretendard-13-semibold;
+  color: #94b9e3;
+}
+
+.mobileMemberCardStatus {
+  @include pretendard-13-semibold;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+
+.mobileMemberCardStatusCompleted {
+  background-color: #bfd8f3;
+  color: #002046;
+}
+
+.mobileMemberCardStatusReceived {
+  background-color: #003675;
+  color: #f8f8fc;
+}
+
+.mobileMemberCardStatusWaiting {
+  background-color: #555;
+  color: #f0f0f0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.mobileMemberCardContent {
+  @include pretendard-13-regular;
+  color: #d8d8d8;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.5;
+}
+
+.mobileMemberCardTags {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: #2d2d2d;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.mobileMemberCardTag {
+  @include pretendard-13-semibold;
+  color: white;
+}
+
+.mobileMemberCardTagDivider {
+  @include pretendard-13-regular;
+  color: #8e8e8e;
+}
+
+.mobileMemberCardTagValue {
+  @include pretendard-13-regular;
+  color: #d8d8d8;
+}
+
+.mobileMemberCardFooter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobileMemberCardNo {
+  @include pretendard-13-regular;
+  color: #8e8e8e;
+}
+
+.mobileMemberCardDivider {
+  @include pretendard-13-regular;
+  color: #555;
+}
+
+.mobileMemberCardDate {
+  @include pretendard-13-regular;
+  color: #8e8e8e;
+}
+
+.mobileMemberCardSeparator {
+  width: 100%;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin-top: 0;
 }
 
