@@ -72,19 +72,14 @@ const InsightsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
-  // B 타입(스니펫형) 테스트: 'snippet'으로 변경
-  // A 타입(갤러리형): 'gallery'
-  // C 타입(리스트형): 'list'
-  // localStorage에서 설정값을 읽어오거나 기본값 사용
-  const [libraryDisplayType, setLibraryDisplayType] = useState<LibraryDisplayType>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('libraryDisplayType') as LibraryDisplayType;
-      if (saved && ['gallery', 'snippet', 'list'].includes(saved)) {
-        return saved;
-      }
-    }
-    return 'gallery'; // 기본값: 갤러리형
-  });
+  // 자료실 노출 타입 - API 응답에서 설정
+  const [libraryDisplayType, setLibraryDisplayType] = useState<LibraryDisplayType>('gallery');
+
+  // 현재 자료실 ID (URL 쿼리에서 가져옴)
+  const [currentDataRoom, setCurrentDataRoom] = useState<string>('');
+
+  // 자료실 정보 (이름 등)
+  const [dataRoomName, setDataRoomName] = useState<string>('');
 
   // API에서 데이터 가져오기
   const fetchInsights = async () => {
@@ -104,7 +99,8 @@ const InsightsPage: React.FC = () => {
       if (activeTab === 'column') {
         params.append('categoryId', '1');
       } else {
-        params.append('dataRoom', 'A');
+        // URL 쿼리의 dataRoom 파라미터 사용
+        params.append('dataRoom', currentDataRoom || 'A');
       }
 
       const response = await get<InsightResponse>(
@@ -153,15 +149,9 @@ const InsightsPage: React.FC = () => {
         const calculatedTotalPages = Math.ceil(filteredItems.length / limit);
         setTotalPages(calculatedTotalPages);
         
-        // 자료실 노출 방식 설정 (API에서 받아오거나 localStorage 또는 기본값 사용)
-        if (activeTab === 'library') {
-          if (data.displayType) {
-            setLibraryDisplayType(data.displayType);
-            // localStorage에도 저장
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('libraryDisplayType', data.displayType);
-            }
-          }
+        // 자료실 노출 방식 설정 (API 응답에서만 결정)
+        if (activeTab === 'library' && data.displayType) {
+          setLibraryDisplayType(data.displayType);
         }
       }
     } catch (err) {
@@ -175,9 +165,28 @@ const InsightsPage: React.FC = () => {
     }
   };
 
+  // URL 쿼리 파라미터 처리
   useEffect(() => {
-    fetchInsights();
-  }, [activeTab, categoryFilter, currentPage, searchQuery]);
+    if (router.isReady) {
+      const { tab, dataRoom } = router.query;
+
+      // 탭 설정
+      if (tab === 'column' || tab === 'library') {
+        setActiveTab(tab);
+      }
+
+      // 자료실 ID 설정
+      if (typeof dataRoom === 'string') {
+        setCurrentDataRoom(dataRoom);
+      }
+    }
+  }, [router.isReady, router.query]);
+
+  useEffect(() => {
+    if (router.isReady) {
+      fetchInsights();
+    }
+  }, [router.isReady, activeTab, categoryFilter, currentPage, searchQuery, currentDataRoom]);
 
   // 검색 핸들러 (Enter 키 또는 검색 버튼 클릭 시)
   const handleSearch = (query: string) => {
@@ -242,6 +251,15 @@ const InsightsPage: React.FC = () => {
     setCurrentPage(1);
     setCategoryFilter('all');
     setSearchQuery('');
+
+    // URL 업데이트
+    if (tabId === 'column') {
+      router.push('/insights?tab=column', undefined, { shallow: true });
+    } else {
+      // 자료실 탭: 현재 dataRoom 유지 (없으면 기본값)
+      const dataRoom = currentDataRoom || 'A';
+      router.push(`/insights?tab=library&dataRoom=${dataRoom}`, undefined, { shallow: true });
+    }
   };
 
   // 카테고리 필터 변경 핸들러
@@ -513,14 +531,10 @@ const InsightsPage: React.FC = () => {
               {/* 모바일 타이틀 섹션 */}
               <div className={styles.mobileLibraryTitleSection}>
                 <h2 className={styles.mobileLibraryTitle}>
-                  {libraryDisplayType === 'gallery' && 'ARCHIVES A'}
-                  {libraryDisplayType === 'snippet' && 'ARCHIVES B'}
-                  {libraryDisplayType === 'list' && 'ARCHIVES C'}
+                  ARCHIVES {currentDataRoom || 'A'}
                 </h2>
                 <p className={styles.mobileLibrarySubtitle}>
-                  {libraryDisplayType === 'gallery' && '자료실A'}
-                  {libraryDisplayType === 'snippet' && '자료실B'}
-                  {libraryDisplayType === 'list' && '자료실C'}
+                  {dataRoomName || `자료실${currentDataRoom || 'A'}`}
                 </p>
               </div>
 
@@ -567,56 +581,15 @@ const InsightsPage: React.FC = () => {
                 <span>개의 게시물이 있습니다</span>
               </div>
 
-              {/* 임시: 노출 방식 전환 버튼 */}
-              <div className={styles.libraryDisplayTypeSelector}>
-                <button
-                  className={`${styles.displayTypeButton} ${libraryDisplayType === 'gallery' ? styles.displayTypeButtonActive : ''}`}
-                  onClick={() => {
-                    setLibraryDisplayType('gallery');
-                    if (typeof window !== 'undefined') {
-                      localStorage.setItem('libraryDisplayType', 'gallery');
-                    }
-                  }}
-                >
-                  A (갤러리형)
-                </button>
-                <button
-                  className={`${styles.displayTypeButton} ${libraryDisplayType === 'snippet' ? styles.displayTypeButtonActive : ''}`}
-                  onClick={() => {
-                    setLibraryDisplayType('snippet');
-                    if (typeof window !== 'undefined') {
-                      localStorage.setItem('libraryDisplayType', 'snippet');
-                    }
-                  }}
-                >
-                  B (스니펫형)
-                </button>
-                <button
-                  className={`${styles.displayTypeButton} ${libraryDisplayType === 'list' ? styles.displayTypeButtonActive : ''}`}
-                  onClick={() => {
-                    setLibraryDisplayType('list');
-                    if (typeof window !== 'undefined') {
-                      localStorage.setItem('libraryDisplayType', 'list');
-                    }
-                  }}
-                >
-                  C (리스트형)
-                </button>
-              </div>
-
               <div className={styles.libraryTitleSection}>
                 <h2 className={styles.libraryTitle}>
-                  {libraryDisplayType === 'gallery' && 'Archives A'}
-                  {libraryDisplayType === 'snippet' && 'Archives B'}
-                  {libraryDisplayType === 'list' && 'Archives C'}
+                  {dataRoomName ? `ARCHIVES ${currentDataRoom}` : `ARCHIVES ${currentDataRoom || 'A'}`}
                 </h2>
               </div>
               <div className={styles.libraryMainContent}>
                 <div className={styles.librarySidebar}>
                   <h2 className={styles.librarySidebarTitle}>
-                    {libraryDisplayType === 'gallery' && '자료실A'}
-                    {libraryDisplayType === 'snippet' && '자료실B'}
-                    {libraryDisplayType === 'list' && '자료실C'}
+                    {dataRoomName || `자료실${currentDataRoom || 'A'}`}
                   </h2>
                   <nav className={styles.libraryCategoryNav}>
                     <button

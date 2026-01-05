@@ -1,3 +1,4 @@
+import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import Footer from './index';
 
@@ -9,11 +10,6 @@ const meta: Meta<typeof Footer> = {
     layout: 'fullscreen',
   },
   argTypes: {
-    variant: {
-      control: 'select',
-      options: ['web', 'mobile'],
-      description: '푸터 변형',
-    },
     copyright: {
       control: 'text',
       description: '저작권 텍스트',
@@ -24,16 +20,12 @@ const meta: Meta<typeof Footer> = {
 export default meta;
 type Story = StoryObj<typeof Footer>;
 
-export const Web: Story = {
-  args: {
-    variant: 'web',
-  },
+export const Default: Story = {
+  args: {},
 };
 
 export const Mobile: Story = {
-  args: {
-    variant: 'mobile',
-  },
+  args: {},
   parameters: {
     viewport: {
       defaultViewport: 'mobile1',
@@ -48,16 +40,16 @@ export const Mobile: Story = {
   ],
 };
 
-export const AllVariants: Story = {
+export const AllViewports: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '64px' }}>
       <div>
-        <p style={{ color: '#8E8E8E', marginBottom: '16px', fontSize: '12px' }}>Web</p>
-        <Footer variant="web" />
+        <p style={{ color: '#8E8E8E', marginBottom: '16px', fontSize: '12px' }}>Desktop (resize browser to see)</p>
+        <Footer />
       </div>
       <div style={{ maxWidth: '375px' }}>
-        <p style={{ color: '#8E8E8E', marginBottom: '16px', fontSize: '12px' }}>Mobile</p>
-        <Footer variant="mobile" />
+        <p style={{ color: '#8E8E8E', marginBottom: '16px', fontSize: '12px' }}>Mobile (375px container)</p>
+        <Footer />
       </div>
     </div>
   ),

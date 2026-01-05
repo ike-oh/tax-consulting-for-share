@@ -54,3 +54,31 @@ img {
 input, textarea {
   font-family: inherit;
 }
+
+// Print Styles - 인쇄 시 헤더, 메뉴, 푸터 숨김
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  // Header 숨김 (header HTML element)
+  header {
+    display: none !important;
+  }
+
+  // Menu 숨김
+  .menu-wrapper,
+  .menu-overlay,
+  .menu-container {
+    display: none !important;
+  }
+
+  // Footer 숨김
+  footer,
+  .footer {
+    display: none !important;
+  }
+}

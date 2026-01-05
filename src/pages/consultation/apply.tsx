@@ -58,6 +58,14 @@ interface SelectOption {
   label: string;
 }
 
+interface UserProfile {
+  id: number;
+  loginId: string;
+  name: string;
+  phoneNumber?: string;
+  email?: string;
+}
+
 const ConsultationApplyPage: React.FC = () => {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -69,6 +77,9 @@ const ConsultationApplyPage: React.FC = () => {
   const [searchFieldQuery, setSearchFieldQuery] = useState('');
   const [searchAccountantQuery, setSearchAccountantQuery] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [isSubmitAttempted, setIsSubmitAttempted] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // API에서 가져온 데이터
   const [consultationFields, setConsultationFields] = useState<SelectOption[]>([
@@ -82,6 +93,27 @@ const ConsultationApplyPage: React.FC = () => {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     setIsLoggedIn(!!token);
+
+    // 로그인 상태일 때 사용자 정보 자동 입력
+    const fetchUserProfile = async () => {
+      if (!token) return;
+      try {
+        const response = await get<UserProfile>(API_ENDPOINTS.AUTH.ME);
+        if (response.data) {
+          setFormData(prev => ({
+            ...prev,
+            name: response.data!.name || '',
+            phone: response.data!.phoneNumber || '',
+          }));
+        }
+      } catch (e) {
+        console.error('Failed to fetch user profile:', e);
+      }
+    };
+
+    if (token) {
+      fetchUserProfile();
+    }
 
     // 상담 분야 (카테고리) 가져오기
     const fetchCategories = async () => {
@@ -104,29 +136,7 @@ const ConsultationApplyPage: React.FC = () => {
       }
     };
 
-    // 담당 세무사 (멤버) 가져오기
-    const fetchMembers = async () => {
-      try {
-        const response = await get<MembersResponse>(`${API_ENDPOINTS.MEMBERS}?page=1&limit=100`);
-        if (response.data?.items) {
-          const options: SelectOption[] = [
-            { value: '', label: '선택안함' },
-            ...response.data.items
-              .filter(item => item.isExposed)
-              .map(item => ({
-                value: item.id.toString(),
-                label: item.name
-              }))
-          ];
-          setTaxAccountants(options);
-        }
-      } catch (error) {
-        console.error('Failed to fetch members:', error);
-      }
-    };
-
     fetchCategories();
-    fetchMembers();
   }, []);
 
   const [formData, setFormData] = useState<ConsultationFormData>({
@@ -168,9 +178,40 @@ const ConsultationApplyPage: React.FC = () => {
     };
   }, []);
 
-  const handleFieldChange = (value: string) => {
-    setFormData(prev => ({ ...prev, consultationField: value }));
+  const handleFieldChange = async (value: string) => {
+    // formData 업데이트 + 세무사 선택 초기화
+    setFormData(prev => ({
+      ...prev,
+      consultationField: value,
+      taxAccountant: ''
+    }));
     setIsFieldDropdownOpen(false);
+
+    // 분야가 선택된 경우 해당 분야의 세무사 목록 조회
+    if (value) {
+      try {
+        const response = await get<MembersResponse>(
+          `${API_ENDPOINTS.MEMBERS}?page=1&limit=100&workArea=${value}`
+        );
+        if (response.data?.items) {
+          const options: SelectOption[] = [
+            { value: '', label: '선택안함' },
+            ...response.data.items
+              .filter(item => item.isExposed)
+              .map(item => ({
+                value: item.id.toString(),
+                label: item.name
+              }))
+          ];
+          setTaxAccountants(options);
+        }
+      } catch (error) {
+        console.error('Failed to fetch members:', error);
+      }
+    } else {
+      // 선택안함인 경우 세무사 목록 초기화
+      setTaxAccountants([{ value: '', label: '선택안함' }]);
+    }
   };
 
   const handleAccountantChange = (value: string) => {
@@ -180,10 +221,76 @@ const ConsultationApplyPage: React.FC = () => {
 
   const handleInputChange = (field: keyof ConsultationFormData) => (value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // 필드 값 변경 시 해당 필드의 API 오류 초기화
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleCheckboxChange = (field: 'privacyAgreement' | 'termsAgreement') => (checked: boolean) => {
     setFormData(prev => ({ ...prev, [field]: checked }));
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
+  const getFieldError = (field: keyof ConsultationFormData): string | null => {
+    // API에서 반환한 필드별 오류 우선 표시
+    if (fieldErrors[field]) return fieldErrors[field];
+
+    const shouldShow = touched[field] || isSubmitAttempted;
+    if (!shouldShow) return null;
+
+    switch (field) {
+      case 'consultationField':
+        return !formData.consultationField ? '상담 분야를 선택해주세요' : null;
+      case 'taxAccountant':
+        return !formData.taxAccountant ? '담당 세무사를 선택해주세요' : null;
+      case 'name':
+        return !formData.name ? '이름을 입력해주세요' : null;
+      case 'phone':
+        return !formData.phone ? '휴대폰 번호를 입력해주세요' : null;
+      case 'additionalRequest':
+        return !formData.additionalRequest ? '추가 요청사항을 입력해주세요' : null;
+      case 'privacyAgreement':
+        return !formData.privacyAgreement ? '개인정보 처리 방침에 동의해주세요' : null;
+      case 'termsAgreement':
+        return !formData.termsAgreement ? '이용약관에 동의해주세요' : null;
+      default:
+        return null;
+    }
+  };
+
+  const parseApiError = (errorMessage: string): Record<string, string> => {
+    const errors: Record<string, string> = {};
+
+    // 이름 관련 오류
+    if (errorMessage.includes('이름')) {
+      errors.name = errorMessage;
+    }
+    // 휴대폰 번호 관련 오류
+    else if (errorMessage.includes('휴대폰') || errorMessage.includes('전화')) {
+      errors.phone = errorMessage;
+    }
+    // 상담 분야 관련 오류
+    else if (errorMessage.includes('상담 분야') || errorMessage.includes('분야')) {
+      errors.consultationField = errorMessage;
+    }
+    // 세무사 관련 오류
+    else if (errorMessage.includes('세무사')) {
+      errors.taxAccountant = errorMessage;
+    }
+    // 내용 관련 오류
+    else if (errorMessage.includes('내용') || errorMessage.includes('요청사항')) {
+      errors.additionalRequest = errorMessage;
+    }
+
+    return errors;
   };
 
   const isFormValid = () => {
@@ -200,10 +307,12 @@ const ConsultationApplyPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitAttempted(true);
     if (!isFormValid() || isSubmitting) return;
 
     setIsSubmitting(true);
     setSubmitError(null);
+    setFieldErrors({});
 
     try {
       // 폼 데이터를 API 요청 형식으로 변환
@@ -231,7 +340,16 @@ const ConsultationApplyPage: React.FC = () => {
       setIsSuccessModalOpen(true);
     } catch (error) {
       console.error('Consultation submission error:', error);
-      setSubmitError(error instanceof Error ? error.message : '상담 신청에 실패했습니다. 다시 시도해주세요.');
+      const errorMessage = error instanceof Error ? error.message : '상담 신청에 실패했습니다. 다시 시도해주세요.';
+
+      // API 오류를 필드별로 분류
+      const parsedErrors = parseApiError(errorMessage);
+      if (Object.keys(parsedErrors).length > 0) {
+        setFieldErrors(parsedErrors);
+      } else {
+        // 분류되지 않은 오류는 일반 오류로 표시
+        setSubmitError(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -243,7 +361,9 @@ const ConsultationApplyPage: React.FC = () => {
   };
 
   const selectedFieldLabel = consultationFields.find(f => f.value === formData.consultationField)?.label || '상담 분야를 선택해주세요';
-  const selectedAccountantLabel = taxAccountants.find(a => a.value === formData.taxAccountant)?.label || '담당 세무사를 선택해주세요';
+  const selectedAccountantLabel = !formData.consultationField
+    ? '상담 분야를 먼저 선택해주세요'
+    : taxAccountants.find(a => a.value === formData.taxAccountant)?.label || '담당 세무사를 선택해주세요';
 
   return (
     <div className={styles.consultationPage}>
@@ -347,6 +467,9 @@ const ConsultationApplyPage: React.FC = () => {
                         </div>
                       )}
                     </div>
+                    {getFieldError('consultationField') && (
+                      <p className={styles.fieldError}>{getFieldError('consultationField')}</p>
+                    )}
                   </div>
 
                   <div className={styles.formField} ref={accountantDropdownRef}>
@@ -356,8 +479,11 @@ const ConsultationApplyPage: React.FC = () => {
                     </label>
                     <div className={styles.selectWrapper}>
                       <div
-                        className={`${styles.selectTrigger} ${isAccountantDropdownOpen ? styles.selectTriggerOpen : ''}`}
-                        onClick={() => setIsAccountantDropdownOpen(!isAccountantDropdownOpen)}
+                        className={`${styles.selectTrigger} ${isAccountantDropdownOpen ? styles.selectTriggerOpen : ''} ${!formData.consultationField ? styles.selectTriggerDisabled : ''}`}
+                        onClick={() => {
+                          if (!formData.consultationField) return;
+                          setIsAccountantDropdownOpen(!isAccountantDropdownOpen);
+                        }}
                       >
                         <span className={formData.taxAccountant ? styles.selectValue : styles.selectPlaceholder}>
                           {selectedAccountantLabel}
@@ -415,6 +541,9 @@ const ConsultationApplyPage: React.FC = () => {
                         </div>
                       )}
                     </div>
+                    {getFieldError('taxAccountant') && (
+                      <p className={styles.fieldError}>{getFieldError('taxAccountant')}</p>
+                    )}
                   </div>
                 </div>
 
@@ -427,11 +556,15 @@ const ConsultationApplyPage: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      className={styles.textInput}
+                      className={`${styles.textInput} ${getFieldError('name') ? styles.textInputError : ''}`}
                       placeholder="이름을 입력해주세요"
                       value={formData.name}
                       onChange={(e) => handleInputChange('name')(e.target.value)}
+                      onBlur={() => handleBlur('name')}
                     />
+                    {getFieldError('name') && (
+                      <p className={styles.fieldError}>{getFieldError('name')}</p>
+                    )}
                   </div>
 
                   <div className={styles.formField}>
@@ -441,11 +574,15 @@ const ConsultationApplyPage: React.FC = () => {
                     </label>
                     <input
                       type="tel"
-                      className={styles.textInput}
+                      className={`${styles.textInput} ${getFieldError('phone') ? styles.textInputError : ''}`}
                       placeholder="휴대폰 번호를 입력해주세요"
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone')(e.target.value)}
+                      onBlur={() => handleBlur('phone')}
                     />
+                    {getFieldError('phone') && (
+                      <p className={styles.fieldError}>{getFieldError('phone')}</p>
+                    )}
                   </div>
                 </div>
 
@@ -456,37 +593,51 @@ const ConsultationApplyPage: React.FC = () => {
                     <span className={styles.required}>*</span>
                   </label>
                   <textarea
-                    className={styles.textarea}
+                    className={`${styles.textarea} ${getFieldError('additionalRequest') ? styles.textareaError : ''}`}
                     placeholder="상담 내용을 입력해주세요"
                     value={formData.additionalRequest}
                     onChange={(e) => handleInputChange('additionalRequest')(e.target.value)}
+                    onBlur={() => handleBlur('additionalRequest')}
                     rows={8}
                   />
+                  {getFieldError('additionalRequest') && (
+                    <p className={styles.fieldError}>{getFieldError('additionalRequest')}</p>
+                  )}
                 </div>
 
                 {/* 동의 체크박스 */}
                 <div className={styles.agreements}>
-                  <div className={styles.agreementItem}>
-                    <Checkbox
-                      variant="square"
-                      checked={formData.privacyAgreement}
-                      onChange={handleCheckboxChange('privacyAgreement')}
-                      label="[필수] 개인정보 처리 방침 이용 동의"
-                    />
-                    <button type="button" className={styles.viewLink}>
-                      보기
-                    </button>
+                  <div className={styles.agreementItemWrapper}>
+                    <div className={styles.agreementItem}>
+                      <Checkbox
+                        variant="square"
+                        checked={formData.privacyAgreement}
+                        onChange={handleCheckboxChange('privacyAgreement')}
+                        label="[필수] 개인정보 처리 방침 이용 동의"
+                      />
+                      <button type="button" className={styles.viewLink}>
+                        보기
+                      </button>
+                    </div>
+                    {getFieldError('privacyAgreement') && (
+                      <p className={styles.fieldError}>{getFieldError('privacyAgreement')}</p>
+                    )}
                   </div>
-                  <div className={styles.agreementItem}>
-                    <Checkbox
-                      variant="square"
-                      checked={formData.termsAgreement}
-                      onChange={handleCheckboxChange('termsAgreement')}
-                      label="[필수] OO OOOOO 이용 동의"
-                    />
-                    <button type="button" className={styles.viewLink}>
-                      보기
-                    </button>
+                  <div className={styles.agreementItemWrapper}>
+                    <div className={styles.agreementItem}>
+                      <Checkbox
+                        variant="square"
+                        checked={formData.termsAgreement}
+                        onChange={handleCheckboxChange('termsAgreement')}
+                        label="[필수] OO OOOOO 이용 동의"
+                      />
+                      <button type="button" className={styles.viewLink}>
+                        보기
+                      </button>
+                    </div>
+                    {getFieldError('termsAgreement') && (
+                      <p className={styles.fieldError}>{getFieldError('termsAgreement')}</p>
+                    )}
                   </div>
                 </div>
               </div>

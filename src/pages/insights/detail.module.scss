@@ -988,3 +988,139 @@
   }
 }
 
+// Print Styles - 인사이트 본문만 출력
+@media print {
+  // 전체 페이지 배경 흰색으로 변경
+  .page {
+    background-color: white !important;
+    color: black !important;
+    min-height: auto !important;
+    padding-top: 0 !important;
+  }
+
+  // 컨테이너 패딩 조정
+  .container {
+    padding: 0 40px !important;
+    max-width: 100% !important;
+  }
+
+  .content {
+    padding: 20px 0 !important;
+    gap: 40px !important;
+  }
+
+  // 플로팅 버튼 숨김
+  .floatingButtons {
+    display: none !important;
+  }
+
+  // 헤더 섹션 (제목, 카테고리, 메타 정보)
+  .headerSection {
+    display: flex !important;
+  }
+
+  .category {
+    color: #003675 !important;
+  }
+
+  .title {
+    color: black !important;
+  }
+
+  .meta {
+    border-color: rgba(0, 0, 0, 0.2) !important;
+
+    &::before,
+    &::after {
+      background-color: rgba(0, 0, 0, 0.2) !important;
+    }
+  }
+
+  .metaLeft {
+    .author,
+    .date {
+      color: #333 !important;
+    }
+
+    .divider {
+      background-color: #666 !important;
+    }
+  }
+
+  // 메타 우측 (프린트, 공유 아이콘) 숨김
+  .metaRight {
+    display: none !important;
+  }
+
+  // 본문 섹션
+  .bodySection {
+    display: flex !important;
+  }
+
+  .imageSection {
+    page-break-inside: avoid;
+  }
+
+  .bodyContent {
+    color: black !important;
+
+    :global(.toastui-editor-contents) {
+      color: black !important;
+
+      p, span, div, li, td, th {
+        color: black !important;
+      }
+
+      strong {
+        color: black !important;
+      }
+
+      h1, h2, h3, h4, h5, h6 {
+        color: black !important;
+      }
+
+      a {
+        color: #003675 !important;
+      }
+
+      code {
+        background: #f5f5f5 !important;
+        color: #333 !important;
+      }
+
+      pre {
+        background: #f5f5f5 !important;
+      }
+
+      blockquote {
+        border-left-color: #003675 !important;
+        color: black !important;
+      }
+
+      table {
+        border-color: rgba(0, 0, 0, 0.2) !important;
+
+        th, td {
+          border-color: rgba(0, 0, 0, 0.2) !important;
+          color: black !important;
+        }
+      }
+    }
+  }
+
+  // 첨부파일 섹션 숨김
+  .attachmentsSection {
+    display: none !important;
+  }
+
+  // 댓글 섹션 숨김
+  .commentsSection {
+    display: none !important;
+  }
+
+  // 네비게이션 섹션 숨김
+  .navigationSection {
+    display: none !important;
+  }
+}
+

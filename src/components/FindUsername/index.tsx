@@ -47,62 +47,123 @@ const FindUsername: React.FC = () => {
 
   const handleRequestVerification = useCallback(async () => {
     setError('');
+    setIsLoading(true);
 
-    if (activeTab === 'sms') {
-      if (!name || !phone) {
-        setError('이름과 휴대폰 번호를 입력해주세요.');
-        return;
+    try {
+      if (activeTab === 'sms') {
+        if (!name || !phone) {
+          setError('이름과 휴대폰 번호를 입력해주세요.');
+          return;
+        }
+
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+        if (cleanPhone.length < 10 || cleanPhone.length > 11) {
+          setError('올바른 휴대폰 번호를 입력해주세요.');
+          return;
+        }
+
+        const response = await post(API_ENDPOINTS.AUTH.FIND_ID_PHONE_SEND, {
+          phoneNumber: cleanPhone,
+        });
+
+        if (response.error) {
+          if (response.status === 404) {
+            setError('해당 전화번호로 가입된 회원이 없습니다.');
+          } else {
+            setError(response.error || '인증번호 발송에 실패했습니다.');
+          }
+          return;
+        }
+
+        setTimeLeft(180);
+        setIsTimerActive(true);
+        setStep('verification');
+      } else {
+        if (!name || !email) {
+          setError('이름과 이메일을 입력해주세요.');
+          return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          setError('올바른 이메일 형식을 입력해주세요.');
+          return;
+        }
+
+        const response = await post(API_ENDPOINTS.AUTH.FIND_ID_EMAIL_SEND, {
+          email: email,
+        });
+
+        if (response.error) {
+          if (response.status === 404) {
+            setError('해당 이메일로 가입된 회원이 없습니다.');
+          } else {
+            setError(response.error || '인증번호 발송에 실패했습니다.');
+          }
+          return;
+        }
+
+        setTimeLeft(180);
+        setIsTimerActive(true);
+        setStep('verification');
       }
-
-      const cleanPhone = phone.replace(/[^0-9]/g, '');
-      if (cleanPhone.length < 10 || cleanPhone.length > 11) {
-        setError('올바른 휴대폰 번호를 입력해주세요.');
-        return;
-      }
-
-      // API 호출 임시 비활성화 - 바로 타이머 시작
-      setTimeLeft(180);
-      setIsTimerActive(true);
-      setStep('verification');
-    } else {
-      if (!name || !email) {
-        setError('이름과 이메일을 입력해주세요.');
-        return;
-      }
-
-      // 이메일 형식 검증
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        setError('올바른 이메일 형식을 입력해주세요.');
-        return;
-      }
-
-      // API 호출 임시 비활성화 - 바로 타이머 시작
-      setTimeLeft(180);
-      setIsTimerActive(true);
-      setStep('verification');
+    } catch {
+      setError('인증번호 발송에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
     }
   }, [activeTab, name, phone, email]);
 
   const handleVerifyCode = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
     setError('');
+    setIsLoading(true);
 
     if (!verificationCode) {
       setError('인증번호를 입력해주세요.');
+      setIsLoading(false);
       return;
     }
 
-    // API 호출 임시 비활성화 - 인증번호 1234로 검증
-    if (verificationCode === '1234') {
-      // 임시 아이디 표시 (API 비활성화 상태)
-      setFoundUsername('(인증 기능 점검중)');
-      setStep('result');
-      setIsTimerActive(false);
-    } else {
-      setError('인증번호가 올바르지 않습니다.');
+    try {
+      let response;
+      if (activeTab === 'sms') {
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+        response = await post<{ loginId: string }>(API_ENDPOINTS.AUTH.FIND_ID_PHONE_VERIFY, {
+          phoneNumber: cleanPhone,
+          verificationCode: verificationCode,
+        });
+      } else {
+        response = await post<{ loginId: string }>(API_ENDPOINTS.AUTH.FIND_ID_EMAIL_VERIFY, {
+          email: email,
+          verificationCode: verificationCode,
+        });
+      }
+
+      if (response.error) {
+        if (response.status === 400) {
+          setError('인증번호가 올바르지 않거나 만료되었습니다.');
+        } else if (response.status === 404) {
+          setError('해당 정보로 가입된 회원이 없습니다.');
+        } else {
+          setError(response.error || '인증에 실패했습니다.');
+        }
+        return;
+      }
+
+      if (response.data?.loginId) {
+        setFoundUsername(response.data.loginId);
+        setStep('result');
+        setIsTimerActive(false);
+      } else {
+        setError('아이디를 찾을 수 없습니다.');
+      }
+    } catch {
+      setError('인증에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
     }
-  }, [verificationCode]);
+  }, [verificationCode, activeTab, phone, email]);
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId as TabType);

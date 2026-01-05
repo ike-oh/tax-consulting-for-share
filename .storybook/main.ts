@@ -1,6 +1,5 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import path from 'path';
-import react from '@vitejs/plugin-react';
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
@@ -15,13 +14,13 @@ const config: StorybookConfig = {
   },
   staticDirs: ['../public'],
   viteFinal: async (config) => {
-    config.plugins = config.plugins || [];
-    config.plugins.push(react());
-
     if (config.resolve) {
       config.resolve.alias = {
         ...config.resolve.alias,
         '@': path.resolve(__dirname, '../src'),
+        'next/link': path.resolve(__dirname, './mocks/next-link.tsx'),
+        'next/image': path.resolve(__dirname, './mocks/next-image.tsx'),
+        'next/navigation': path.resolve(__dirname, './mocks/next-navigation.tsx'),
       };
     }
     return config;

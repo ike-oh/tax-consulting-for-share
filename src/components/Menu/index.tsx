@@ -1,9 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { get } from '@/lib/api';
+import { API_ENDPOINTS } from '@/config/api';
 
 interface MenuProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+interface HistoryResponse {
+  isExposed: boolean;
+  data: unknown[];
+}
+
+interface DataRoom {
+  id: string;
+  name: string;
+  displayType: 'gallery' | 'snippet' | 'list';
+  isExposed: boolean;
+}
+
+interface DataRoomsResponse {
+  items: DataRoom[];
 }
 
 const MENU_ITEMS = [
@@ -43,6 +61,33 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose }) => {
   const [isClosing, setIsClosing] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // 연혁 탭 노출 여부
+  const [historyExposed, setHistoryExposed] = useState(true);
+
+  // 자료실 목록
+  const [dataRooms, setDataRooms] = useState<DataRoom[]>([]);
+
+  // 연혁 노출 여부 및 자료실 목록에 따라 메뉴 아이템 동적 생성
+  const menuItems = MENU_ITEMS.map(item => {
+    if (item.id === 'about') {
+      return {
+        ...item,
+        subItems: historyExposed
+          ? item.subItems
+          : item.subItems.filter(sub => sub !== '연혁')
+      };
+    }
+    if (item.id === 'insight') {
+      // 자료실 목록을 동적으로 구성
+      const exposedDataRooms = dataRooms.filter(dr => dr.isExposed);
+      return {
+        ...item,
+        subItems: ['칼럼', ...exposedDataRooms.map(dr => dr.name)]
+      };
+    }
+    return item;
+  });
+
   // 현재 경로에 따라 메뉴 항목 자동 선택
   useEffect(() => {
     if (isOpen) {
@@ -61,20 +106,27 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose }) => {
         setSelectedSubItem(null);
       } else if (pathname === '/history' || pathname.startsWith('/history')) {
         setSelectedItem('about');
-        // 함께소개 서브메뉴 선택
-        const tabMap: { [key: string]: number } = {
-          'intro': 0,      // 소개
-          'history': 1,    // 연혁
-          'awards': 2,     // 수상/인증
-          'branches': 3,   // 본점/지점 안내
-          'customers': 4,  // 주요 고객
-          'ci': 5,         // CI가이드
-        };
-        const tab = query.tab as string;
-        if (tab && tabMap[tab] !== undefined) {
-          setSelectedSubItem(tabMap[tab]);
+        // 함께소개 서브메뉴 선택 - 연혁 노출 여부에 따라 동적으로 인덱스 계산
+        const aboutMenuItem = menuItems.find(item => item.id === 'about');
+        if (aboutMenuItem) {
+          const labelToTab: { [key: string]: string } = {
+            '소개': 'intro',
+            '연혁': 'history',
+            '수상/인증': 'awards',
+            '본점/지점 안내': 'branches',
+            '주요 고객': 'customers',
+            'CI가이드': 'ci',
+          };
+          const tab = query.tab as string;
+          // 현재 서브메뉴에서 해당 탭의 인덱스 찾기
+          const subItemIndex = aboutMenuItem.subItems.findIndex(subItem => labelToTab[subItem] === tab);
+          if (subItemIndex !== -1) {
+            setSelectedSubItem(subItemIndex);
+          } else {
+            setSelectedSubItem(null);
+          }
         } else {
-          setSelectedSubItem(null); // 탭이 없으면 서브메뉴 선택 안함
+          setSelectedSubItem(null);
         }
       } else if (pathname === '/business-areas/hierarchical' || pathname.startsWith('/business-areas/')) {
         setSelectedItem('services');
@@ -91,7 +143,7 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose }) => {
         setSelectedSubItem(null);
       }
     }
-  }, [isOpen, router.pathname, router.query]);
+  }, [isOpen, router.pathname, router.query, historyExposed]);
 
   useEffect(() => {
     if (isOpen && !hasBeenOpened) {
@@ -144,6 +196,44 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose }) => {
     };
   }, [isOpen]);
 
+  // 메뉴가 열릴 때 연혁 노출 여부 확인
+  useEffect(() => {
+    if (isOpen) {
+      const checkHistoryExposed = async () => {
+        try {
+          const response = await get<HistoryResponse>(API_ENDPOINTS.HISTORY);
+          if (response.data) {
+            setHistoryExposed(response.data.isExposed);
+          } else {
+            setHistoryExposed(false);
+          }
+        } catch {
+          setHistoryExposed(false);
+        }
+      };
+      checkHistoryExposed();
+    }
+  }, [isOpen]);
+
+  // 메뉴가 열릴 때 자료실 목록 확인
+  useEffect(() => {
+    if (isOpen) {
+      const fetchDataRooms = async () => {
+        try {
+          const response = await get<DataRoomsResponse>(API_ENDPOINTS.DATA_ROOMS);
+          if (response.data?.items) {
+            setDataRooms(response.data.items);
+          } else {
+            setDataRooms([]);
+          }
+        } catch {
+          setDataRooms([]);
+        }
+      };
+      fetchDataRooms();
+    }
+  }, [isOpen]);
+
   const handleClose = () => {
     setIsClosing(true);
     setTimeout(() => {
@@ -168,7 +258,7 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose }) => {
   };
 
   const handleItemClick = (id: string) => {
-    const menuItem = MENU_ITEMS.find(item => item.id === id);
+    const menuItem = menuItems.find(item => item.id === id);
     const hasSubItems = menuItem && menuItem.subItems && menuItem.subItems.length > 0;
     
     if (hasSubItems) {
@@ -216,10 +306,21 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose }) => {
         '주요 고객': 'customers',
         'CI가이드': 'ci',
       };
-      
+
       const tab = tabMap[subItem];
       if (tab) {
         setTimeout(() => router.push(`/history?tab=${tab}`), 500);
+      }
+    } else if (selectedItem === 'insight') {
+      // 인사이트 서브메뉴
+      if (subItem === '칼럼') {
+        setTimeout(() => router.push('/insights?tab=column'), 500);
+      } else {
+        // 자료실 항목 - dataRooms에서 해당 이름의 자료실 찾기
+        const dataRoom = dataRooms.find(dr => dr.name === subItem);
+        if (dataRoom) {
+          setTimeout(() => router.push(`/insights?tab=library&dataRoom=${dataRoom.id}`), 500);
+        }
       }
     }
   };
@@ -276,7 +377,7 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose }) => {
         <div className="menu-content">
           {/* 메인 메뉴 */}
           <ul className="menu-list">
-            {MENU_ITEMS.map((item) => (
+            {menuItems.map((item) => (
               <li
                 key={item.id}
                 className={`menu-item ${selectedItem === item.id ? 'is-selected' : ''} ${hoveredItem === item.id ? 'is-hovered' : ''}`}
@@ -308,7 +409,7 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose }) => {
 
           {/* 데스크탑: 서브메뉴를 오른쪽에 표시 */}
           {(() => {
-            const selectedMenuItem = MENU_ITEMS.find(item => item.id === selectedItem);
+            const selectedMenuItem = menuItems.find(item => item.id === selectedItem);
             if (selectedMenuItem && selectedMenuItem.subItems.length > 0) {
               return (
                 <ul className="sub-menu-list sub-menu-list--desktop">

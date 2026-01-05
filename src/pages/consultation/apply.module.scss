@@ -136,6 +136,15 @@
   border-bottom-color: #94b9e3;
 }
 
+.selectTriggerDisabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+
+  &:hover {
+    border-bottom-color: #404040;
+  }
+}
+
 .selectValue {
   font-family: 'Pretendard', sans-serif;
   font-weight: 400;
@@ -280,6 +289,38 @@
   &:focus {
     border-color: #94b9e3;
   }
+}
+
+// Error states
+.textInputError {
+  border-bottom-color: #ff6b6b;
+
+  &:focus {
+    border-bottom-color: #ff6b6b;
+  }
+}
+
+.textareaError {
+  border-color: #ff6b6b;
+
+  &:focus {
+    border-color: #ff6b6b;
+  }
+}
+
+.fieldError {
+  margin-top: 8px;
+  font-family: 'Pretendard', sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #ff6b6b;
+}
+
+.agreementItemWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 // Agreements

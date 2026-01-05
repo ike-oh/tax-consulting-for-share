@@ -680,7 +680,8 @@
     transform: translateY(-50%);
     height: 725px;
     right: 0;
-    overflow: visible;
+    overflow: hidden;
+    clip-path: inset(0 0 0 0);
 
     @media (max-width: $breakpoint-wide) {
       height: 600px;
@@ -769,6 +770,7 @@
     display: flex;
     gap: $spacing-32;
     transition: transform $transition-slow;
+    padding-left: $spacing-32;
   }
 
   .cards-progress {
@@ -970,14 +972,42 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: $spacing-120;
-    padding-bottom: $spacing-100;
+    justify-content: flex-start;
+    padding-top: 100px;
     z-index: 3;
-    overflow-y: auto;
+    overflow: hidden;
 
     @media (max-width: $breakpoint-tablet) {
-      padding-top: $spacing-100;
+      padding-top: 80px;
     }
+
+    // 4줄째 카드가 나오면 전체 스크롤 가능
+    &.full-scroll {
+      overflow-y: auto;
+
+      .solution-grids-container {
+        overflow-y: visible;
+      }
+    }
+  }
+
+  .solution-header {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    transition: opacity 0.5s ease;
+  }
+
+  .solution-grids-container {
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: $spacing-100;
   }
 
   .solution-label {
@@ -1032,6 +1062,8 @@
     display: flex;
     justify-content: center;
     gap: 12px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
 
     @media (max-width: $breakpoint-tablet) {
       margin-bottom: $spacing-12;
@@ -1183,6 +1215,7 @@
   overflow: hidden;
   background-color: #000000;
   padding: 80px 0;
+  min-height: auto; // 100vh 상속 제거 - 콘텐츠 크기에 맞춤
 }
 
 .solution02-background {
@@ -1766,18 +1799,14 @@
 
 .system-main-content {
   position: absolute;
-  top: 150px; // SYSTEM 라벨과 겹치지 않도록 조정
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%); // 화면 중앙 배치
   text-align: center;
   z-index: 2;
   width: 100%;
   max-width: 1200px;
   padding: 0 $spacing-24;
-
-  @media (max-width: $breakpoint-tablet) {
-    top: 120px;
-  }
 }
 
 .system-headline {
@@ -2161,14 +2190,14 @@
   overflow: hidden;
   background-color: #090909;
   z-index: 100;
-  padding: 120px 120px 80px;
+  padding: 120px 120px 280px; // bottom +200px 여백 추가
 
   @media (max-width: $breakpoint-wide) {
-    padding: 100px 80px 60px;
+    padding: 100px 80px 260px;
   }
 
   @media (max-width: $breakpoint-tablet) {
-    padding: 100px $spacing-20 40px;
+    padding: 100px $spacing-20 240px;
     min-height: 100vh;
   }
 }
@@ -2295,7 +2324,7 @@
 }
 
 .experts-cards {
-  overflow: hidden;
+  overflow: visible; // 카드 잘림 방지
   will-change: opacity, transform;
   margin-left: 120px;
   margin-top: 40px;
@@ -2307,7 +2336,6 @@
   @media (max-width: $breakpoint-tablet) {
     margin-left: 0;
     margin-top: 0;
-    overflow: visible;
   }
 }
 

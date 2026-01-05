@@ -72,7 +72,11 @@ export const API_ENDPOINTS = {
     UNSUBSCRIBE: '/newsletter/unsubscribe',
     ME: '/newsletter/me',
     ME_UNSUBSCRIBE: '/newsletter/me/unsubscribe',
+    PAGE: '/newsletter-page',
   },
+
+  // Data Rooms (자료실)
+  DATA_ROOMS: '/data-rooms',
 } as const;
 
 // API 요청 타임아웃 (ms)

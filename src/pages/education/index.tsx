@@ -19,6 +19,9 @@ const EducationPage: React.FC = () => {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<'education' | 'newsletter'>('education');
+
+  // 뉴스레터 탭 노출 여부
+  const [newsletterExposed, setNewsletterExposed] = useState(true);
   const [educationList, setEducationList] = useState<EducationItem[]>([]);
   const [newEducationList, setNewEducationList] = useState<EducationItem[]>([]); // 신규 교육용 별도 목록
   const [loading, setLoading] = useState(true);
@@ -36,7 +39,51 @@ const EducationPage: React.FC = () => {
   const [nameError, setNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
+  // 로그인된 사용자 정보로 뉴스레터 폼 미리 채우기
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.name && !newsletterName) {
+          setNewsletterName(user.name);
+        }
+        // email 또는 loginId(이메일 형식인 경우) 사용
+        const email = user.email || (user.loginId && user.loginId.includes('@') ? user.loginId : '');
+        if (email && !newsletterEmail) {
+          setNewsletterEmail(email);
+        }
+      } catch (e) {
+        // 파싱 실패 시 무시
+      }
+    }
+  }, []);
+
+  // 뉴스레터 탭 노출 여부 확인
+  useEffect(() => {
+    const checkNewsletterExposed = async () => {
+      try {
+        const response = await get<{ isExposed: boolean }>(API_ENDPOINTS.NEWSLETTER.PAGE);
+        if (response.data) {
+          setNewsletterExposed(response.data.isExposed);
+        } else {
+          setNewsletterExposed(false);
+        }
+      } catch {
+        setNewsletterExposed(false);
+      }
+    };
+    checkNewsletterExposed();
+  }, []);
+
+  // 뉴스레터 탭이 숨겨진 상태에서 newsletter 탭에 접근하면 education으로 변경
+  useEffect(() => {
+    if (!newsletterExposed && activeSubTab === 'newsletter') {
+      setActiveSubTab('education');
+    }
+  }, [newsletterExposed, activeSubTab]);
+
   // Email validation
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -119,6 +166,12 @@ const EducationPage: React.FC = () => {
     { id: 'education', label: '교육/세미나 안내' },
     { id: 'newsletter', label: '뉴스레터' },
   ];
+
+  // 뉴스레터 탭 노출 여부에 따라 탭 필터링
+  const filteredSubTabItems = subTabItems.filter(tab => {
+    if (tab.id === 'newsletter') return newsletterExposed;
+    return true;
+  });
 
   // 신규 교육 목록 가져오기 (필터 무관, 최초 1회)
   useEffect(() => {
@@ -237,7 +290,7 @@ const EducationPage: React.FC = () => {
 
         <div className={styles.tabSection}>
           <Tab
-            items={subTabItems}
+            items={filteredSubTabItems}
             activeId={activeSubTab}
             onChange={(tabId) => {
               setActiveSubTab(tabId as 'education' | 'newsletter');

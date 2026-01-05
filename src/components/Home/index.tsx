@@ -215,16 +215,11 @@ const TestMotion: React.FC = () => {
         gsap.set([expandText1, expandText2], { opacity: 0, y: 30 });
         gsap.set(crewOverlay, { opacity: 0 });
 
-        // 화면 크기에 맞는 scale 계산
+        // 화면 크기
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-        const pillWidth = 180;
-        const pillHeight = 80;
-        const scaleX = viewportWidth / pillWidth;
-        const scaleY = viewportHeight / pillHeight;
-        const targetScale = Math.max(scaleX, scaleY) * 1.2; // 여유있게 1.2배
 
-        // crew pill의 현재 위치에서 화면 중앙까지의 거리 계산
+        // crew pill의 현재 위치 계산
         const crewPillRect = (crewPill as HTMLElement).getBoundingClientRect();
         const centerX = viewportWidth / 2 - crewPillRect.left - crewPillRect.width / 2;
         const centerY = viewportHeight / 2 - crewPillRect.top - crewPillRect.height / 2;
@@ -298,10 +293,16 @@ const TestMotion: React.FC = () => {
         }, 0)
         // Phase 2: Crew pill expands (0.2 - 0.5)
         .to(crewPill, {
-          scale: targetScale,
-          borderRadius: '0px',
+          width: viewportWidth,
+          height: viewportHeight,
           duration: 0.3,
           ease: 'power2.inOut',
+        }, 0.2)
+        // borderRadius는 더 빠르게 (0.2 - 0.4)
+        .to(crewPill, {
+          borderRadius: '0px',
+          duration: 0.2,
+          ease: 'power2.out',
         }, 0.2)
         // Overlay appears after full expansion (0.5 - 0.55)
         .to(crewOverlay, { opacity: 1, duration: 0.05 }, 0.5);
@@ -489,7 +490,7 @@ const TestMotion: React.FC = () => {
           scrollTrigger: {
             trigger: growthSectionRef.current,
             start: 'top top',
-            end: '+=800%', // 카드 넘기는 속도 조절
+            end: '+=400%', // 스크롤 거리 단축
             pin: true,
             pinSpacing: true,
             scrub: 0.5,
@@ -587,16 +588,22 @@ const TestMotion: React.FC = () => {
         const directionText = solution01Ref.current.querySelector('.direction-text');
         const solutionOverlay = solution01Ref.current.querySelector('.solution-overlay');
         const solutionContent = solution01Ref.current.querySelector('.solution-content');
+        const solutionHeader = solution01Ref.current.querySelector('.solution-header');
         const solutionLabel = solution01Ref.current.querySelector('.solution-label');
         const solutionTitle = solution01Ref.current.querySelector('.solution-title');
         const solutionDescription = solution01Ref.current.querySelector('.solution-description');
+        const solutionGridsContainer = solution01Ref.current.querySelector('.solution-grids-container');
         const solutionGrids = solution01Ref.current.querySelectorAll('.solution-grid');
 
         gsap.set(directionText, { opacity: 0 });
         gsap.set(solutionOverlay, { opacity: 0 });
         gsap.set(solutionContent, { opacity: 0 });
         gsap.set([solutionLabel, solutionTitle, solutionDescription], { opacity: 0, y: 30 });
-        gsap.set(solutionGrids, { opacity: 0, y: 50, scale: 1.1 });
+        gsap.set(solutionGrids, { opacity: 0 });
+        // 카드 영역 스크롤 위치 초기화
+        if (solutionGridsContainer) {
+          (solutionGridsContainer as HTMLElement).scrollTop = 0;
+        }
 
         let textContentPlayed = false;
 
@@ -604,10 +611,10 @@ const TestMotion: React.FC = () => {
           scrollTrigger: {
             trigger: solution01Ref.current,
             start: 'top top',
-            end: '+=1000%', // Direction 체류 시간 길게
+            end: '+=500%', // 스크롤 속도 빠르게
             pin: true,
             pinSpacing: true,
-            scrub: 0.5,
+            scrub: 1.5, // 더 부드러운 스크롤 연동
             // 타임라인:
             // 0%: 나침반 배경만
             // 5%: DIRECTION 텍스트 등장
@@ -620,7 +627,7 @@ const TestMotion: React.FC = () => {
             snap: {
               snapTo: (progress) => {
                 if (progress < 0.04) return 0;
-                if (progress < 0.18) return 0.10;  // DIRECTION 텍스트 상태 (오래 머물기)
+                if (progress < 0.25) return 0.10;  // DIRECTION 텍스트 상태 (더 오래 머물기)
                 if (progress >= 0.90) return 1;
                 return progress;
               },
@@ -653,6 +660,10 @@ const TestMotion: React.FC = () => {
               // 3. 텍스트 순차 등장 (26% 이상) - 부드러운 전환
               if (self.progress > 0.26 && !textContentPlayed) {
                 textContentPlayed = true;
+                // 카드 영역 스크롤 위치를 맨 위로 초기화
+                if (solutionGridsContainer) {
+                  (solutionGridsContainer as HTMLElement).scrollTop = 0;
+                }
                 gsap.to(solutionContent, { opacity: 1, duration: 0.5, ease: 'power2.out' });
                 // 라벨 → 제목 → 설명 순차 (시간 기반, 더 부드럽게)
                 gsap.to(solutionLabel, { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' });
@@ -663,33 +674,77 @@ const TestMotion: React.FC = () => {
               // 텍스트 되돌리기 (24% 이하)
               if (self.progress < 0.24 && textContentPlayed) {
                 textContentPlayed = false;
-                gsap.to(solutionContent, { opacity: 0, duration: 0.3 });
+                // 카드 영역 스크롤 위치 초기화
+                if (solutionGridsContainer) {
+                  (solutionGridsContainer as HTMLElement).scrollTop = 0;
+                }
+                gsap.to(solutionContent, { opacity: 0, y: 0, duration: 0.3 });
                 gsap.to([solutionLabel, solutionTitle, solutionDescription], { opacity: 0, y: 30, duration: 0.3 });
-                gsap.to(solutionGrids, { opacity: 0, y: 50, scale: 1.1, duration: 0.3 });
+                gsap.to(solutionGrids, { opacity: 0, duration: 0.3 });
               }
 
-              // 4. 마키 카드 한 줄씩 등장 (35%~55% 구간, 스크롤 기반)
-              // 아래에서 위로 + opacity + scale 전환
-              if (self.progress >= 0.35 && self.progress <= 0.55) {
-                const gridProgress = (self.progress - 0.35) / 0.20; // 0~1
-                const visibleGrids = Math.min(Math.ceil(gridProgress * 4), 4);
+              // 4. 마키 카드 한 줄씩 등장 (35%~75% 구간, 스크롤 기반)
+              // 각 행이 10% 구간마다 등장 + 헤더만 위로 이동하며 페이드아웃
+              if (self.progress >= 0.35 && self.progress <= 0.75) {
+                // 각 행 등장 시점: 35%, 45%, 55%, 65%
+                const row1Visible = self.progress >= 0.35;
+                const row2Visible = self.progress >= 0.45;
+                const row3Visible = self.progress >= 0.55;
+                const row4Visible = self.progress >= 0.65;
+                const visibleGrids = [row1Visible, row2Visible, row3Visible, row4Visible].filter(Boolean).length;
 
+                // 헤더 opacity: 2행(45%)~3행(55%) 사이에서 fade out
+                let headerOpacity = 1;
+                if (self.progress >= 0.45 && self.progress < 0.55) {
+                  headerOpacity = 1 - ((self.progress - 0.45) / 0.10); // 1 → 0
+                } else if (self.progress >= 0.55) {
+                  headerOpacity = 0;
+                }
+
+                // 헤더 opacity + height collapse + 위로 이동 모션
+                const headerMaxHeight = headerOpacity > 0 ? 300 : 0;
+                const headerY = headerOpacity > 0 ? 0 : -50; // 위로 올라가는 모션
+                gsap.to(solutionHeader, {
+                  opacity: headerOpacity,
+                  y: headerY,
+                  maxHeight: headerMaxHeight,
+                  overflow: 'hidden',
+                  duration: 0.6, // 더 부드러운 전환
+                  ease: 'power1.out' // 더 부드러운 easing
+                });
+                // grids는 헤더 collapse에 따라 자연스럽게 위로 올라감 (y 애니메이션 불필요)
+
+                // 4줄째 카드가 나타나면 전체 스크롤 가능
+                if (visibleGrids >= 4 && solutionContent) {
+                  (solutionContent as HTMLElement).classList.add('full-scroll');
+                } else {
+                  if (solutionContent) {
+                    (solutionContent as HTMLElement).classList.remove('full-scroll');
+                  }
+                  if (solutionGridsContainer) {
+                    (solutionGridsContainer as HTMLElement).scrollTop = 0;
+                  }
+                }
+
+                // 카드는 fade in만
                 solutionGrids.forEach((grid, index) => {
                   if (index < visibleGrids) {
-                    gsap.to(grid, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'power2.out' });
+                    gsap.to(grid, { opacity: 1, duration: 0.8, ease: 'power1.out' }); // 더 부드러운 카드 등장
                   } else {
-                    gsap.set(grid, { opacity: 0, y: 50, scale: 1.1 });
+                    gsap.set(grid, { opacity: 0 });
                   }
                 });
-              } else if (self.progress > 0.55) {
-                // 모든 그리드 표시
+              } else if (self.progress > 0.75) {
+                // 모든 그리드 표시 + 헤더 collapsed + 위로 이동
+                gsap.set(solutionHeader, { opacity: 0, y: -50, maxHeight: 0, overflow: 'hidden' });
                 solutionGrids.forEach((grid) => {
-                  gsap.set(grid, { opacity: 1, y: 0, scale: 1 });
+                  gsap.set(grid, { opacity: 1 });
                 });
               } else if (self.progress < 0.35) {
-                // 모든 그리드 숨김
+                // 모든 그리드 숨김 + 헤더 원위치
+                gsap.set(solutionHeader, { opacity: 1, y: 0, maxHeight: 300, overflow: 'visible' });
                 solutionGrids.forEach((grid) => {
-                  gsap.set(grid, { opacity: 0, y: 50, scale: 1.1 });
+                  gsap.set(grid, { opacity: 0 });
                 });
               }
 
@@ -713,53 +768,38 @@ const TestMotion: React.FC = () => {
 
         let solution02ContentPlayed = false;
 
-        gsap.timeline({
-          scrollTrigger: {
-            trigger: solution02Ref.current,
-            start: 'top top',
-            end: '+=350%', // 시간 기반이므로 줄임
-            pin: true,
-            pinSpacing: true,
-            scrub: 0.5,
-            snap: {
-              snapTo: (progress) => {
-                if (progress < 0.08) return 0;
-                if (progress < 0.9) return 0.55; // 애니메이션 완료 후 머무르기
-                return 1;
-              },
-              duration: { min: 0.3, max: 0.6 },
-              ease: 'power2.out',
-              inertia: false,
-            },
-            onUpdate: (self) => {
-              // 콘텐츠 등장 (10% 이상) - 시간 기반 애니메이션
-              if (self.progress > 0.10 && !solution02ContentPlayed) {
-                solution02ContentPlayed = true;
-                gsap.to(solution02Content, { opacity: 1, duration: 0.3, ease: 'power2.out' });
-                // 라벨 → 제목 → 설명 순차 등장 (시간 기반)
-                gsap.to(solution02Label, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' });
-                gsap.to(solution02Title, { opacity: 1, y: 0, duration: 0.5, delay: 0.15, ease: 'power2.out' });
-                gsap.to(solution02Description, { opacity: 1, y: 0, duration: 0.5, delay: 0.3, ease: 'power2.out' });
-                // 타임라인 컨테이너 등장
-                gsap.to(timelineContainer, { opacity: 1, duration: 0.4, delay: 0.45, ease: 'power2.out' });
+        // Solution 02: 자연스러운 스크롤 (pin 없음)
+        ScrollTrigger.create({
+          trigger: solution02Ref.current,
+          start: 'top 80%', // 화면 80% 지점에서 시작
+          end: 'bottom 20%',
+          onEnter: () => {
+            if (!solution02ContentPlayed) {
+              solution02ContentPlayed = true;
+              gsap.to(solution02Content, { opacity: 1, duration: 0.3, ease: 'power2.out' });
+              // 라벨 → 제목 → 설명 순차 등장
+              gsap.to(solution02Label, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' });
+              gsap.to(solution02Title, { opacity: 1, y: 0, duration: 0.5, delay: 0.15, ease: 'power2.out' });
+              gsap.to(solution02Description, { opacity: 1, y: 0, duration: 0.5, delay: 0.3, ease: 'power2.out' });
+              // 타임라인 컨테이너 등장
+              gsap.to(timelineContainer, { opacity: 1, duration: 0.4, delay: 0.45, ease: 'power2.out' });
 
-                // 스텝들 시간 기반 순차 등장 (0.6초 후부터 0.4초 간격)
-                for (let i = 1; i <= 6; i++) {
-                  gsap.delayedCall(0.6 + i * 0.4, () => {
-                    setVisibleSteps(i);
-                  });
-                }
+              // 스텝들 시간 기반 순차 등장
+              for (let i = 1; i <= 6; i++) {
+                gsap.delayedCall(0.6 + i * 0.4, () => {
+                  setVisibleSteps(i);
+                });
               }
-
-              // 되돌리기 (8% 이하)
-              if (self.progress < 0.08 && solution02ContentPlayed) {
-                solution02ContentPlayed = false;
-                gsap.to(solution02Content, { opacity: 0, duration: 0.3 });
-                gsap.to([solution02Label, solution02Title, solution02Description], { opacity: 0, y: 30, duration: 0.3 });
-                gsap.to(timelineContainer, { opacity: 0, duration: 0.3 });
-                setVisibleSteps(0);
-              }
-            },
+            }
+          },
+          onLeaveBack: () => {
+            if (solution02ContentPlayed) {
+              solution02ContentPlayed = false;
+              gsap.to(solution02Content, { opacity: 0, duration: 0.3 });
+              gsap.to([solution02Label, solution02Title, solution02Description], { opacity: 0, y: 30, duration: 0.3 });
+              gsap.to(timelineContainer, { opacity: 0, duration: 0.3 });
+              setVisibleSteps(0);
+            }
           },
         });
       }
@@ -848,7 +888,7 @@ const TestMotion: React.FC = () => {
           scrollTrigger: {
             trigger: systemRef.current,
             start: 'top top',
-            end: '+=1000%', // 더 길게 (비디오 확장 + 카드 스크롤 포함)
+            end: '+=500%', // 스크롤 거리 단축
             pin: true,
             pinSpacing: true,
             scrub: 0.5,
@@ -1057,7 +1097,7 @@ const TestMotion: React.FC = () => {
 
         // 초기 상태 설정
         gsap.set(teamworkBackground, { opacity: 0 });
-        gsap.set(teamworkHeadline, { opacity: 0, y: headlineStartY });
+        gsap.set(teamworkHeadline, { opacity: 0, y: headlineStartY, xPercent: -50, yPercent: -50 });
         gsap.set(teamworkText, { opacity: 0 });
 
         gsap.timeline({
@@ -1086,21 +1126,23 @@ const TestMotion: React.FC = () => {
                 const currentY = headlineStartY * (1 - headlineProgress);
                 gsap.set(teamworkHeadline, {
                   opacity: headlineProgress,
-                  y: currentY
+                  y: currentY,
+                  xPercent: -50,
+                  yPercent: -50
                 });
               } else if (self.progress > 0.15 && self.progress < 0.30) {
-                gsap.set(teamworkHeadline, { opacity: 1, y: 0 });
+                gsap.set(teamworkHeadline, { opacity: 1, y: 0, xPercent: -50, yPercent: -50 });
               } else if (self.progress < 0.03) {
-                gsap.set(teamworkHeadline, { opacity: 0, y: headlineStartY });
+                gsap.set(teamworkHeadline, { opacity: 0, y: headlineStartY, xPercent: -50, yPercent: -50 });
               }
 
               // 2. 헤드라인 페이드아웃 + 배경 페이드인 (30% ~ 45%)
               if (self.progress >= 0.30 && self.progress <= 0.45) {
                 const transitionProgress = (self.progress - 0.30) / 0.15;
-                gsap.set(teamworkHeadline, { opacity: 1 - transitionProgress, y: 0 });
+                gsap.set(teamworkHeadline, { opacity: 1 - transitionProgress, y: 0, xPercent: -50, yPercent: -50 });
                 gsap.set(teamworkBackground, { opacity: transitionProgress });
               } else if (self.progress > 0.45) {
-                gsap.set(teamworkHeadline, { opacity: 0 });
+                gsap.set(teamworkHeadline, { opacity: 0, xPercent: -50, yPercent: -50 });
                 gsap.set(teamworkBackground, { opacity: 1 });
               } else if (self.progress < 0.30) {
                 gsap.set(teamworkBackground, { opacity: 0 });
@@ -1139,47 +1181,32 @@ const TestMotion: React.FC = () => {
 
         let expertsContentPlayed = false;
 
-        gsap.timeline({
-          scrollTrigger: {
-            trigger: expertsRef.current,
-            start: 'top top',
-            end: '+=300%',
-            pin: true,
-            pinSpacing: true,
-            scrub: 0.5,
-            snap: {
-              snapTo: (progress) => {
-                if (progress < 0.08) return 0;
-                if (progress < 0.9) return 0.40;  // 콘텐츠 등장 후 머무르기
-                return 1;
-              },
-              duration: { min: 0.3, max: 0.6 },
-              ease: 'power2.out',
-              inertia: false,
-            },
-            onUpdate: (self) => {
-              // 콘텐츠 등장 (10% 이상) - 부드러운 전환
-              if (self.progress > 0.10 && !expertsContentPlayed) {
-                expertsContentPlayed = true;
-                // 헤드라인 fade-up
-                gsap.to(expertsHeadline, { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' });
-                // 설명 fade-up (딜레이)
-                gsap.to(expertsDesc, { opacity: 1, y: 0, duration: 0.8, delay: 0.3, ease: 'power2.out' });
-                // 네비게이션 fade-in
-                gsap.to(expertsNav, { opacity: 1, duration: 0.6, delay: 0.2, ease: 'power2.out' });
-                // 카드 fade-up
-                gsap.to(expertsCards, { opacity: 1, y: 0, duration: 0.8, delay: 0.2, ease: 'power2.out' });
-              }
-
-              // 되돌리기 (8% 이하)
-              if (self.progress < 0.08 && expertsContentPlayed) {
-                expertsContentPlayed = false;
-                gsap.to(expertsHeadline, { opacity: 0, y: 30, duration: 0.3 });
-                gsap.to(expertsDesc, { opacity: 0, y: 30, duration: 0.3 });
-                gsap.to(expertsNav, { opacity: 0, duration: 0.3 });
-                gsap.to(expertsCards, { opacity: 0, y: 30, duration: 0.3 });
-              }
-            },
+        // 자연스러운 스크롤 (pin 없음)
+        ScrollTrigger.create({
+          trigger: expertsRef.current,
+          start: 'top 80%',
+          end: 'bottom 20%',
+          onEnter: () => {
+            if (!expertsContentPlayed) {
+              expertsContentPlayed = true;
+              // 헤드라인 fade-up
+              gsap.to(expertsHeadline, { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' });
+              // 설명 fade-up (딜레이)
+              gsap.to(expertsDesc, { opacity: 1, y: 0, duration: 0.8, delay: 0.3, ease: 'power2.out' });
+              // 네비게이션 fade-in
+              gsap.to(expertsNav, { opacity: 1, duration: 0.6, delay: 0.2, ease: 'power2.out' });
+              // 카드 fade-up
+              gsap.to(expertsCards, { opacity: 1, y: 0, duration: 0.8, delay: 0.2, ease: 'power2.out' });
+            }
+          },
+          onLeaveBack: () => {
+            if (expertsContentPlayed) {
+              expertsContentPlayed = false;
+              gsap.to(expertsHeadline, { opacity: 0, y: 30, duration: 0.3 });
+              gsap.to(expertsDesc, { opacity: 0, y: 30, duration: 0.3 });
+              gsap.to(expertsNav, { opacity: 0, duration: 0.3 });
+              gsap.to(expertsCards, { opacity: 0, y: 30, duration: 0.3 });
+            }
           },
         });
       }
@@ -1194,37 +1221,22 @@ const TestMotion: React.FC = () => {
 
         let champagneContentPlayed = false;
 
-        gsap.timeline({
-          scrollTrigger: {
-            trigger: champagneRef.current,
-            start: 'top top',
-            end: '+=200%',
-            pin: true,
-            pinSpacing: true,
-            scrub: 0.5,
-            snap: {
-              snapTo: (progress) => {
-                if (progress < 0.08) return 0;
-                if (progress < 0.9) return 0.40;
-                return 1;
-              },
-              duration: { min: 0.3, max: 0.6 },
-              ease: 'power2.out',
-              inertia: false,
-            },
-            onUpdate: (self) => {
-              // 콘텐츠 등장 (10% 이상)
-              if (self.progress > 0.10 && !champagneContentPlayed) {
-                champagneContentPlayed = true;
-                gsap.to(champagneContent, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' });
-              }
-
-              // 되돌리기 (8% 이하)
-              if (self.progress < 0.08 && champagneContentPlayed) {
-                champagneContentPlayed = false;
-                gsap.to(champagneContent, { opacity: 0, y: 30, duration: 0.3 });
-              }
-            },
+        // 자연스러운 스크롤 (pin 없음)
+        ScrollTrigger.create({
+          trigger: champagneRef.current,
+          start: 'top 80%',
+          end: 'bottom 20%',
+          onEnter: () => {
+            if (!champagneContentPlayed) {
+              champagneContentPlayed = true;
+              gsap.to(champagneContent, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' });
+            }
+          },
+          onLeaveBack: () => {
+            if (champagneContentPlayed) {
+              champagneContentPlayed = false;
+              gsap.to(champagneContent, { opacity: 0, y: 30, duration: 0.3 });
+            }
           },
         });
       }
@@ -1239,38 +1251,28 @@ const TestMotion: React.FC = () => {
         gsap.set(cruiseLeftText, { opacity: 0, y: 30 });
         gsap.set(cruiseRightText, { opacity: 0, y: 30 });
 
-        let cruiseLeftPlayed = false;
-        let cruiseRightPlayed = false;
+        let cruiseContentPlayed = false;
 
-        gsap.timeline({
-          scrollTrigger: {
-            trigger: cruiseRef.current,
-            start: 'top top',
-            end: '+=200%',
-            pin: true,
-            pinSpacing: true,
-            scrub: 0.5,
-            onUpdate: (self) => {
-              // 좌측 텍스트 등장 (10% 이상)
-              if (self.progress > 0.10 && !cruiseLeftPlayed) {
-                cruiseLeftPlayed = true;
-                gsap.to(cruiseLeftText, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' });
-              }
-
-              // 우측 텍스트 등장 (25% 이상)
-              if (self.progress > 0.25 && !cruiseRightPlayed) {
-                cruiseRightPlayed = true;
-                gsap.to(cruiseRightText, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' });
-              }
-
-              // 되돌리기 (8% 이하)
-              if (self.progress < 0.08 && cruiseLeftPlayed) {
-                cruiseLeftPlayed = false;
-                cruiseRightPlayed = false;
-                gsap.to(cruiseLeftText, { opacity: 0, y: 30, duration: 0.3 });
-                gsap.to(cruiseRightText, { opacity: 0, y: 30, duration: 0.3 });
-              }
-            },
+        // 자연스러운 스크롤 (pin 없음)
+        ScrollTrigger.create({
+          trigger: cruiseRef.current,
+          start: 'top 80%',
+          end: 'bottom 20%',
+          onEnter: () => {
+            if (!cruiseContentPlayed) {
+              cruiseContentPlayed = true;
+              // 좌측 텍스트 먼저 등장
+              gsap.to(cruiseLeftText, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' });
+              // 우측 텍스트 딜레이 후 등장
+              gsap.to(cruiseRightText, { opacity: 1, y: 0, duration: 0.6, delay: 0.3, ease: 'power2.out' });
+            }
+          },
+          onLeaveBack: () => {
+            if (cruiseContentPlayed) {
+              cruiseContentPlayed = false;
+              gsap.to(cruiseLeftText, { opacity: 0, y: 30, duration: 0.3 });
+              gsap.to(cruiseRightText, { opacity: 0, y: 30, duration: 0.3 });
+            }
           },
         });
       }
@@ -1525,63 +1527,67 @@ const TestMotion: React.FC = () => {
         <h2 className="direction-text">DIRECTION</h2>
         <div className="solution-overlay" />
         <div className="solution-content">
-          <span className="solution-label">Solution 01</span>
-          <h2 className="solution-title">End-to-End <br className="mobile-br" />Strategic Solution</h2>
-          <p className="solution-description">
-            세무사의 전문성을 기반으로,<br className="mobile-br" /> 보험·펀드·신탁·법인 재무까지 아우르는<br />
-            통합형 실무 트레이닝 시스템을 제공합니다.<br />
-            세무사의 판단력과 실행력을 동시에 강화합니다.
-          </p>
-          <div className="solution-grid solution-grid-left">
-            <div className="solution-marquee-wrapper">
-              {[...SOLUTION_ROW1, ...SOLUTION_ROW1].map((card, index) => (
-                <div className="solution-card" key={index}>
-                  <span className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</span>
-                  <div className="solution-card-divider" />
-                  <ul className="solution-card-items">
-                    {card.items.map((item, i) => (<li key={i}>{item}</li>))}
-                  </ul>
-                </div>
-              ))}
-            </div>
+          <div className="solution-header">
+            <span className="solution-label">Solution 01</span>
+            <h2 className="solution-title">End-to-End <br className="mobile-br" />Strategic Solution</h2>
+            <p className="solution-description">
+              세무사의 전문성을 기반으로,<br className="mobile-br" /> 보험·펀드·신탁·법인 재무까지 아우르는<br />
+              통합형 실무 트레이닝 시스템을 제공합니다.<br />
+              세무사의 판단력과 실행력을 동시에 강화합니다.
+            </p>
           </div>
-          <div className="solution-grid solution-grid-right">
-            <div className="solution-marquee-wrapper">
-              {[...SOLUTION_ROW2, ...SOLUTION_ROW2].map((card, index) => (
-                <div className="solution-card" key={index}>
-                  <span className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</span>
-                  <div className="solution-card-divider" />
-                  <ul className="solution-card-items">
-                    {card.items.map((item, i) => (<li key={i}>{item}</li>))}
-                  </ul>
-                </div>
-              ))}
+          <div className="solution-grids-container">
+            <div className="solution-grid solution-grid-left">
+              <div className="solution-marquee-wrapper">
+                {[...SOLUTION_ROW1, ...SOLUTION_ROW1].map((card, index) => (
+                  <div className="solution-card" key={index}>
+                    <span className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</span>
+                    <div className="solution-card-divider" />
+                    <ul className="solution-card-items">
+                      {card.items.map((item, i) => (<li key={i}>{item}</li>))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="solution-grid solution-grid-left">
-            <div className="solution-marquee-wrapper">
-              {[...SOLUTION_ROW3, ...SOLUTION_ROW3].map((card, index) => (
-                <div className="solution-card" key={index}>
-                  <span className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</span>
-                  <div className="solution-card-divider" />
-                  <ul className="solution-card-items">
-                    {card.items.map((item, i) => (<li key={i}>{item}</li>))}
-                  </ul>
-                </div>
-              ))}
+            <div className="solution-grid solution-grid-right">
+              <div className="solution-marquee-wrapper">
+                {[...SOLUTION_ROW2, ...SOLUTION_ROW2].map((card, index) => (
+                  <div className="solution-card" key={index}>
+                    <span className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</span>
+                    <div className="solution-card-divider" />
+                    <ul className="solution-card-items">
+                      {card.items.map((item, i) => (<li key={i}>{item}</li>))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="solution-grid solution-grid-right">
-            <div className="solution-marquee-wrapper">
-              {[...SOLUTION_ROW4, ...SOLUTION_ROW4].map((card, index) => (
-                <div className="solution-card" key={index}>
-                  <span className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</span>
-                  <div className="solution-card-divider" />
-                  <ul className="solution-card-items">
-                    {card.items.map((item, i) => (<li key={i}>{item}</li>))}
-                  </ul>
-                </div>
-              ))}
+            <div className="solution-grid solution-grid-left">
+              <div className="solution-marquee-wrapper">
+                {[...SOLUTION_ROW3, ...SOLUTION_ROW3].map((card, index) => (
+                  <div className="solution-card" key={index}>
+                    <span className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</span>
+                    <div className="solution-card-divider" />
+                    <ul className="solution-card-items">
+                      {card.items.map((item, i) => (<li key={i}>{item}</li>))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="solution-grid solution-grid-right">
+              <div className="solution-marquee-wrapper">
+                {[...SOLUTION_ROW4, ...SOLUTION_ROW4].map((card, index) => (
+                  <div className="solution-card" key={index}>
+                    <span className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</span>
+                    <div className="solution-card-divider" />
+                    <ul className="solution-card-items">
+                      {card.items.map((item, i) => (<li key={i}>{item}</li>))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

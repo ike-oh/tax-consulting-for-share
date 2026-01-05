@@ -75,16 +75,6 @@ const ResetPassword: React.FC = () => {
 
     setIsLoading(true);
 
-    // 임시 토큰인 경우 API 호출 없이 성공 처리 (인증 기능 점검중)
-    if (token.startsWith('temp_reset_token_')) {
-      setIsSuccess(true);
-      setIsLoading(false);
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
-      return;
-    }
-
     try {
       const response = await post(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
         token: token,

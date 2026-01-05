@@ -9,6 +9,7 @@ import '@/components/FindUsername/styles.scss';
 import '@/components/FindPassword/styles.scss';
 import '@/components/ResetPassword/styles.scss';
 import '@/components/Home/styles.scss';
+import '@/components/TestMotion/styles.scss';
 // Design System Component styles
 import '@/components/common/Button/styles.scss';
 import '@/components/common/TextField/styles.scss';

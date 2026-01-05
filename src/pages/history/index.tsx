@@ -83,13 +83,16 @@ const HistoryPage: React.FC = () => {
   const [data, setData] = useState<HistoryYear[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
+  // 연혁 탭 노출 여부 (다른 state보다 먼저 선언)
+  const [historyExposed, setHistoryExposed] = useState(true);
+
   // URL 쿼리 파라미터에서 탭 읽기
   const tabFromQuery = router.query.tab as string;
   const validTabs = ['intro', 'history', 'awards', 'branches', 'customers', 'ci'];
   const initialTab = tabFromQuery && validTabs.includes(tabFromQuery) ? tabFromQuery : 'intro';
   const [activeTab, setActiveTab] = useState(initialTab);
-  
+
   // URL 쿼리 파라미터가 변경되면 탭 업데이트
   useEffect(() => {
     if (tabFromQuery && validTabs.includes(tabFromQuery)) {
@@ -100,6 +103,14 @@ const HistoryPage: React.FC = () => {
       setActiveTab('intro');
     }
   }, [tabFromQuery]);
+
+  // 연혁 탭이 숨겨진 상태에서 history 탭에 접근하면 intro로 리다이렉트
+  useEffect(() => {
+    if (!historyExposed && activeTab === 'history') {
+      router.replace('/history?tab=intro', undefined, { shallow: true });
+      setActiveTab('intro');
+    }
+  }, [historyExposed, activeTab]);
   const [activeCard, setActiveCard] = useState<'professionalism' | 'consulting' | 'trust'>('professionalism');
   const [awardsData, setAwardsData] = useState<AwardYear[]>([]);
   const [awardsLoading, setAwardsLoading] = useState(true);
@@ -262,6 +273,12 @@ const HistoryPage: React.FC = () => {
     { id: 'ci', label: 'CI가이드' },
   ];
 
+  // 연혁 탭 노출 여부에 따라 탭 필터링
+  const filteredTabItems = tabItems.filter(tab => {
+    if (tab.id === 'history') return historyExposed;
+    return true;
+  });
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -269,14 +286,20 @@ const HistoryPage: React.FC = () => {
         const response = await get<HistoryResponse>(API_ENDPOINTS.HISTORY);
 
         if (response.error) {
-          setError(response.error);
-        } else if (response.data && response.data.isExposed && response.data.data) {
-          setData(response.data.data);
-        } else {
-          setError('데이터를 불러올 수 없습니다.');
+          // API 에러 시 연혁 탭만 숨김 (페이지 에러로 처리하지 않음)
+          setHistoryExposed(false);
+        } else if (response.data) {
+          if (response.data.isExposed && response.data.data) {
+            setData(response.data.data);
+            setHistoryExposed(true);
+          } else {
+            // isExposed가 false면 연혁 탭만 숨김
+            setHistoryExposed(false);
+          }
         }
       } catch (err) {
-        setError('데이터를 불러오는 중 오류가 발생했습니다.');
+        // 에러 시 연혁 탭만 숨김
+        setHistoryExposed(false);
       } finally {
         setLoading(false);
       }
@@ -370,7 +393,8 @@ const HistoryPage: React.FC = () => {
 
   // Naver Map 초기화
   useEffect(() => {
-    if (activeTab !== 'branches' || branchesData.length === 0 || typeof window === 'undefined') {
+    // branchesLoading이 true이면 아직 DOM에 지도 요소가 없으므로 대기
+    if (activeTab !== 'branches' || branchesData.length === 0 || branchesLoading || typeof window === 'undefined') {
       return;
     }
 
@@ -543,7 +567,7 @@ const HistoryPage: React.FC = () => {
       }
       // 지도 인스턴스는 유지 (탭 전환 시에도 지도가 유지되도록)
     };
-  }, [activeTab, branchesData]);
+  }, [activeTab, branchesData, branchesLoading]);
 
   const formatMonth = (item: HistoryItem): string => {
     // month 값을 사용하여 월만 표시
@@ -575,18 +599,11 @@ const HistoryPage: React.FC = () => {
     );
   }
 
-  if (error || !data || data.length === 0) {
-    return (
-      <div className={styles.page}>
-        <Header variant="transparent" onMenuClick={() => setIsMenuOpen(true)} />
-        <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-        <div className={styles.error}>{error || '데이터를 불러올 수 없습니다.'}</div>
-      </div>
-    );
-  }
+  // 연혁 데이터가 없어도 다른 탭은 정상 작동해야 하므로 에러 페이지 제거
+  // 연혁 탭은 historyExposed에 따라 자동으로 숨겨짐
 
   // 연도별로 그룹화하고 내림차순 정렬
-  const sortedData = [...data].sort((a, b) => b.year - a.year);
+  const sortedData = data.length > 0 ? [...data].sort((a, b) => b.year - a.year) : [];
 
   return (
     <div className={styles.page}>
@@ -603,7 +620,7 @@ const HistoryPage: React.FC = () => {
 
         <div className={styles.tabSection}>
           <Tab
-            items={tabItems}
+            items={filteredTabItems}
             activeId={activeTab}
             onChange={(tabId) => {
               setActiveTab(tabId);
