@@ -1,18 +1,16 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Lenis from 'lenis';
-import Header, { HeaderVariant } from '@/components/common/Header';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+import Header from '@/components/common/Header';
 import Menu from '@/components/Menu';
 import Footer from '@/components/common/Footer';
 
-// GSAP 플러그인 등록
+// GSAP ScrollTrigger 플러그인 등록
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
 // 동영상 경로 (public 폴더)
-const shipVideo1 = '/videos/ship1.mp4';
 const visionVideo = '/videos/vision.mp4';
 const growthVideo = '/videos/growth.mp4';
 const crewVideo = '/videos/crew.mp4';
@@ -31,25 +29,35 @@ const systemCard3Video = '/videos/system-card3.mp4';
 const champagneVideo = '/videos/champagne.mp4';
 
 // 이미지 경로 (public 폴더)
-// 메인 히어로 배경 이미지
-const mainHeroImage = '/images/main/hero/main-hero.jpg';
-
-// 섹션별 이미지
 const binocularsImg = '/images/main/sections/binoculars.jpg';
 const compassImg = '/images/main/sections/compass.png';
-const teamworkImg = '/images/main/sections/teamwork.jpg';
-const cruiseImg = '/images/main/sections/cruise.png';
-
-// 전문가 이미지
-const expert1Img = '/images/main/experts/expert1.png';
-const expert2Img = '/images/main/experts/expert2.png';
-const expert3Img = '/images/main/experts/expert3.png';
-
-// 버튼 이미지
 const btnLeftActive = '/images/main/buttons/btn-left-active.png';
 const btnLeftInactive = '/images/main/buttons/btn-left-inactive.png';
 const btnRightActive = '/images/main/buttons/btn-right-active.png';
 const btnRightInactive = '/images/main/buttons/btn-right-inactive.png';
+
+// 배경 이미지 경로 추가
+const teamworkImg = '/images/main/sections/teamwork.jpg';
+const cruiseImg = '/images/main/sections/cruise.png';
+
+// 전문가 카드 데이터 타입
+interface ExpertCard {
+  id: number;
+  name: string;
+  role: string;
+  quote: string;
+  image: string;
+}
+
+// 타임라인 데이터 (Solution 02)
+const TIMELINE_STEPS = [
+  { step: '01', title: '통합적 관점', tags: ['One-Stop Learning'], cols: 1 },
+  { step: '02', title: '실무 중심 커리큘럼', tags: ['Work-ready', '커리큘럼명'], cols: 2 },
+  { step: '03', title: '크로스펑셔널 멘토링', tags: ['전문가 네트워크'], cols: 3 },
+  { step: '04', title: '프로세스 기반 교육', tags: ['문제 해결 프레임워크', '커리큘럼명'], cols: 3 },
+  { step: '05', title: '평가-성과 연계', tags: ['학습 → 실적 전환'], cols: 4 },
+  { step: '06', title: '유연한 전달 방식', tags: ['On-Off Line', '하이브리드'], cols: 5, highlight: true },
+];
 
 // Solution 카드 데이터
 const SOLUTION_ROW1 = [
@@ -102,135 +110,56 @@ const SERVICE_CARDS = [
   { title: '전문가 협업 프로토콜', subtitle: '빈틈없는 통합솔루션 제공', video: card6Video },
 ];
 
-// 타임라인 데이터 (Solution 02)
-const TIMELINE_STEPS = [
-  { step: '01', title: '통합적 관점', tags: ['One-Stop Learning'], cols: 1 },
-  { step: '02', title: '실무 중심 커리큘럼', tags: ['Work-ready', '커리큘럼명'], cols: 2 },
-  { step: '03', title: '크로스펑셔널 멘토링', tags: ['전문가 네트워크'], cols: 3 },
-  { step: '04', title: '프로세스 기반 교육', tags: ['문제 해결 프레임워크', '커리큘럼명'], cols: 3 },
-  { step: '05', title: '평가-성과 연계', tags: ['학습 → 실적 전환'], cols: 4 },
-  { step: '06', title: '유연한 전달 방식', tags: ['On-Off Line', '하이브리드'], cols: 5, highlight: true },
-];
+const TestMotion: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [headerVariant, setHeaderVariant] = React.useState<'white' | 'transparent'>('white');
 
-// 전문가 카드 데이터
-const EXPERTS_CARDS = [
-  { name: '박준서', role: '세무사', quote: '창업 초기부터 성장 단계까지,\n든든한 파트너가 되겠습니다.', image: expert1Img },
-  { name: '박준서', role: '세무사', quote: '체계적이고\n신뢰할 수 있는 회계 관리', image: expert2Img },
-  { name: '박준서', role: '세무사', quote: '적용할 수 있는 실질적인\n세무 서비스를 제공합니다.', image: expert3Img },
-  { name: '박준서', role: '세무사', quote: '창업 초기부터 성장 단계까지,\n든든한 파트너가 되겠습니다.', image: expert1Img },
-  { name: '박준서', role: '세무사', quote: '체계적이고\n신뢰할 수 있는 회계 관리', image: expert2Img },
-];
+  // Vision 하이라이트 진행률 (0~100)
+  const [highlightProgress, setHighlightProgress] = React.useState(0);
 
-const Home: React.FC = () => {
-  const [headerVariant, setHeaderVariant] = useState<HeaderVariant>('white');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  // 카드 슬라이더 상태
+  const [cardIndex, setCardIndex] = React.useState(0);
+  const [cardSlideWidth, setCardSlideWidth] = React.useState(695);
+  const [expertsCardIndex, setExpertsCardIndex] = React.useState(0);
+  const [expertsCardSlideWidth, setExpertsCardSlideWidth] = React.useState(352); // 330px + 22px gap
 
-  // Hero section refs
+  // 전문가 데이터 (API에서 가져옴)
+  const [expertsCards, setExpertsCards] = React.useState<ExpertCard[]>([]);
+
+  // Solution 02 타임라인 - 보이는 스텝 개수 (0~6)
+  const [visibleSteps, setVisibleSteps] = React.useState(0);
+
+  // System 섹션 하이라이트 진행률 (0~100)
+  const [systemHighlightProgress, setSystemHighlightProgress] = React.useState(0);
+
+  // 섹션 Refs
   const heroRef = useRef<HTMLDivElement>(null);
-  const visionRowRef = useRef<HTMLDivElement>(null);
-  const growthRowRef = useRef<HTMLDivElement>(null);
-  const crewRowRef = useRef<HTMLDivElement>(null);
-  const visionPillRef = useRef<HTMLDivElement>(null);
-  const growthPillRef = useRef<HTMLDivElement>(null);
-  const crewPillRef = useRef<HTMLDivElement>(null);
-  const crewTextRef = useRef<HTMLHeadingElement>(null);
-  const expandingVideoRef = useRef<HTMLDivElement>(null);
-  const shipTextRef = useRef<HTMLDivElement>(null);
-  const mainTitleRef = useRef<HTMLHeadingElement>(null);
-  const subTitleRef = useRef<HTMLHeadingElement>(null);
-  const financeOverlayRef = useRef<HTMLDivElement>(null);
-  const leftContentRef = useRef<HTMLDivElement>(null);
-  const rightContentRef = useRef<HTMLDivElement>(null);
-  const yachtOverlayRef = useRef<HTMLDivElement>(null);
-  const yachtContentRef = useRef<HTMLDivElement>(null);
-  const visionContentRef = useRef<HTMLDivElement>(null);
-  const visionDescriptionRef = useRef<HTMLDivElement>(null);
-  const [highlightProgress, setHighlightProgress] = useState(0);
-
-  // Growth section refs
+  const financeRef = useRef<HTMLDivElement>(null);
+  const yachtRef = useRef<HTMLDivElement>(null);
+  const visionTextRef = useRef<HTMLDivElement>(null);
   const growthSectionRef = useRef<HTMLDivElement>(null);
-  const growthVisionTextRef = useRef<HTMLHeadingElement>(null);
-  const growthOverlayRef = useRef<HTMLDivElement>(null);
-  const growthContentRef = useRef<HTMLDivElement>(null);
-  const cardsContainerRef = useRef<HTMLDivElement>(null);
-  const cardsWrapperRef = useRef<HTMLDivElement>(null);
-  const [cardIndex, setCardIndex] = useState(0);
-  const [cardSlideWidth, setCardSlideWidth] = useState(695);
-
-  // Direction section refs
-  const directionSectionRef = useRef<HTMLDivElement>(null);
-  const directionTextRef = useRef<HTMLHeadingElement>(null);
-  const solutionOverlayRef = useRef<HTMLDivElement>(null);
-  const solutionContentRef = useRef<HTMLDivElement>(null);
-  const solutionLabelRef = useRef<HTMLSpanElement>(null);
-  const solutionTitleRef = useRef<HTMLHeadingElement>(null);
-  const solutionDescRef = useRef<HTMLParagraphElement>(null);
-  const solutionGrid1Ref = useRef<HTMLDivElement>(null);
-  const solutionGrid2Ref = useRef<HTMLDivElement>(null);
-  const solutionGrid3Ref = useRef<HTMLDivElement>(null);
-  const solutionGrid4Ref = useRef<HTMLDivElement>(null);
-
-  // Solution 02 refs
-  const solution02SectionRef = useRef<HTMLDivElement>(null);
-  const solution02LabelRef = useRef<HTMLSpanElement>(null);
-  const solution02TitleRef = useRef<HTMLHeadingElement>(null);
-  const solution02DescRef = useRef<HTMLParagraphElement>(null);
-  const timelineContainerRef = useRef<HTMLDivElement>(null);
-  const timelineGridRef = useRef<HTMLDivElement>(null);
-  const timelineStepRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const timelineColumnRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  // SYSTEM section refs
-  const systemSectionRef = useRef<HTMLDivElement>(null);
-  const systemTextRef = useRef<HTMLHeadingElement>(null);
-  const systemHeadlineRef = useRef<HTMLHeadingElement>(null);
-  const systemDescRef = useRef<HTMLParagraphElement>(null);
-  const systemVideoRef = useRef<HTMLDivElement>(null);
-  const systemCardsRef = useRef<HTMLDivElement>(null);
-  const [systemHighlightProgress, setSystemHighlightProgress] = useState(0);
-
-  // TEAMWORK section refs
-  const teamworkSectionRef = useRef<HTMLDivElement>(null);
-  const teamworkHeadlineRef = useRef<HTMLHeadingElement>(null);
-  const teamworkBgRef = useRef<HTMLDivElement>(null);
-  const teamworkTextRef = useRef<HTMLHeadingElement>(null);
-
-  // EXPERTS section refs
-  const expertsSectionRef = useRef<HTMLDivElement>(null);
-  const expertsHeadlineRef = useRef<HTMLDivElement>(null);
-  const expertsDescRef = useRef<HTMLDivElement>(null);
-  const expertsCardsRef = useRef<HTMLDivElement>(null);
-  const expertsNavRef = useRef<HTMLDivElement>(null);
-  const [expertsCardIndex, setExpertsCardIndex] = useState(0);
-  const [expertsCardSlideWidth, setExpertsCardSlideWidth] = useState(316);
-
-  // CHAMPAGNE section refs
-  const champagneSectionRef = useRef<HTMLDivElement>(null);
-  const champagneTextRef = useRef<HTMLDivElement>(null);
-
-  // CRUISE section refs
-  const cruiseSectionRef = useRef<HTMLDivElement>(null);
-  const cruiseLeftTextRef = useRef<HTMLDivElement>(null);
-  const cruiseRightTextRef = useRef<HTMLDivElement>(null);
-
-  // FINAL section refs
-  const finalSectionRef = useRef<HTMLDivElement>(null);
-  const finalContentRef = useRef<HTMLDivElement>(null);
+  const solution01Ref = useRef<HTMLDivElement>(null);
+  const solution02Ref = useRef<HTMLDivElement>(null);
+  const systemRef = useRef<HTMLDivElement>(null);
+  const teamworkRef = useRef<HTMLDivElement>(null);
+  const expertsRef = useRef<HTMLDivElement>(null);
+  const champagneRef = useRef<HTMLDivElement>(null);
+  const cruiseRef = useRef<HTMLDivElement>(null);
+  const finalRef = useRef<HTMLDivElement>(null);
 
   // 반응형 슬라이드 너비 업데이트
-  useEffect(() => {
+  React.useEffect(() => {
     const updateSlideWidth = () => {
       const vw = window.innerWidth;
       if (vw <= 768) {
         setCardSlideWidth(316);
-        setExpertsCardSlideWidth(252);
+        setExpertsCardSlideWidth(252); // 240px + 12px gap (모바일)
       } else if (vw <= 1024) {
         setCardSlideWidth(432);
-        setExpertsCardSlideWidth(316);
+        setExpertsCardSlideWidth(352); // 330px + 22px gap
       } else {
         setCardSlideWidth(695);
-        setExpertsCardSlideWidth(316);
+        setExpertsCardSlideWidth(352); // 330px + 22px gap
       }
     };
 
@@ -239,470 +168,1172 @@ const Home: React.FC = () => {
     return () => window.removeEventListener('resize', updateSlideWidth);
   }, []);
 
-  // Lenis 스무스 스크롤 초기화
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  // 전문가 데이터 API에서 가져오기
+  React.useEffect(() => {
+    const fetchExperts = async () => {
+      try {
+        const response = await fetch('http://13.124.98.132:3000/members?page=1&limit=20');
+        const data = await response.json();
 
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    } as any); // 타입 에러 방지를 위한 임시 처리
-
-    // GSAP ScrollTrigger와 연동
-    lenis.on('scroll', ScrollTrigger.update);
-
-    function raf(time: DOMHighResTimeStamp) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
-
-    requestAnimationFrame(raf);
-
-    // ScrollTrigger 새로고침 (약간의 지연 후)
-    setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 100);
-
-    return () => {
-      lenis.destroy();
+        if (data.items && Array.isArray(data.items)) {
+          const formattedExperts: ExpertCard[] = data.items.map((item: {
+            id: number;
+            name: string;
+            mainPhoto?: { url: string };
+            workAreas?: { value: string }[];
+            oneLineIntro?: string;
+          }) => ({
+            id: item.id,
+            name: item.name,
+            role: item.workAreas && item.workAreas.length > 0 ? item.workAreas[0].value : '전문가',
+            quote: item.oneLineIntro || '',
+            image: item.mainPhoto?.url || '/images/main/experts/expert1.png',
+          }));
+          setExpertsCards(formattedExperts);
+        }
+      } catch (error) {
+        console.error('Failed to fetch experts:', error);
+      }
     };
+
+    fetchExperts();
   }, []);
 
-  // 초기 로드 시 VISION/GROWTH/CREW 등장 애니메이션
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!visionRowRef.current || !growthRowRef.current || !crewRowRef.current) return;
-
-    // 초기 로드 애니메이션 타임라인
-    const initialTl = gsap.timeline({ delay: 0.3 });
-
-    // VISION: 왼쪽에서 나타나기
-    initialTl.to(visionRowRef.current, {
-      opacity: 1,
-      x: 0,
-      duration: 0.8,
-      ease: 'power3.out'
-    }, 0);
-    initialTl.to(visionPillRef.current, {
-      opacity: 1,
-      duration: 0.8,
-      ease: 'power3.out'
-    }, 0);
-
-    // GROWTH: 오른쪽에서 나타나기
-    initialTl.to(growthRowRef.current, {
-      opacity: 1,
-      x: 0,
-      duration: 0.8,
-      ease: 'power3.out'
-    }, 0.2);
-    initialTl.to(growthPillRef.current, {
-      opacity: 1,
-      duration: 0.8,
-      ease: 'power3.out'
-    }, 0.2);
-
-    // CREW: 왼쪽에서 나타나기
-    initialTl.to(crewRowRef.current, {
-      opacity: 1,
-      x: 0,
-      duration: 0.8,
-      ease: 'power3.out'
-    }, 0.4);
-    initialTl.to(crewPillRef.current, {
-      opacity: 1,
-      duration: 0.8,
-      ease: 'power3.out'
-    }, 0.4);
-    initialTl.to(crewTextRef.current, {
-      opacity: 1,
-      duration: 0.8,
-      ease: 'power3.out'
-    }, 0.4);
-
-    return () => {
-      initialTl.kill();
-    };
-  }, []);
-
-  // 메인 스크롤 애니메이션
   useEffect(() => {
     const ctx = gsap.context(() => {
-      const isMobile = window.innerWidth <= 768;
+      // Section 1: Hero - Pills fade out, CREW expands, then text appears
+      if (heroRef.current) {
+        const visionRow = heroRef.current.querySelector('.vision-row');
+        const growthRow = heroRef.current.querySelector('.growth-row');
+        const crewPill = heroRef.current.querySelector('.crew-pill');
+        const crewText = heroRef.current.querySelector('.crew-text');
+        const crewOverlay = heroRef.current.querySelector('.crew-overlay');
+        const expandText1 = heroRef.current.querySelector('.expand-text-1');
+        const expandText2 = heroRef.current.querySelector('.expand-text-2');
 
-      // ===== HERO SECTION =====
-      // 초기 상태 설정 - 모두 숨김 및 위치 설정
-      gsap.set(visionRowRef.current, { opacity: 0, x: -100 }); // 왼쪽에서 시작
-      gsap.set(growthRowRef.current, { opacity: 0, x: 100 }); // 오른쪽에서 시작
-      gsap.set(crewRowRef.current, { opacity: 0, x: -100 }); // 왼쪽에서 시작
-      gsap.set([visionPillRef.current, growthPillRef.current, crewPillRef.current], { opacity: 0 });
-      gsap.set(crewTextRef.current, { opacity: 0, width: 'auto' });
-      gsap.set(expandingVideoRef.current, { opacity: 0, display: 'none', visibility: 'hidden' });
-      gsap.set(shipTextRef.current, { opacity: 0 });
-      gsap.set([mainTitleRef.current, subTitleRef.current], { opacity: 0, y: 50 });
-      gsap.set(financeOverlayRef.current, { opacity: 0 });
-      gsap.set([leftContentRef.current, rightContentRef.current], { opacity: 0, y: 50 });
-      gsap.set(yachtOverlayRef.current, { opacity: 0 });
-      gsap.set(yachtContentRef.current, { opacity: 0, y: 50 });
-      gsap.set(visionContentRef.current, { opacity: 0 });
+        // 초기 상태 설정
+        gsap.set([expandText1, expandText2], { opacity: 0, y: 30 });
+        gsap.set(crewOverlay, { opacity: 0 });
 
-      // Hero 타임라인 - 스크롤 기반
-      const heroTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: heroRef.current,
-          start: 'top top',
-          end: '+=25000',
-          pin: true,
-          scrub: 4,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-          onUpdate: (self) => {
-            // 헤더 변경
-            if (self.progress > 0.1) {
-              setHeaderVariant('transparent');
-            } else {
-              setHeaderVariant('white');
-            }
-            // 하이라이트 진행률 (Vision content 부분)
-            if (self.progress > 0.75 && self.progress < 0.95) {
-              const highlightProg = (self.progress - 0.75) / 0.2 * 100;
-              setHighlightProgress(Math.min(100, highlightProg));
-            }
+        // 화면 크기에 맞는 scale 계산
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const pillWidth = 180;
+        const pillHeight = 80;
+        const scaleX = viewportWidth / pillWidth;
+        const scaleY = viewportHeight / pillHeight;
+        const targetScale = Math.max(scaleX, scaleY) * 1.2; // 여유있게 1.2배
+
+        // crew pill의 현재 위치에서 화면 중앙까지의 거리 계산
+        const crewPillRect = (crewPill as HTMLElement).getBoundingClientRect();
+        const centerX = viewportWidth / 2 - crewPillRect.left - crewPillRect.width / 2;
+        const centerY = viewportHeight / 2 - crewPillRect.top - crewPillRect.height / 2;
+
+        // 텍스트 애니메이션 상태
+        let textAnimationPlayed = false;
+
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: 'top top',
+            end: '+=350%',
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            snap: {
+              snapTo: (progress) => {
+                if (progress < 0.08) return 0;     // 아주 조금만 스크롤하면 시작으로
+                if (progress < 0.9) return 0.55;   // 조금만 스크롤해도 확장 상태로
+                return 1;
+              },
+              duration: { min: 0.3, max: 0.6 },
+              ease: 'power2.out',
+              inertia: false,
+            },
+            onUpdate: (self) => {
+              if (self.progress > 0.35) {
+                setHeaderVariant('transparent');
+              } else {
+                setHeaderVariant('white');
+              }
+
+              // 텍스트 애니메이션 (55% 이상일 때 - 영상이 꽉 찬 후 바로)
+              if (self.progress > 0.55 && !textAnimationPlayed) {
+                textAnimationPlayed = true;
+                gsap.to(expandText1, {
+                  opacity: 1,
+                  y: 0,
+                  duration: 0.5,
+                  ease: 'power2.out',
+                });
+                gsap.to(expandText2, {
+                  opacity: 1,
+                  y: 0,
+                  duration: 0.5,
+                  delay: 0.15,
+                  ease: 'power2.out',
+                });
+              }
+              // 스크롤을 다시 위로 올리면 텍스트 숨기기
+              if (self.progress < 0.5 && textAnimationPlayed) {
+                textAnimationPlayed = false;
+                gsap.to([expandText1, expandText2], {
+                  opacity: 0,
+                  y: 30,
+                  duration: 0.3,
+                });
+              }
+            },
           },
-        },
-      });
+        })
+        // Phase 1: Crew pill moves to center (0 - 0.2)
+        .to(visionRow, { opacity: 0, y: -50, duration: 0.15 }, 0)
+        .to(growthRow, { opacity: 0, y: -50, duration: 0.15 }, 0)
+        .to(crewText, { opacity: 0, duration: 0.1 }, 0)
+        .to(crewPill, {
+          x: centerX,
+          y: centerY,
+          duration: 0.2,
+          ease: 'power2.out',
+        }, 0)
+        // Phase 2: Crew pill expands (0.2 - 0.5)
+        .to(crewPill, {
+          scale: targetScale,
+          borderRadius: '0px',
+          duration: 0.3,
+          ease: 'power2.inOut',
+        }, 0.2)
+        // Overlay appears after full expansion (0.5 - 0.55)
+        .to(crewOverlay, { opacity: 1, duration: 0.05 }, 0.5);
+      }
 
-      // Phase 1: VISION/GROWTH/CREW 텍스트 사라짐 (0% - 2%)
-      // 초기 로드 애니메이션으로 이미 나타난 상태에서 시작
-      heroTl.to([visionRowRef.current, growthRowRef.current, crewRowRef.current], {
-        opacity: 0,
-        x: 0, // x 위치는 유지 (초기 로드 애니메이션으로 이미 0으로 이동함)
-        duration: 0.02
-      }, 0);
-      heroTl.to(crewTextRef.current, {
-        opacity: 0,
-        width: 0,
-        marginLeft: 0,
-        marginRight: 0,
-        duration: 0.02
-      }, 0);
-      heroTl.to([visionPillRef.current, growthPillRef.current], {
-        opacity: 0,
-        duration: 0.02
-      }, 0);
+      // Section 2: Finance - 시간 기반 텍스트 등장
+      if (financeRef.current) {
+        const financeOverlay = financeRef.current.querySelector('.finance-overlay');
+        const text1 = financeRef.current.querySelector('.finance-text-1');
+        const text2 = financeRef.current.querySelector('.finance-text-2');
+        const text3 = financeRef.current.querySelector('.finance-text-3');
+        const text4 = financeRef.current.querySelector('.finance-text-4');
+        const text5 = financeRef.current.querySelector('.finance-text-5');
+        const text6 = financeRef.current.querySelector('.finance-text-6');
 
-      // Phase 2: 크루 pill 중앙 이동 후 비디오 확장 (2% - 20%)
-      heroTl.to(crewPillRef.current, {
-        opacity: 0,
-        duration: 0.05
-      }, 0.02);
-      heroTl.to(expandingVideoRef.current, {
-        opacity: 1,
-        display: 'block',
-        visibility: 'visible',
-        duration: 0.15
-      }, 0.04);
+        gsap.set([text1, text2, text3], { opacity: 0, y: 30 });
+        gsap.set([text4, text5, text6], { opacity: 0, x: 30 });
+        gsap.set(financeOverlay, { opacity: 0 });
 
-      // Phase 3: Ship 텍스트 등장 (20% - 30%) - Figma 디자인에 맞게
-      heroTl.to(shipTextRef.current, { opacity: 1, duration: 0.08 }, 0.20);
-      heroTl.to(mainTitleRef.current, { opacity: 1, y: 0, duration: 0.08 }, 0.22);
-      heroTl.to(subTitleRef.current, { opacity: 1, y: 0, duration: 0.08 }, 0.24);
+        let financeTextPlayed = false;
 
-      // Phase 4: Finance overlay 등장 (30% - 45%)
-      heroTl.to(shipTextRef.current, { opacity: 0, duration: 0.05 }, 0.30);
-      heroTl.to(financeOverlayRef.current, { opacity: 1, duration: 0.05 }, 0.32);
-      heroTl.to(leftContentRef.current, { opacity: 1, y: 0, duration: 0.05 }, 0.35);
-      heroTl.to(rightContentRef.current, { opacity: 1, y: 0, duration: 0.05 }, 0.40);
-
-      // Phase 5: Yacht overlay 등장 (45% - 60%)
-      heroTl.to(financeOverlayRef.current, { opacity: 0, duration: 0.05 }, 0.45);
-      heroTl.to(yachtOverlayRef.current, { opacity: 1, duration: 0.05 }, 0.47);
-      heroTl.to(yachtContentRef.current, { opacity: 1, y: 0, duration: 0.05 }, 0.50);
-
-      // Phase 6: Vision content 등장 (60% - 100%)
-      heroTl.to(yachtOverlayRef.current, { opacity: 0, duration: 0.1 }, 0.60);
-      heroTl.to(expandingVideoRef.current, { opacity: 0, duration: 0.1 }, 0.60);
-      heroTl.to(visionContentRef.current, { opacity: 1, duration: 0.1 }, 0.65);
-
-      // ===== GROWTH SECTION =====
-      gsap.set(growthVisionTextRef.current, { opacity: 0 });
-      gsap.set(growthOverlayRef.current, { opacity: 0 });
-      gsap.set(growthContentRef.current, { opacity: 0 });
-      gsap.set(cardsContainerRef.current, { opacity: 0 });
-
-      const growthTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: growthSectionRef.current,
-          start: 'top top',
-          end: '+=18000',
-          pin: true,
-          scrub: 4,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-          onUpdate: (self) => {
-            // 카드 인덱스 업데이트 (스크롤에 따라)
-            if (self.progress > 0.5) {
-              const cardProgress = (self.progress - 0.5) / 0.5;
-              const newIndex = Math.floor(cardProgress * SERVICE_CARDS.length);
-              setCardIndex(Math.min(newIndex, SERVICE_CARDS.length - 1));
-            }
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: financeRef.current,
+            start: 'top top',
+            end: '+=350%',
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            snap: {
+              snapTo: (progress) => {
+                if (progress < 0.08) return 0;
+                if (progress < 0.9) return 0.55;  // Hero와 동일
+                return 1;
+              },
+              duration: { min: 0.3, max: 0.6 },
+              ease: 'power2.out',
+              inertia: false,
+            },
+            onUpdate: (self) => {
+              // 텍스트 애니메이션 (55% 이상일 때) - 부드러운 전환
+              if (self.progress > 0.55 && !financeTextPlayed) {
+                financeTextPlayed = true;
+                // 왼쪽 텍스트
+                gsap.to(text1, { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' });
+                gsap.to(text2, { opacity: 1, y: 0, duration: 0.8, delay: 0.15, ease: 'power2.out' });
+                gsap.to(text3, { opacity: 1, y: 0, duration: 0.8, delay: 0.3, ease: 'power2.out' });
+                // 오른쪽 텍스트
+                gsap.to(text4, { opacity: 1, x: 0, duration: 0.8, delay: 0.45, ease: 'power2.out' });
+                gsap.to(text5, { opacity: 1, x: 0, duration: 0.8, delay: 0.6, ease: 'power2.out' });
+                gsap.to(text6, { opacity: 1, x: 0, duration: 0.8, delay: 0.75, ease: 'power2.out' });
+              }
+              // 스크롤을 다시 위로 올리면 텍스트 숨기기 (Hero와 동일: 0.5)
+              if (self.progress < 0.5 && financeTextPlayed) {
+                financeTextPlayed = false;
+                gsap.to([text1, text2, text3], { opacity: 0, y: 30, duration: 0.3 });
+                gsap.to([text4, text5, text6], { opacity: 0, x: 30, duration: 0.3 });
+              }
+            },
           },
-        },
-      });
+        })
+        // 오버레이 등장 (0.2 - 0.5)
+        .to(financeOverlay, { opacity: 1, duration: 0.3 }, 0.2);
+      }
 
-      growthTl.to(growthVisionTextRef.current, { opacity: 1, duration: 0.15 }, 0);
-      growthTl.to(growthVisionTextRef.current, { opacity: 0, duration: 0.1 }, 0.2);
-      growthTl.to(growthOverlayRef.current, { opacity: 1, duration: 0.1 }, 0.25);
-      growthTl.to(growthContentRef.current, { opacity: 1, duration: 0.1 }, 0.30);
-      growthTl.to(cardsContainerRef.current, { opacity: 1, duration: 0.1 }, 0.35);
+      // Section 3: Yacht - 시간 기반 텍스트 등장
+      if (yachtRef.current) {
+        const yachtOverlay = yachtRef.current.querySelector('.yacht-overlay');
+        const yachtText1 = yachtRef.current.querySelector('.yacht-text-1');
+        const yachtText2 = yachtRef.current.querySelector('.yacht-text-2');
 
-      // ===== DIRECTION SECTION =====
-      gsap.set(directionTextRef.current, { opacity: 0 });
-      gsap.set(solutionOverlayRef.current, { opacity: 0 });
-      gsap.set(solutionContentRef.current, { opacity: 0 });
-      gsap.set(solutionLabelRef.current, { opacity: 0 });
-      gsap.set(solutionTitleRef.current, { opacity: 0 });
-      gsap.set(solutionDescRef.current, { opacity: 0 });
-      gsap.set(solutionGrid1Ref.current, { opacity: 0 });
-      gsap.set(solutionGrid2Ref.current, { opacity: 0 });
-      gsap.set(solutionGrid3Ref.current, { opacity: 0 });
-      gsap.set(solutionGrid4Ref.current, { opacity: 0 });
+        gsap.set([yachtText1, yachtText2], { opacity: 0, y: 30 });
+        gsap.set(yachtOverlay, { opacity: 0 });
 
-      const directionTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: directionSectionRef.current,
-          start: 'top top',
-          end: '+=20000',
-          pin: true,
-          scrub: 4,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-        },
-      });
+        let yachtTextPlayed = false;
 
-      directionTl.to(directionTextRef.current, { opacity: 1, duration: 0.1 }, 0);
-      directionTl.to(directionTextRef.current, { opacity: 0, duration: 0.05 }, 0.15);
-      directionTl.to(solutionOverlayRef.current, { opacity: 1, duration: 0.05 }, 0.18);
-      directionTl.to(solutionContentRef.current, { opacity: 1, duration: 0.05 }, 0.20);
-      directionTl.to(solutionLabelRef.current, { opacity: 1, duration: 0.05 }, 0.25);
-      directionTl.to(solutionTitleRef.current, { opacity: 1, duration: 0.05 }, 0.30);
-      directionTl.to(solutionDescRef.current, { opacity: 1, duration: 0.05 }, 0.35);
-      directionTl.to(solutionGrid1Ref.current, { opacity: 1, duration: 0.1 }, 0.45);
-      directionTl.to(solutionGrid2Ref.current, { opacity: 1, duration: 0.1 }, 0.55);
-      directionTl.to(solutionGrid3Ref.current, { opacity: 1, duration: 0.1 }, 0.65);
-      directionTl.to(solutionGrid4Ref.current, { opacity: 1, duration: 0.1 }, 0.75);
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: yachtRef.current,
+            start: 'top top',
+            end: '+=350%',
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            snap: {
+              snapTo: (progress) => {
+                if (progress < 0.08) return 0;
+                if (progress < 0.9) return 0.55;  // Hero와 동일
+                return 1;
+              },
+              duration: { min: 0.3, max: 0.6 },
+              ease: 'power2.out',
+              inertia: false,
+            },
+            onUpdate: (self) => {
+              // 텍스트 애니메이션 (55% 이상일 때 - Hero와 동일)
+              if (self.progress > 0.55 && !yachtTextPlayed) {
+                yachtTextPlayed = true;
+                gsap.to(yachtText1, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' });
+                gsap.to(yachtText2, { opacity: 1, y: 0, duration: 0.5, delay: 0.15, ease: 'power2.out' });
+              }
+              // 스크롤을 다시 위로 올리면 텍스트 숨기기 (Hero와 동일: 0.5)
+              if (self.progress < 0.5 && yachtTextPlayed) {
+                yachtTextPlayed = false;
+                gsap.to([yachtText1, yachtText2], { opacity: 0, y: 30, duration: 0.3 });
+              }
+            },
+          },
+        })
+        // 오버레이 등장 (0.2 - 0.5)
+        .to(yachtOverlay, { opacity: 1, duration: 0.3 }, 0.2);
+      }
 
-      // ===== SOLUTION 02 SECTION =====
-      gsap.set(solution02LabelRef.current, { opacity: 0 });
-      gsap.set(solution02TitleRef.current, { opacity: 0 });
-      gsap.set(solution02DescRef.current, { opacity: 0 });
-      gsap.set(timelineContainerRef.current, { opacity: 0 });
-      timelineColumnRefs.current.forEach((col) => {
-        if (col) gsap.set(col, { opacity: 0 });
-      });
-      timelineStepRefs.current.forEach((step) => {
-        if (step) gsap.set(step, { opacity: 0 });
-      });
+      // Section 4: Vision Text - 검은 배경에 텍스트 + highlight 효과
+      // [모션] 제목 + 본문 동시 등장 → 스크롤에 따라 본문 highlight
+      if (visionTextRef.current) {
+        const visionTitle = visionTextRef.current.querySelector('.vision-title');
+        const visionDescription = visionTextRef.current.querySelector('.vision-description');
 
-      const solution02Tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: solution02SectionRef.current,
-          start: 'top top',
-          end: '+=18000',
-          pin: true,
-          scrub: 4,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-        },
-      });
+        // 초기 상태: 제목과 본문 모두 숨김
+        gsap.set(visionTitle, { opacity: 0, y: 30 });
+        gsap.set(visionDescription, { opacity: 0, y: 20 });
 
-      solution02Tl.to(solution02LabelRef.current, { opacity: 1, duration: 0.1 }, 0);
-      solution02Tl.to(solution02TitleRef.current, { opacity: 1, duration: 0.1 }, 0.1);
-      solution02Tl.to(solution02DescRef.current, { opacity: 1, duration: 0.1 }, 0.2);
-      solution02Tl.to(timelineContainerRef.current, { opacity: 1, duration: 0.1 }, 0.3);
+        let contentPlayed = false;
 
-      // 타임라인 스텝 순차 등장
-      TIMELINE_STEPS.forEach((step, index) => {
-        const startTime = 0.4 + index * 0.1;
-        const colsNeeded = step.cols;
-        for (let i = 0; i < colsNeeded; i++) {
-          const col = timelineColumnRefs.current[i];
-          if (col) {
-            solution02Tl.to(col, { opacity: 1, duration: 0.05 }, startTime);
-          }
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: visionTextRef.current,
+            start: 'top top',
+            end: '+=350%',
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            // snap 제거
+            onUpdate: (self) => {
+              // 제목 + 본문 동시 등장 (20% 이상)
+              if (self.progress > 0.2 && !contentPlayed) {
+                contentPlayed = true;
+                // 제목 fade-up
+                gsap.to(visionTitle, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' });
+                // 본문 fade-up (동시에)
+                gsap.to(visionDescription, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' });
+              }
+
+              // 되돌리기 (15% 이하)
+              if (self.progress < 0.15 && contentPlayed) {
+                contentPlayed = false;
+                gsap.to(visionTitle, { opacity: 0, y: 30, duration: 0.3 });
+                gsap.to(visionDescription, { opacity: 0, y: 20, duration: 0.3 });
+                setHighlightProgress(0);
+              }
+
+              // 본문 highlight - 스크롤 기반 (30% ~ 55% 구간)
+              if (self.progress >= 0.3 && self.progress <= 0.55) {
+                const highlightPercent = ((self.progress - 0.3) / 0.25) * 100;
+                setHighlightProgress(Math.min(highlightPercent, 100));
+              } else if (self.progress < 0.3) {
+                setHighlightProgress(0);
+              } else if (self.progress > 0.55) {
+                setHighlightProgress(100);
+              }
+            },
+          },
+        });
+      }
+
+      // Section 5: Growth - 망원경 배경 + VISION 텍스트 → 본문
+      // [순서] 1. 배경 → 2. VISION 텍스트 (snap으로 오래 머물기) → 3. 오버레이 + 본문
+      if (growthSectionRef.current) {
+        const growthVisionText = growthSectionRef.current.querySelector('.growth-vision-text');
+        const growthOverlay = growthSectionRef.current.querySelector('.growth-overlay');
+        const growthLeftContent = growthSectionRef.current.querySelector('.growth-left-content');
+        const growthDescription = growthSectionRef.current.querySelector('.growth-description');
+        const cardsContainer = growthSectionRef.current.querySelector('.cards-container');
+
+        gsap.set(growthVisionText, { opacity: 0 });
+        gsap.set(growthOverlay, { opacity: 0 });
+        gsap.set(growthLeftContent, { opacity: 0, y: 30 });
+        gsap.set(growthDescription, { opacity: 0, y: 30 });
+        gsap.set(cardsContainer, { opacity: 0, x: 50 });
+
+        let contentPlayed = false;
+
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: growthSectionRef.current,
+            start: 'top top',
+            end: '+=800%', // 카드 넘기는 속도 조절
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            // 타임라인:
+            // 0%: 망원경 배경만
+            // 8%: VISION 텍스트 등장
+            // 10%~25%: snap (VISION 오래 머물기)
+            // 28%~32%: VISION 페이드아웃 + 오버레이 (매우 빠르게)
+            // 35%: 본문 + 카드 등장
+            // 45%~90%: 카드 자동 넘기기 (자유 스크롤)
+            // 90% 이상: 다음 섹션으로
+            snap: {
+              snapTo: (progress) => {
+                if (progress < 0.06) return 0;        // 시작
+                if (progress < 0.28) return 0.15;     // VISION 텍스트 상태에서 오래 머물기
+                if (progress >= 0.90) return 1;       // 다음 섹션으로
+                // 카드 넘기기 구간에서는 snap 없이 자유 스크롤
+                return progress;
+              },
+              duration: { min: 0.3, max: 0.6 },
+              ease: 'power2.out',
+              inertia: false,
+            },
+            onUpdate: (self) => {
+              // 1. VISION 텍스트 점진적 등장 (0% ~ 12%)
+              if (self.progress >= 0 && self.progress <= 0.12) {
+                const fadeInProgress = self.progress / 0.12;
+                gsap.set(growthVisionText, { opacity: fadeInProgress });
+              }
+              // VISION 텍스트 유지 (12% ~ 22%)
+              else if (self.progress > 0.12 && self.progress <= 0.22) {
+                gsap.set(growthVisionText, { opacity: 1 });
+              }
+              // 2. VISION 텍스트 점진적 페이드아웃 + 오버레이 점진적 등장 (22% ~ 32%)
+              else if (self.progress > 0.22 && self.progress <= 0.32) {
+                const fadeProgress = (self.progress - 0.22) / 0.10;
+                const visionOpacity = Math.max(0, 1 - fadeProgress);
+                const overlayOpacity = Math.min(1, fadeProgress);
+                gsap.set(growthVisionText, { opacity: visionOpacity });
+                gsap.set(growthOverlay, { opacity: overlayOpacity });
+              } else if (self.progress > 0.32) {
+                gsap.set(growthVisionText, { opacity: 0 });
+                gsap.set(growthOverlay, { opacity: 1 });
+              }
+
+              // 3. 본문 등장 (35% 이상) - 부드러운 전환
+              if (self.progress > 0.35 && !contentPlayed) {
+                contentPlayed = true;
+
+                // 좌측 텍스트 fade-up
+                gsap.to(growthLeftContent, {
+                  opacity: 1,
+                  y: 0,
+                  duration: 0.8,
+                  ease: 'power2.out'
+                });
+
+                // 카드 컨테이너 fade-in
+                gsap.to(cardsContainer, {
+                  opacity: 1,
+                  x: 0,
+                  duration: 0.8,
+                  delay: 0.3,
+                  ease: 'power2.out'
+                });
+
+                // 하단 설명 텍스트 fade-up (카드와 함께)
+                gsap.to(growthDescription, {
+                  opacity: 1,
+                  y: 0,
+                  duration: 0.8,
+                  delay: 0.5,
+                  ease: 'power2.out'
+                });
+              }
+
+              // 본문 되돌리기 (32% 이하)
+              if (self.progress < 0.32 && contentPlayed) {
+                contentPlayed = false;
+                gsap.to(growthLeftContent, { opacity: 0, y: 30, duration: 0.3 });
+                gsap.to(growthDescription, { opacity: 0, y: 30, duration: 0.3 });
+                gsap.to(cardsContainer, { opacity: 0, x: 50, duration: 0.3 });
+              }
+
+              // 카드는 버튼 클릭으로만 넘김 (스크롤 자동 넘기기 제거)
+            },
+          },
+        });
+        // 오버레이는 onUpdate에서 직접 제어
+      }
+
+      // Section 6: Solution 01 - 나침반 배경 + DIRECTION 텍스트 → 마키 카드
+      // [순서] 1. 배경 → 2. DIRECTION (오래 머물기) → 3. 오버레이 → 4. 텍스트 순차 → 5. 마키 한줄씩
+      if (solution01Ref.current) {
+        const directionText = solution01Ref.current.querySelector('.direction-text');
+        const solutionOverlay = solution01Ref.current.querySelector('.solution-overlay');
+        const solutionContent = solution01Ref.current.querySelector('.solution-content');
+        const solutionLabel = solution01Ref.current.querySelector('.solution-label');
+        const solutionTitle = solution01Ref.current.querySelector('.solution-title');
+        const solutionDescription = solution01Ref.current.querySelector('.solution-description');
+        const solutionGrids = solution01Ref.current.querySelectorAll('.solution-grid');
+
+        gsap.set(directionText, { opacity: 0 });
+        gsap.set(solutionOverlay, { opacity: 0 });
+        gsap.set(solutionContent, { opacity: 0 });
+        gsap.set([solutionLabel, solutionTitle, solutionDescription], { opacity: 0, y: 30 });
+        gsap.set(solutionGrids, { opacity: 0, y: 50, scale: 1.1 });
+
+        let textContentPlayed = false;
+
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: solution01Ref.current,
+            start: 'top top',
+            end: '+=1000%', // Direction 체류 시간 길게
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            // 타임라인:
+            // 0%: 나침반 배경만
+            // 5%: DIRECTION 텍스트 등장
+            // 5%~18%: snap (DIRECTION 오래 머물기 - Vision과 동일)
+            // 20%~24%: DIRECTION 페이드아웃 + 오버레이
+            // 26%: 라벨 등장
+            // 28%: 제목 등장
+            // 30%: 설명 등장
+            // 35%~55%: 마키 카드 한 줄씩 등장
+            snap: {
+              snapTo: (progress) => {
+                if (progress < 0.04) return 0;
+                if (progress < 0.18) return 0.10;  // DIRECTION 텍스트 상태 (오래 머물기)
+                if (progress >= 0.90) return 1;
+                return progress;
+              },
+              duration: { min: 0.3, max: 0.6 },
+              ease: 'power2.out',
+              inertia: false,
+            },
+            onUpdate: (self) => {
+              // 1. DIRECTION 텍스트 점진적 등장 (0% ~ 8%)
+              if (self.progress >= 0 && self.progress <= 0.08) {
+                const fadeInProgress = self.progress / 0.08;
+                gsap.set(directionText, { opacity: fadeInProgress });
+              }
+              // DIRECTION 텍스트 유지 (8% ~ 15%)
+              else if (self.progress > 0.08 && self.progress <= 0.15) {
+                gsap.set(directionText, { opacity: 1 });
+              }
+              // 2. DIRECTION 텍스트 점진적 페이드아웃 + 오버레이 점진적 등장 (15% ~ 24%)
+              else if (self.progress > 0.15 && self.progress <= 0.24) {
+                const fadeProgress = (self.progress - 0.15) / 0.09;
+                const directionOpacity = Math.max(0, 1 - fadeProgress);
+                const overlayOpacity = Math.min(1, fadeProgress);
+                gsap.set(directionText, { opacity: directionOpacity });
+                gsap.set(solutionOverlay, { opacity: overlayOpacity });
+              } else if (self.progress > 0.24) {
+                gsap.set(directionText, { opacity: 0 });
+                gsap.set(solutionOverlay, { opacity: 1 });
+              }
+
+              // 3. 텍스트 순차 등장 (26% 이상) - 부드러운 전환
+              if (self.progress > 0.26 && !textContentPlayed) {
+                textContentPlayed = true;
+                gsap.to(solutionContent, { opacity: 1, duration: 0.5, ease: 'power2.out' });
+                // 라벨 → 제목 → 설명 순차 (시간 기반, 더 부드럽게)
+                gsap.to(solutionLabel, { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' });
+                gsap.to(solutionTitle, { opacity: 1, y: 0, duration: 0.8, delay: 0.3, ease: 'power2.out' });
+                gsap.to(solutionDescription, { opacity: 1, y: 0, duration: 0.8, delay: 0.6, ease: 'power2.out' });
+              }
+
+              // 텍스트 되돌리기 (24% 이하)
+              if (self.progress < 0.24 && textContentPlayed) {
+                textContentPlayed = false;
+                gsap.to(solutionContent, { opacity: 0, duration: 0.3 });
+                gsap.to([solutionLabel, solutionTitle, solutionDescription], { opacity: 0, y: 30, duration: 0.3 });
+                gsap.to(solutionGrids, { opacity: 0, y: 50, scale: 1.1, duration: 0.3 });
+              }
+
+              // 4. 마키 카드 한 줄씩 등장 (35%~55% 구간, 스크롤 기반)
+              // 아래에서 위로 + opacity + scale 전환
+              if (self.progress >= 0.35 && self.progress <= 0.55) {
+                const gridProgress = (self.progress - 0.35) / 0.20; // 0~1
+                const visibleGrids = Math.min(Math.ceil(gridProgress * 4), 4);
+
+                solutionGrids.forEach((grid, index) => {
+                  if (index < visibleGrids) {
+                    gsap.to(grid, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'power2.out' });
+                  } else {
+                    gsap.set(grid, { opacity: 0, y: 50, scale: 1.1 });
+                  }
+                });
+              } else if (self.progress > 0.55) {
+                // 모든 그리드 표시
+                solutionGrids.forEach((grid) => {
+                  gsap.set(grid, { opacity: 1, y: 0, scale: 1 });
+                });
+              } else if (self.progress < 0.35) {
+                // 모든 그리드 숨김
+                solutionGrids.forEach((grid) => {
+                  gsap.set(grid, { opacity: 0, y: 50, scale: 1.1 });
+                });
+              }
+
+            },
+          },
+        });
+      }
+
+      // Section 7: Solution 02 - 타임라인 그리드
+      // [모션] 트리거 시 시간 기반으로 스텝과 헤더가 순차 등장
+      if (solution02Ref.current) {
+        const solution02Content = solution02Ref.current.querySelector('.solution02-content');
+        const solution02Label = solution02Ref.current.querySelector('.solution02-label');
+        const solution02Title = solution02Ref.current.querySelector('.solution02-title');
+        const solution02Description = solution02Ref.current.querySelector('.solution02-description');
+        const timelineContainer = solution02Ref.current.querySelector('.timeline-container');
+
+        gsap.set(solution02Content, { opacity: 0 });
+        gsap.set([solution02Label, solution02Title, solution02Description], { opacity: 0, y: 30 });
+        gsap.set(timelineContainer, { opacity: 0 });
+
+        let solution02ContentPlayed = false;
+
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: solution02Ref.current,
+            start: 'top top',
+            end: '+=350%', // 시간 기반이므로 줄임
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            snap: {
+              snapTo: (progress) => {
+                if (progress < 0.08) return 0;
+                if (progress < 0.9) return 0.55; // 애니메이션 완료 후 머무르기
+                return 1;
+              },
+              duration: { min: 0.3, max: 0.6 },
+              ease: 'power2.out',
+              inertia: false,
+            },
+            onUpdate: (self) => {
+              // 콘텐츠 등장 (10% 이상) - 시간 기반 애니메이션
+              if (self.progress > 0.10 && !solution02ContentPlayed) {
+                solution02ContentPlayed = true;
+                gsap.to(solution02Content, { opacity: 1, duration: 0.3, ease: 'power2.out' });
+                // 라벨 → 제목 → 설명 순차 등장 (시간 기반)
+                gsap.to(solution02Label, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' });
+                gsap.to(solution02Title, { opacity: 1, y: 0, duration: 0.5, delay: 0.15, ease: 'power2.out' });
+                gsap.to(solution02Description, { opacity: 1, y: 0, duration: 0.5, delay: 0.3, ease: 'power2.out' });
+                // 타임라인 컨테이너 등장
+                gsap.to(timelineContainer, { opacity: 1, duration: 0.4, delay: 0.45, ease: 'power2.out' });
+
+                // 스텝들 시간 기반 순차 등장 (0.6초 후부터 0.4초 간격)
+                for (let i = 1; i <= 6; i++) {
+                  gsap.delayedCall(0.6 + i * 0.4, () => {
+                    setVisibleSteps(i);
+                  });
+                }
+              }
+
+              // 되돌리기 (8% 이하)
+              if (self.progress < 0.08 && solution02ContentPlayed) {
+                solution02ContentPlayed = false;
+                gsap.to(solution02Content, { opacity: 0, duration: 0.3 });
+                gsap.to([solution02Label, solution02Title, solution02Description], { opacity: 0, y: 30, duration: 0.3 });
+                gsap.to(timelineContainer, { opacity: 0, duration: 0.3 });
+                setVisibleSteps(0);
+              }
+            },
+          },
+        });
+      }
+
+      // Section 8: System - SYSTEM 대형 텍스트 → 라벨로 변환 → 헤드라인 + highlight 텍스트 + 비디오 축소 + 카드
+      // [모션 순서]
+      // 1단계: "SYSTEM" 대형 텍스트가 중앙에 크게 표시 (화면 바닥에서 올라옴)
+      // 2단계: "SYSTEM" 텍스트가 상단 중앙으로 이동하면서 작아짐 (scale + y 이동)
+      // 3단계: 상단에 "SYSTEM" 라벨 유지 + 헤드라인 등장 + 설명 텍스트 등장 (회색 상태)
+      // 4단계: 설명 텍스트가 스크롤에 따라 highlight (회색 → 흰색) + 쉬는 시간
+      // 5단계: SYSTEM 라벨 + 헤드라인 + 설명 페이드아웃
+      // 6단계: 비디오 화면 중앙에 큰 상태로 등장 (화면의 4/6 크기, border-radius: 28.5px)
+      // 7단계: 비디오 좌측으로 이동 + 좌우 축소
+      // 8단계: 카드 등장 (스크롤 맨 위에서 시작)
+      // 9단계: 카드 스크롤 가능
+      if (systemRef.current) {
+        const systemText = systemRef.current.querySelector('.system-text') as HTMLElement;
+        const systemMainContent = systemRef.current.querySelector('.system-main-content');
+        const systemHeadline = systemRef.current.querySelector('.system-headline');
+        const systemDescription = systemRef.current.querySelector('.system-description');
+        const systemVideoContainer = systemRef.current.querySelector('.system-video-container') as HTMLElement;
+        const systemCards = systemRef.current.querySelector('.system-cards') as HTMLElement;
+
+        // 대형 텍스트 초기 위치 계산 (화면 바닥에서 시작)
+        const viewportHeight = window.innerHeight;
+        const viewportWidth = window.innerWidth;
+        const textStartY = viewportHeight; // 화면 바닥에서 시작
+
+        // 대형 텍스트 → 라벨 변환을 위한 목표 위치/스케일 계산
+        const textRect = systemText?.getBoundingClientRect();
+        const textCenterY = viewportHeight / 2;
+        const labelTargetY = 0; // 라벨 최종 Y 위치 (상단 50px 위치, 헤드라인 100px - 간격 50px)
+        const labelTargetScale = 0.09; // 265px → ~24px (약 0.09배) - 더 크게
+
+        // 비디오 애니메이션 계산
+        // 시작 크기: 작은 상태 (화면의 50%)
+        const startVideoWidth = viewportWidth * 0.5;
+        const startVideoHeight = viewportHeight * 0.5;
+        const startBorderRadius = 28.5;
+        // 중간 크기: 화면 꽉 채움 (높이는 상하 80px 여백)
+        const fullVideoWidth = viewportWidth;
+        const fullVideoHeight = viewportHeight - 160; // 상하 80px 여백
+        const fullBorderRadius = 0;
+        // 최종 비디오 크기 (좌측 배치, 카드와 64px 간격)
+        // 카드 왼쪽 가장자리 = viewportWidth - 64 - (0.35*viewportWidth - 96) = 0.65*viewportWidth + 32
+        // 비디오 오른쪽 가장자리 = 64 + finalVideoWidth
+        // 간격 64px: (0.65*viewportWidth + 32) - (64 + finalVideoWidth) = 64
+        // finalVideoWidth = 0.65*viewportWidth - 96
+        const finalVideoWidth = viewportWidth * 0.65 - 96;
+        const finalVideoHeight = fullVideoHeight; // 높이는 동일하게 유지
+        const finalBorderRadius = 24;
+        // 최종 위치 (좌측 64px)
+        const finalVideoLeft = 64;
+
+        // 비디오 이동을 위한 계산
+        const finalVideoX = finalVideoLeft + finalVideoWidth / 2 - viewportWidth / 2;
+        // 시작 위치 (화면 바닥에서 시작 - SYSTEM 텍스트처럼)
+        const videoStartY = viewportHeight;
+
+        // 초기 상태 설정
+        gsap.set(systemText, { opacity: 0, y: textStartY, scale: 1 }); // 화면 바닥에서 시작
+        gsap.set(systemMainContent, { opacity: 0 }); // 메인 컨텐츠 컨테이너
+        gsap.set([systemHeadline, systemDescription], { opacity: 0, y: 30 });
+        gsap.set(systemVideoContainer, {
+          opacity: 0,
+          width: startVideoWidth,
+          height: startVideoHeight,
+          borderRadius: startBorderRadius,
+          xPercent: -50,
+          yPercent: -50,
+          x: 0,
+          y: videoStartY
+        });
+        gsap.set(systemCards, { opacity: 0 });
+        // 카드 스크롤 위치 초기화
+        if (systemCards) {
+          systemCards.scrollTop = 0;
         }
-        const stepEl = timelineStepRefs.current[index];
-        if (stepEl) {
-          solution02Tl.to(stepEl, { opacity: 1, duration: 0.08 }, startTime + 0.02);
-        }
-      });
 
-      // ===== SYSTEM SECTION =====
-      gsap.set(systemTextRef.current, {
-        fontSize: isMobile ? '50px' : '265px',
-        opacity: 1
-      });
-      gsap.set(systemHeadlineRef.current, { opacity: 0 });
-      gsap.set(systemDescRef.current, { opacity: 0 });
-      gsap.set(systemVideoRef.current, { opacity: 0 });
-      gsap.set(systemCardsRef.current, { opacity: 0 });
+        let systemTextPlayed = false;
+        let systemContentPlayed = false;
+        let systemVideoPlayed = false;
+        let systemCardsPlayed = false;
 
-      const systemTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: systemSectionRef.current,
-          start: 'top top',
-          end: '+=20000',
-          pin: true,
-          scrub: 4,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-          onUpdate: (self) => {
-            // 시스템 하이라이트 진행률
-            if (self.progress > 0.25 && self.progress < 0.45) {
-              const highlightProg = (self.progress - 0.25) / 0.2 * 100;
-              setSystemHighlightProgress(Math.min(100, highlightProg));
-            }
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: systemRef.current,
+            start: 'top top',
+            end: '+=1000%', // 더 길게 (비디오 확장 + 카드 스크롤 포함)
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            snap: {
+              snapTo: (progress) => {
+                if (progress < 0.05) return 0;        // 시작
+                if (progress < 0.15) return 0.08;    // SYSTEM 대형 텍스트 등장 후 머무르기
+                if (progress < 0.48) return 0.35;    // 콘텐츠 + highlight 완료 후 머무르기
+                if (progress < 0.58) return 0.55;    // 비디오 등장 시작
+                if (progress < 0.68) return 0.63;    // 비디오 풀스크린 상태에서 머무르기
+                if (progress < 0.9) return 0.80;     // 비디오/카드 완료 상태
+                return 1;
+              },
+              duration: { min: 0.3, max: 0.6 },
+              ease: 'power2.out',
+              inertia: false,
+            },
+            onUpdate: (self) => {
+              // 1. SYSTEM 대형 텍스트 등장 (3%~8% 스크롤 연동) - 화면 바닥에서 중앙으로
+              if (self.progress >= 0.03 && self.progress <= 0.08) {
+                const appearProgress = (self.progress - 0.03) / 0.05;
+                const currentY = textStartY * (1 - appearProgress);
+                gsap.set(systemText, {
+                  opacity: appearProgress,
+                  y: currentY,
+                  scale: 1
+                });
+              } else if (self.progress > 0.08 && self.progress < 0.12) {
+                // 중앙에서 머무르기
+                gsap.set(systemText, { opacity: 1, y: 0, scale: 1 });
+              }
+
+              // 되돌리기 (3% 이하)
+              if (self.progress < 0.03) {
+                gsap.set(systemText, { opacity: 0, y: textStartY, scale: 1 });
+              }
+
+              // 2. SYSTEM 텍스트 상단으로 이동 + 축소 (12%~22% 스크롤 연동)
+              if (self.progress >= 0.12 && self.progress <= 0.22) {
+                const moveProgress = (self.progress - 0.12) / 0.10;
+                // 대형 텍스트: 중앙(y:0) → 상단(y: -textCenterY + labelTargetY)으로 이동 + scale 축소
+                const targetY = -textCenterY + labelTargetY + 120; // 상단으로 이동 (더 아래로)
+                const currentY = targetY * moveProgress;
+                const currentScale = 1 - (1 - labelTargetScale) * moveProgress;
+                gsap.set(systemText, {
+                  opacity: 1,
+                  y: currentY,
+                  scale: currentScale
+                });
+              } else if (self.progress > 0.22 && self.progress < 0.50) {
+                // 최종 라벨 상태 유지 (50% 전까지)
+                const targetY = -textCenterY + labelTargetY + 120;
+                gsap.set(systemText, { opacity: 1, y: targetY, scale: labelTargetScale });
+              }
+
+              // 3. 헤드라인 + 설명 등장 (28% 이상) - 부드러운 전환
+              if (self.progress > 0.28 && !systemContentPlayed) {
+                systemContentPlayed = true;
+                gsap.to(systemMainContent, { opacity: 1, duration: 0.5, ease: 'power2.out' });
+                gsap.to(systemHeadline, { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' });
+                gsap.to(systemDescription, { opacity: 1, y: 0, duration: 0.8, delay: 0.3, ease: 'power2.out' });
+              }
+
+              // 콘텐츠 되돌리기 (25% 이하)
+              if (self.progress < 0.25 && systemContentPlayed) {
+                systemContentPlayed = false;
+                gsap.to(systemMainContent, { opacity: 0, duration: 0.3 });
+                gsap.to([systemHeadline, systemDescription], { opacity: 0, y: 30, duration: 0.3 });
+                setSystemHighlightProgress(0);
+              }
+
+              // 4. 설명 텍스트 highlight (32% ~ 45% 구간) + 이후 쉬는 시간 (45%~50%)
+              if (self.progress >= 0.32 && self.progress <= 0.45) {
+                const highlightPercent = ((self.progress - 0.32) / 0.13) * 100;
+                setSystemHighlightProgress(Math.min(highlightPercent, 100));
+              } else if (self.progress < 0.32) {
+                setSystemHighlightProgress(0);
+              } else if (self.progress > 0.45) {
+                setSystemHighlightProgress(100);
+              }
+
+              // 5. SYSTEM 라벨 + 헤드라인 + 설명 페이드아웃 (50%~55%)
+              if (self.progress >= 0.50 && self.progress <= 0.55) {
+                const fadeProgress = (self.progress - 0.50) / 0.05;
+                const targetY = -textCenterY + labelTargetY + 120;
+                gsap.set(systemText, { opacity: 1 - fadeProgress, y: targetY, scale: labelTargetScale });
+                gsap.set(systemMainContent, { opacity: 1 - fadeProgress });
+              } else if (self.progress > 0.55) {
+                gsap.set(systemText, { opacity: 0 });
+                gsap.set(systemMainContent, { opacity: 0 });
+              }
+
+              // 6. 비디오 아래에서 올라오며 등장 (55%~60%) - opacity 0→1, y: 아래→중앙
+              if (self.progress >= 0.55 && self.progress <= 0.60) {
+                const appearProgress = (self.progress - 0.55) / 0.05;
+                const currentY = videoStartY * (1 - appearProgress);
+                gsap.set(systemVideoContainer, {
+                  opacity: appearProgress,
+                  width: startVideoWidth,
+                  height: startVideoHeight,
+                  borderRadius: startBorderRadius,
+                  xPercent: -50,
+                  yPercent: -50,
+                  x: 0,
+                  y: currentY
+                });
+              }
+
+              // 7. 비디오 화면 꽉 채움 (60%~65%) - 작은 상태 → 풀스크린
+              if (self.progress >= 0.60 && self.progress <= 0.65) {
+                const expandProgress = (self.progress - 0.60) / 0.05;
+                const currentWidth = startVideoWidth + (fullVideoWidth - startVideoWidth) * expandProgress;
+                const currentHeight = startVideoHeight + (fullVideoHeight - startVideoHeight) * expandProgress;
+                const currentBorderRadius = startBorderRadius * (1 - expandProgress);
+                gsap.set(systemVideoContainer, {
+                  opacity: 1,
+                  width: currentWidth,
+                  height: currentHeight,
+                  borderRadius: currentBorderRadius,
+                  xPercent: -50,
+                  yPercent: -50,
+                  x: 0,
+                  y: 0
+                });
+              }
+
+              // 8. 비디오 좌측으로 이동 + 좌우 크롭 (65%~75%) - 비디오 크기 유지, 컨테이너만 줄어서 크롭
+              if (self.progress >= 0.65 && self.progress <= 0.75) {
+                const cropProgress = (self.progress - 0.65) / 0.10;
+                // 컨테이너 너비만 줄임 (비디오는 풀사이즈 유지, overflow:hidden으로 크롭)
+                const currentContainerWidth = fullVideoWidth - (fullVideoWidth - finalVideoWidth) * cropProgress;
+                const currentBorderRadius = finalBorderRadius * cropProgress;
+                const currentX = finalVideoX * cropProgress;
+
+                gsap.set(systemVideoContainer, {
+                  opacity: 1,
+                  width: currentContainerWidth,
+                  height: fullVideoHeight, // 높이는 풀스크린 유지
+                  borderRadius: currentBorderRadius,
+                  xPercent: -50,
+                  yPercent: -50,
+                  x: currentX,
+                  y: 0
+                });
+              } else if (self.progress > 0.75) {
+                // 최종 상태 유지 (좌우 크롭 완료, 좌측 배치)
+                gsap.set(systemVideoContainer, {
+                  opacity: 1,
+                  width: finalVideoWidth,
+                  height: fullVideoHeight, // 높이는 풀스크린 유지
+                  borderRadius: finalBorderRadius,
+                  xPercent: -50,
+                  yPercent: -50,
+                  x: finalVideoX,
+                  y: 0
+                });
+              }
+
+              // 비디오 되돌리기 (55% 이하)
+              if (self.progress < 0.55) {
+                gsap.set(systemVideoContainer, {
+                  opacity: 0,
+                  width: startVideoWidth,
+                  height: startVideoHeight,
+                  borderRadius: startBorderRadius,
+                  xPercent: -50,
+                  yPercent: -50,
+                  x: 0,
+                  y: videoStartY
+                });
+              }
+
+              // 8. 카드 등장 (75% 이상) - 시간 기반
+              if (self.progress > 0.75 && !systemCardsPlayed) {
+                systemCardsPlayed = true;
+                // 카드 스크롤 위치 초기화 (맨 위에서 시작)
+                if (systemCards) {
+                  systemCards.scrollTop = 0;
+                }
+                gsap.to(systemCards, { opacity: 1, duration: 0.5, ease: 'power2.out' });
+              }
+
+              // 카드 되돌리기 (73% 이하)
+              if (self.progress < 0.73 && systemCardsPlayed) {
+                systemCardsPlayed = false;
+                gsap.to(systemCards, { opacity: 0, duration: 0.3 });
+              }
+            },
           },
-        },
-      });
+        });
+      }
 
-      // SYSTEM 텍스트 축소
-      systemTl.to(systemTextRef.current, {
-        fontSize: isMobile ? '14px' : '26px',
-        duration: 0.15
-      }, 0);
+      // Section 9: Teamwork - 헤드라인 → 배경 이미지 → TEAMWORK 텍스트
+      // [모션 순서]
+      // 1단계: 헤드라인 등장 (검은 배경)
+      // 2단계: 헤드라인 페이드아웃 + 배경 이미지 페이드인
+      // 3단계: TEAMWORK 대형 텍스트 등장
+      if (teamworkRef.current) {
+        const teamworkBackground = teamworkRef.current.querySelector('.teamwork-background') as HTMLElement;
+        const teamworkHeadline = teamworkRef.current.querySelector('.teamwork-headline') as HTMLElement;
+        const teamworkText = teamworkRef.current.querySelector('.teamwork-text') as HTMLElement;
 
-      // 헤드라인, 설명 등장
-      systemTl.to(systemHeadlineRef.current, { opacity: 1, duration: 0.1 }, 0.15);
-      systemTl.to(systemDescRef.current, { opacity: 1, duration: 0.1 }, 0.25);
+        // 헤드라인 시작 위치 (화면 바닥)
+        const viewportHeight = window.innerHeight;
+        const headlineStartY = viewportHeight * 0.5; // 화면 중앙 아래에서 시작
 
-      // 텍스트 사라지고 비디오 등장
-      systemTl.to([systemTextRef.current, systemHeadlineRef.current, systemDescRef.current], {
-        opacity: 0,
-        duration: 0.1
-      }, 0.50);
-      systemTl.to(systemVideoRef.current, { opacity: 1, duration: 0.15 }, 0.55);
+        // 초기 상태 설정
+        gsap.set(teamworkBackground, { opacity: 0 });
+        gsap.set(teamworkHeadline, { opacity: 0, y: headlineStartY });
+        gsap.set(teamworkText, { opacity: 0 });
 
-      // 비디오 크기 조정 및 카드 등장
-      systemTl.to(systemVideoRef.current, {
-        width: isMobile ? '100%' : '55vw',
-        height: isMobile ? '191px' : 'calc(100vh - 160px)',
-        left: isMobile ? '0' : '64px',
-        borderRadius: '24px',
-        duration: 0.15
-      }, 0.70);
-      systemTl.to(systemCardsRef.current, { opacity: 1, duration: 0.15 }, 0.80);
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: teamworkRef.current,
+            start: 'top top',
+            end: '+=400%',
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            snap: {
+              snapTo: (progress) => {
+                if (progress < 0.08) return 0;
+                if (progress < 0.30) return 0.18;  // 헤드라인 머무르기
+                if (progress < 0.9) return 0.65;   // TEAMWORK 텍스트 머무르기
+                return 1;
+              },
+              duration: { min: 0.3, max: 0.6 },
+              ease: 'power2.out',
+              inertia: false,
+            },
+            onUpdate: (self) => {
+              // 1. 헤드라인 아래에서 올라오면서 fade-in (3% ~ 15%)
+              if (self.progress >= 0.03 && self.progress <= 0.15) {
+                const headlineProgress = (self.progress - 0.03) / 0.12;
+                const currentY = headlineStartY * (1 - headlineProgress);
+                gsap.set(teamworkHeadline, {
+                  opacity: headlineProgress,
+                  y: currentY
+                });
+              } else if (self.progress > 0.15 && self.progress < 0.30) {
+                gsap.set(teamworkHeadline, { opacity: 1, y: 0 });
+              } else if (self.progress < 0.03) {
+                gsap.set(teamworkHeadline, { opacity: 0, y: headlineStartY });
+              }
 
-      // ===== TEAMWORK SECTION =====
-      gsap.set(teamworkHeadlineRef.current, { opacity: 1 });
-      gsap.set(teamworkBgRef.current, { opacity: 0 });
-      gsap.set(teamworkTextRef.current, { opacity: 0 });
+              // 2. 헤드라인 페이드아웃 + 배경 페이드인 (30% ~ 45%)
+              if (self.progress >= 0.30 && self.progress <= 0.45) {
+                const transitionProgress = (self.progress - 0.30) / 0.15;
+                gsap.set(teamworkHeadline, { opacity: 1 - transitionProgress, y: 0 });
+                gsap.set(teamworkBackground, { opacity: transitionProgress });
+              } else if (self.progress > 0.45) {
+                gsap.set(teamworkHeadline, { opacity: 0 });
+                gsap.set(teamworkBackground, { opacity: 1 });
+              } else if (self.progress < 0.30) {
+                gsap.set(teamworkBackground, { opacity: 0 });
+              }
 
-      const teamworkTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: teamworkSectionRef.current,
-          start: 'top top',
-          end: '+=12000',
-          pin: true,
-          scrub: 4,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-        },
-      });
-
-      teamworkTl.to(teamworkHeadlineRef.current, { opacity: 0, duration: 0.2 }, 0);
-      teamworkTl.to(teamworkBgRef.current, { opacity: 1, duration: 0.3 }, 0.1);
-      teamworkTl.to(teamworkTextRef.current, { opacity: 1, duration: 0.2 }, 0.5);
-
-      // ===== EXPERTS SECTION =====
-      gsap.set(expertsHeadlineRef.current, { opacity: 0 });
-      gsap.set(expertsDescRef.current, { opacity: 0 });
-      gsap.set(expertsNavRef.current, { opacity: 0 });
-      gsap.set(expertsCardsRef.current, { opacity: 0 });
-
-      const expertsTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: expertsSectionRef.current,
-          start: 'top top',
-          end: '+=14000',
-          pin: true,
-          scrub: 4,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-          onUpdate: (self) => {
-            // 전문가 카드 인덱스 업데이트
-            if (self.progress > 0.6) {
-              const cardProgress = (self.progress - 0.6) / 0.4;
-              const newIndex = Math.floor(cardProgress * EXPERTS_CARDS.length);
-              setExpertsCardIndex(Math.min(newIndex, EXPERTS_CARDS.length - 1));
-            }
+              // 3. TEAMWORK 텍스트 등장 (55% ~ 65%)
+              if (self.progress >= 0.55 && self.progress <= 0.65) {
+                const textProgress = (self.progress - 0.55) / 0.10;
+                gsap.set(teamworkText, { opacity: textProgress });
+              } else if (self.progress > 0.65) {
+                gsap.set(teamworkText, { opacity: 1 });
+              } else if (self.progress < 0.55) {
+                gsap.set(teamworkText, { opacity: 0 });
+              }
+            },
           },
-        },
-      });
+        });
+      }
 
-      expertsTl.to(expertsHeadlineRef.current, { opacity: 1, duration: 0.15 }, 0);
-      expertsTl.to(expertsDescRef.current, { opacity: 1, duration: 0.15 }, 0.15);
-      expertsTl.to(expertsNavRef.current, { opacity: 1, duration: 0.1 }, 0.30);
-      expertsTl.to(expertsCardsRef.current, { opacity: 1, duration: 0.15 }, 0.40);
+      // Section 10: Experts - 헤드라인 + 설명 + 슬라이더
+      // [모션 순서]
+      // 1단계: 헤드라인 등장
+      // 2단계: 설명 등장
+      // 3단계: 네비게이션 + 카드 등장
+      if (expertsRef.current) {
+        const expertsHeadline = expertsRef.current.querySelector('.experts-headline') as HTMLElement;
+        const expertsDesc = expertsRef.current.querySelector('.experts-desc') as HTMLElement;
+        const expertsNav = expertsRef.current.querySelector('.experts-nav') as HTMLElement;
+        const expertsCards = expertsRef.current.querySelector('.experts-cards') as HTMLElement;
 
-      // ===== CHAMPAGNE SECTION =====
-      gsap.set(champagneTextRef.current, { opacity: 0 });
+        // 초기 상태 설정
+        gsap.set(expertsHeadline, { opacity: 0, y: 30 });
+        gsap.set(expertsDesc, { opacity: 0, y: 30 });
+        gsap.set(expertsNav, { opacity: 0 });
+        gsap.set(expertsCards, { opacity: 0, y: 30 });
 
-      const champagneTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: champagneSectionRef.current,
-          start: 'top top',
-          end: '+=10000',
-          pin: true,
-          scrub: 4,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-        },
-      });
+        let expertsContentPlayed = false;
 
-      champagneTl.to(champagneTextRef.current, { opacity: 1, duration: 0.3 }, 0.2);
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: expertsRef.current,
+            start: 'top top',
+            end: '+=300%',
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            snap: {
+              snapTo: (progress) => {
+                if (progress < 0.08) return 0;
+                if (progress < 0.9) return 0.40;  // 콘텐츠 등장 후 머무르기
+                return 1;
+              },
+              duration: { min: 0.3, max: 0.6 },
+              ease: 'power2.out',
+              inertia: false,
+            },
+            onUpdate: (self) => {
+              // 콘텐츠 등장 (10% 이상) - 부드러운 전환
+              if (self.progress > 0.10 && !expertsContentPlayed) {
+                expertsContentPlayed = true;
+                // 헤드라인 fade-up
+                gsap.to(expertsHeadline, { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' });
+                // 설명 fade-up (딜레이)
+                gsap.to(expertsDesc, { opacity: 1, y: 0, duration: 0.8, delay: 0.3, ease: 'power2.out' });
+                // 네비게이션 fade-in
+                gsap.to(expertsNav, { opacity: 1, duration: 0.6, delay: 0.2, ease: 'power2.out' });
+                // 카드 fade-up
+                gsap.to(expertsCards, { opacity: 1, y: 0, duration: 0.8, delay: 0.2, ease: 'power2.out' });
+              }
 
-      // ===== CRUISE SECTION =====
-      gsap.set(cruiseLeftTextRef.current, { opacity: 0 });
-      gsap.set(cruiseRightTextRef.current, { opacity: 0 });
+              // 되돌리기 (8% 이하)
+              if (self.progress < 0.08 && expertsContentPlayed) {
+                expertsContentPlayed = false;
+                gsap.to(expertsHeadline, { opacity: 0, y: 30, duration: 0.3 });
+                gsap.to(expertsDesc, { opacity: 0, y: 30, duration: 0.3 });
+                gsap.to(expertsNav, { opacity: 0, duration: 0.3 });
+                gsap.to(expertsCards, { opacity: 0, y: 30, duration: 0.3 });
+              }
+            },
+          },
+        });
+      }
 
-      const cruiseTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: cruiseSectionRef.current,
-          start: 'top top',
-          end: '+=12000',
-          pin: true,
-          scrub: 4,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-        },
-      });
+      // Section 11: Champagne - 비디오 배경 + 텍스트
+      // [모션 순서] 텍스트 fade-up 등장
+      if (champagneRef.current) {
+        const champagneContent = champagneRef.current.querySelector('.champagne-content') as HTMLElement;
 
-      cruiseTl.to(cruiseLeftTextRef.current, { opacity: 1, duration: 0.3 }, 0);
-      cruiseTl.to(cruiseRightTextRef.current, { opacity: 1, duration: 0.3 }, 0.4);
+        // 초기 상태 설정
+        gsap.set(champagneContent, { opacity: 0, y: 30 });
 
-      // ===== FINAL SECTION =====
-      gsap.set(finalContentRef.current, { opacity: 0, y: 50 });
+        let champagneContentPlayed = false;
 
-      const finalTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: finalSectionRef.current,
-          start: 'top 80%',
-          end: 'top 20%',
-          scrub: 2,
-          invalidateOnRefresh: true,
-        },
-      });
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: champagneRef.current,
+            start: 'top top',
+            end: '+=200%',
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            snap: {
+              snapTo: (progress) => {
+                if (progress < 0.08) return 0;
+                if (progress < 0.9) return 0.40;
+                return 1;
+              },
+              duration: { min: 0.3, max: 0.6 },
+              ease: 'power2.out',
+              inertia: false,
+            },
+            onUpdate: (self) => {
+              // 콘텐츠 등장 (10% 이상)
+              if (self.progress > 0.10 && !champagneContentPlayed) {
+                champagneContentPlayed = true;
+                gsap.to(champagneContent, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' });
+              }
 
-      finalTl.to(finalContentRef.current, { opacity: 1, y: 0, duration: 1 }, 0);
+              // 되돌리기 (8% 이하)
+              if (self.progress < 0.08 && champagneContentPlayed) {
+                champagneContentPlayed = false;
+                gsap.to(champagneContent, { opacity: 0, y: 30, duration: 0.3 });
+              }
+            },
+          },
+        });
+      }
 
-    }, containerRef);
+      // Section 12: Cruise - 배경 이미지 + 좌/우 텍스트
+      // [모션 순서] 좌측 텍스트 → 우측 텍스트 순차 등장
+      if (cruiseRef.current) {
+        const cruiseLeftText = cruiseRef.current.querySelector('.cruise-left-text') as HTMLElement;
+        const cruiseRightText = cruiseRef.current.querySelector('.cruise-right-text') as HTMLElement;
+
+        // 초기 상태 설정
+        gsap.set(cruiseLeftText, { opacity: 0, y: 30 });
+        gsap.set(cruiseRightText, { opacity: 0, y: 30 });
+
+        let cruiseLeftPlayed = false;
+        let cruiseRightPlayed = false;
+
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: cruiseRef.current,
+            start: 'top top',
+            end: '+=200%',
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            onUpdate: (self) => {
+              // 좌측 텍스트 등장 (10% 이상)
+              if (self.progress > 0.10 && !cruiseLeftPlayed) {
+                cruiseLeftPlayed = true;
+                gsap.to(cruiseLeftText, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' });
+              }
+
+              // 우측 텍스트 등장 (25% 이상)
+              if (self.progress > 0.25 && !cruiseRightPlayed) {
+                cruiseRightPlayed = true;
+                gsap.to(cruiseRightText, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' });
+              }
+
+              // 되돌리기 (8% 이하)
+              if (self.progress < 0.08 && cruiseLeftPlayed) {
+                cruiseLeftPlayed = false;
+                cruiseRightPlayed = false;
+                gsap.to(cruiseLeftText, { opacity: 0, y: 30, duration: 0.3 });
+                gsap.to(cruiseRightText, { opacity: 0, y: 30, duration: 0.3 });
+              }
+            },
+          },
+        });
+      }
+
+      // Section 13: Final - 마지막 CTA 섹션
+      if (finalRef.current) {
+        const finalContent = finalRef.current.querySelector('.final-content') as HTMLElement;
+        const finalTitle = finalRef.current.querySelector('.final-title') as HTMLElement;
+        const finalSubtitle = finalRef.current.querySelector('.final-subtitle') as HTMLElement;
+        const finalCta = finalRef.current.querySelector('.final-cta') as HTMLElement;
+
+        // 초기 상태 설정
+        gsap.set(finalTitle, { opacity: 0, y: 30 });
+        gsap.set(finalSubtitle, { opacity: 0, y: 30 });
+        gsap.set(finalCta, { opacity: 0, y: 30 });
+
+        let finalContentPlayed = false;
+
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: finalRef.current,
+            start: 'top top',
+            end: '+=150%',
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            snap: {
+              snapTo: (progress) => {
+                if (progress < 0.08) return 0;
+                if (progress < 0.9) return 0.40;
+                return 1;
+              },
+              duration: { min: 0.3, max: 0.6 },
+              ease: 'power2.out',
+              inertia: false,
+            },
+            onUpdate: (self) => {
+              // 콘텐츠 등장 (10% 이상)
+              if (self.progress > 0.10 && !finalContentPlayed) {
+                finalContentPlayed = true;
+                gsap.to(finalTitle, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' });
+                gsap.to(finalSubtitle, { opacity: 1, y: 0, duration: 0.5, delay: 0.15, ease: 'power2.out' });
+                gsap.to(finalCta, { opacity: 1, y: 0, duration: 0.5, delay: 0.3, ease: 'power2.out' });
+              }
+
+              // 되돌리기 (8% 이하)
+              if (self.progress < 0.08 && finalContentPlayed) {
+                finalContentPlayed = false;
+                gsap.to(finalTitle, { opacity: 0, y: 30, duration: 0.3 });
+                gsap.to(finalSubtitle, { opacity: 0, y: 30, duration: 0.3 });
+                gsap.to(finalCta, { opacity: 0, y: 30, duration: 0.3 });
+              }
+            },
+          },
+        });
+      }
+    });
 
     return () => ctx.revert();
   }, []);
 
   return (
-    <div className="home-container" ref={containerRef}>
+    <div className="test-motion-container">
       <Header
         variant={headerVariant}
         onMenuClick={() => setIsMenuOpen(true)}
@@ -710,83 +1341,91 @@ const Home: React.FC = () => {
       />
       <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
-      {/* HERO SECTION */}
-      <section className="hero-section" ref={heroRef}>
-        <div className="hero-content">
-          <div className="text-row" ref={visionRowRef}>
-            <div className="video-pill" ref={visionPillRef}>
+      {/* Section 1: Hero - VISION / GROWTH / CREW (expands with text) */}
+      <section ref={heroRef} className="motion-section section-hero-initial">
+        <div className="hero-pills-wrapper">
+          <div className="pill-row vision-row">
+            <div className="video-pill">
               <video autoPlay muted loop playsInline>
                 <source src={visionVideo} type="video/mp4" />
               </video>
             </div>
-            <h2 className="hero-text">VISION</h2>
+            <span className="pill-text">VISION</span>
           </div>
 
-          <div className="text-row" ref={growthRowRef}>
-            <h2 className="hero-text">GROWTH</h2>
-            <div className="video-pill" ref={growthPillRef}>
+          <div className="pill-row growth-row">
+            <span className="pill-text">GROWTH</span>
+            <div className="video-pill">
               <video autoPlay muted loop playsInline>
                 <source src={growthVideo} type="video/mp4" />
               </video>
             </div>
           </div>
 
-          <div className="text-row" ref={crewRowRef}>
-            <div className="video-pill" ref={crewPillRef}>
+          <div className="pill-row crew-row">
+            <div className="video-pill crew-pill">
               <video autoPlay muted loop playsInline>
                 <source src={crewVideo} type="video/mp4" />
               </video>
             </div>
-            <h2 className="hero-text" ref={crewTextRef}>CREW</h2>
+            <span className="pill-text crew-text">CREW</span>
           </div>
         </div>
 
-        <div className="expanding-video" ref={expandingVideoRef}>
-          <img src={mainHeroImage} alt="Main Hero Background" className="hero-background-image" />
-          <div className="video-overlay" />
+        {/* Overlay and text that appear after expansion */}
+        <div className="crew-overlay" />
+        <div className="crew-content">
+          <h1 className="expand-text-1">모두 컨설팅과 함께라면,</h1>
+          <h2 className="expand-text-2">세무사의 항해는<br className="mobile-br" />1등의 여정이 됩니다.</h2>
         </div>
+      </section>
 
-        <div className="ship-text-content" ref={shipTextRef}>
-          <h1 className="main-title" ref={mainTitleRef}>모두 컨설팅과 함께라면,</h1>
-          <h2 className="sub-title" ref={subTitleRef}>세무사의 항해는<br className="mobile-br" />1등의 여정이 됩니다.</h2>
-        </div>
-
-        <div className="finance-overlay" ref={financeOverlayRef}>
-          <div className="finance-video-background">
-            <video autoPlay muted loop playsInline>
-              <source src={financeVideo} type="video/mp4" />
-            </video>
+      {/* Section 2: Finance */}
+      <section ref={financeRef} className="motion-section section-finance">
+        <video autoPlay muted loop playsInline className="finance-video">
+          <source src={financeVideo} type="video/mp4" />
+        </video>
+        <div className="finance-overlay" />
+        <div className="finance-content">
+          <div className="finance-left">
+            <h2 className="finance-text-1">복잡한 재무의 바다,</h2>
+            <h2 className="finance-text-2">혼자라면</h2>
+            <h2 className="finance-text-3">길을 잃기 쉽습니다.</h2>
           </div>
-          <div className="finance-content">
-            <div className="left-content" ref={leftContentRef}>
-              <h2 className="finance-title">복잡한 재무의 바다,<br />혼자라면<br />길을 잃기 쉽습니다.</h2>
-            </div>
-            <div className="right-content" ref={rightContentRef}>
-              <p className="right-title">하지만 함께라면,<br />그 길은 곧<br /><strong>수익의 항로</strong>로 이어집니다.</p>
-              <div className="right-description">보험·펀드·신탁·법인자산관리까지<br />세무사의 전문성을 확장시키는<br />종합 재무설계 트레이닝 플랫폼.<br />배움이 생산성을 만들고,<br />생산성이 곧 자연스러운 수익으로 이어집니다.</div>
-              <p className="right-cta">당신의 첫 항해,<br />지금 함께 시작하세요.</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="yacht-overlay" ref={yachtOverlayRef}>
-          <div className="yacht-video-background">
-            <video autoPlay muted loop playsInline>
-              <source src={yachtVideo} type="video/mp4" />
-            </video>
-          </div>
-          <div className="yacht-content" ref={yachtContentRef}>
-            <h2 className="yacht-title">최고가 되는 공식,<br />우리는 그 답을 알고 있습니다</h2>
+          <div className="finance-right">
+            <p className="finance-text-4">하지만 함께라면,<br />그 길은 곧<br /><strong>수익의 항로</strong>로 이어집니다.</p>
+            <p className="finance-text-5">보험·펀드·신탁·법인자산관리까지<br />세무사의 전문성을 확장시키는<br />종합 재무설계 트레이닝 플랫폼.<br />배움이 생산성을 만들고,<br />생산성이 곧 자연스러운 수익으로 이어집니다.</p>
+            <p className="finance-text-6">당신의 첫 항해,<br />지금 함께 시작하세요.</p>
           </div>
         </div>
+      </section>
 
-        <div className="vision-content" ref={visionContentRef}>
-          <h2 className="vision-title">우리는 단순히<br className="mobile-br" /><span className="nowrap">멀리 보는 것이 아니라,</span><br /><span className="mobile-spacer" />정확히 &apos;어디로<br className="mobile-br" /><span className="nowrap">향해야 하는지&apos; 를 봅니다</span></h2>
-          <div className="vision-description" ref={visionDescriptionRef}>
+      {/* Section 3: Yacht */}
+      <section ref={yachtRef} className="motion-section section-yacht">
+        <video autoPlay muted loop playsInline className="yacht-video">
+          <source src={yachtVideo} type="video/mp4" />
+        </video>
+        <div className="yacht-overlay" />
+        <div className="yacht-content">
+          <h2 className="yacht-text-1">최고가 되는 공식,</h2>
+          <h2 className="yacht-text-2">우리는 그 답을 알고 있습니다</h2>
+        </div>
+      </section>
+
+      {/* Section 4: Vision Text - 검은 배경 텍스트 + highlight */}
+      <section ref={visionTextRef} className="motion-section section-vision-text">
+        <div className="vision-text-content">
+          <h2 className="vision-title">
+            우리는 단순히 <br className="mobile-br" />
+            <span className="nowrap">멀리 보는 것이 아니라,</span><br />
+            <span className="mobile-spacer" />
+            정확히 &apos;어디로 <br className="mobile-br" />
+            <span className="nowrap">향해야 하는지&apos; 를 봅니다</span>
+          </h2>
+          <div className="vision-description">
             {(() => {
               const lines = [
-                "모두컨설팅의 비전은",
-                "세무사의 경쟁력을 현재의 지식이 아닌",
+                "모두컨설팅의 비전은 세무사의 경쟁력을 현재의 지식이 아닌",
                 "'미래의 설계 능력'으로 확장하는 것입니다."
               ];
               const text = lines.join('');
@@ -799,7 +1438,10 @@ const Home: React.FC = () => {
                   {line.split('').map((char) => {
                     const currentIndex = charIndex++;
                     return (
-                      <span key={currentIndex} className={`highlight-char ${currentIndex < highlightedChars ? 'active' : ''}`}>
+                      <span
+                        key={currentIndex}
+                        className={`highlight-char ${currentIndex < highlightedChars ? 'active' : ''}`}
+                      >
                         {char}
                       </span>
                     );
@@ -812,51 +1454,46 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* GROWTH SECTION */}
-      <section className="growth-section" ref={growthSectionRef}>
+      {/* Section 5: Growth - 망원경 배경 + VISION 텍스트 → 본문 */}
+      <section ref={growthSectionRef} className="motion-section section-growth">
         <div className="growth-background">
           <img src={binocularsImg} alt="Binoculars looking at the sea" />
         </div>
-        <h2 className="growth-vision-text" ref={growthVisionTextRef}>Vision</h2>
-        <div className="growth-overlay" ref={growthOverlayRef} />
-        <div className="growth-content" ref={growthContentRef}>
+        <h2 className="growth-vision-text">VISION</h2>
+        <div className="growth-overlay" />
+        <div className="growth-content">
           <div className="growth-left-content">
             <div className="growth-main-title">
               <p>Thinking like</p>
               <p>your company.</p>
-              <p>Acting as your partner.</p>
-            </div>
-            <div className="growth-description">
-              <p>고객의 성장은 우리의 성장입니다.</p>
-              <p>고객의 어려움 앞에서 한발 더 다가가고,</p>
-              <p>해결의 순간까지 함께 머무는 것 —</p>
-              <p>그것이 우리가 &apos;내 회사처럼&apos; 일한다는 뜻입니다.</p>
+              <p>Acting as</p>
+              <p>your partner.</p>
             </div>
           </div>
-          <div className="cards-container" ref={cardsContainerRef}>
+          <div className="growth-description">
+            <p>고객의 성장은 우리의 성장입니다.</p>
+            <p>고객의 어려움 앞에서 한발 더 다가가고,</p>
+            <p>해결의 순간까지 함께 머무는 것 —</p>
+            <p>그것이 우리가 &apos;내 회사처럼&apos; 일한다는 뜻입니다.</p>
+          </div>
+          <div className="cards-container">
             <div className="cards-navigation">
               <button
                 className="nav-button"
                 disabled={cardIndex === 0}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCardIndex(Math.max(0, cardIndex - 1));
-                }}
+                onClick={() => setCardIndex(Math.max(0, cardIndex - 1))}
               >
                 <img src={cardIndex === 0 ? btnLeftInactive : btnLeftActive} alt="Previous" />
               </button>
               <button
                 className="nav-button"
                 disabled={cardIndex >= SERVICE_CARDS.length - 1}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCardIndex(Math.min(SERVICE_CARDS.length - 1, cardIndex + 1));
-                }}
+                onClick={() => setCardIndex(Math.min(SERVICE_CARDS.length - 1, cardIndex + 1))}
               >
                 <img src={cardIndex >= SERVICE_CARDS.length - 1 ? btnRightInactive : btnRightActive} alt="Next" />
               </button>
             </div>
-            <div className="cards-wrapper" ref={cardsWrapperRef} style={{ transform: `translateX(-${cardIndex * cardSlideWidth}px)` }}>
+            <div className="cards-wrapper" style={{ transform: `translateX(-${cardIndex * cardSlideWidth}px)` }}>
               {SERVICE_CARDS.map((card, index) => (
                 <div className="service-card" key={index}>
                   <div className="card-header">
@@ -880,26 +1517,27 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* DIRECTION SECTION */}
-      <section className="direction-section" ref={directionSectionRef}>
+      {/* Section 6: Solution 01 - 나침반 배경 + DIRECTION 텍스트 → 마키 카드 */}
+      <section ref={solution01Ref} className="motion-section section-solution01">
         <div className="direction-background">
           <img src={compassImg} alt="Compass" />
         </div>
-        <h2 className="direction-text" ref={directionTextRef}>Direction</h2>
-        <div className="solution-overlay" ref={solutionOverlayRef} />
-        <div className="solution-content" ref={solutionContentRef}>
-          <span className="solution-label" ref={solutionLabelRef}>Solution 01</span>
-          <h2 className="solution-title" ref={solutionTitleRef}>End-to-End<br className="mobile-br" />Strategic Solution</h2>
-          <p className="solution-description" ref={solutionDescRef}>
+        <h2 className="direction-text">DIRECTION</h2>
+        <div className="solution-overlay" />
+        <div className="solution-content">
+          <span className="solution-label">Solution 01</span>
+          <h2 className="solution-title">End-to-End <br className="mobile-br" />Strategic Solution</h2>
+          <p className="solution-description">
             세무사의 전문성을 기반으로,<br className="mobile-br" /> 보험·펀드·신탁·법인 재무까지 아우르는<br />
             통합형 실무 트레이닝 시스템을 제공합니다.<br />
             세무사의 판단력과 실행력을 동시에 강화합니다.
           </p>
-          <div className="solution-grid solution-grid-left" ref={solutionGrid1Ref}>
+          <div className="solution-grid solution-grid-left">
             <div className="solution-marquee-wrapper">
               {[...SOLUTION_ROW1, ...SOLUTION_ROW1].map((card, index) => (
                 <div className="solution-card" key={index}>
-                  <h4 className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</h4>
+                  <span className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</span>
+                  <div className="solution-card-divider" />
                   <ul className="solution-card-items">
                     {card.items.map((item, i) => (<li key={i}>{item}</li>))}
                   </ul>
@@ -907,11 +1545,12 @@ const Home: React.FC = () => {
               ))}
             </div>
           </div>
-          <div className="solution-grid solution-grid-right" ref={solutionGrid2Ref}>
+          <div className="solution-grid solution-grid-right">
             <div className="solution-marquee-wrapper">
               {[...SOLUTION_ROW2, ...SOLUTION_ROW2].map((card, index) => (
                 <div className="solution-card" key={index}>
-                  <h4 className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</h4>
+                  <span className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</span>
+                  <div className="solution-card-divider" />
                   <ul className="solution-card-items">
                     {card.items.map((item, i) => (<li key={i}>{item}</li>))}
                   </ul>
@@ -919,11 +1558,12 @@ const Home: React.FC = () => {
               ))}
             </div>
           </div>
-          <div className="solution-grid solution-grid-left" ref={solutionGrid3Ref}>
+          <div className="solution-grid solution-grid-left">
             <div className="solution-marquee-wrapper">
               {[...SOLUTION_ROW3, ...SOLUTION_ROW3].map((card, index) => (
                 <div className="solution-card" key={index}>
-                  <h4 className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</h4>
+                  <span className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</span>
+                  <div className="solution-card-divider" />
                   <ul className="solution-card-items">
                     {card.items.map((item, i) => (<li key={i}>{item}</li>))}
                   </ul>
@@ -931,11 +1571,12 @@ const Home: React.FC = () => {
               ))}
             </div>
           </div>
-          <div className="solution-grid solution-grid-right" ref={solutionGrid4Ref}>
+          <div className="solution-grid solution-grid-right">
             <div className="solution-marquee-wrapper">
               {[...SOLUTION_ROW4, ...SOLUTION_ROW4].map((card, index) => (
                 <div className="solution-card" key={index}>
-                  <h4 className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</h4>
+                  <span className="solution-card-title" style={{ whiteSpace: 'pre-line' }}>{card.title}</span>
+                  <div className="solution-card-divider" />
                   <ul className="solution-card-items">
                     {card.items.map((item, i) => (<li key={i}>{item}</li>))}
                   </ul>
@@ -946,125 +1587,147 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* SOLUTION 02 SECTION */}
-      <section className="solution02-section" ref={solution02SectionRef}>
+      {/* Section 7: Solution 02 - 타임라인 그리드 */}
+      <section ref={solution02Ref} className="motion-section section-solution02">
         <div className="solution02-background" />
         <div className="solution02-content">
-          <span className="solution02-label" ref={solution02LabelRef}>Solution 02</span>
-          <h2 className="solution02-title" ref={solution02TitleRef}>Integrated Strategic Solution</h2>
-          <p className="solution02-description" ref={solution02DescRef}>
+          <span className="solution02-label">Solution 02</span>
+          <h2 className="solution02-title">Integrated Strategic Solution</h2>
+          <p className="solution02-description">
             고객의 여정을 처음부터 끝까지 함께하며, 완전한 수익 창출 솔루션을 제시합니다.
           </p>
 
-          <div className="timeline-container" ref={timelineContainerRef}>
-            <div className="timeline-grid" ref={timelineGridRef}>
-              {/* 컬럼 헤더 */}
+          <div className="timeline-container">
+            <div className="timeline-grid">
+              {/* 컬럼 헤더 - visibleSteps에 따라 표시 */}
               <div className="timeline-header">
-                {[1, 2, 3, 4, 5].map((num, index) => (
-                  <div
-                    key={index}
-                    className="timeline-column-header"
-                    ref={(el) => { timelineColumnRefs.current[index] = el; }}
-                  >
-                    DAY 0{num}
-                  </div>
-                ))}
+                {[1, 2, 3, 4, 5].map((num, colIndex) => {
+                  // visibleSteps에 따른 visibleCols 계산
+                  // STEP별 cols: [1, 2, 3, 3, 4, 5]
+                  const colsMap = [0, 1, 2, 3, 3, 4, 5];
+                  const visibleCols = colsMap[Math.min(visibleSteps, 6)];
+                  const isVisible = colIndex < visibleCols;
+
+                  return (
+                    <div
+                      key={colIndex}
+                      className={`timeline-column-header ${isVisible ? 'visible' : ''}`}
+                    >
+                      DAY 0{num}
+                    </div>
+                  );
+                })}
               </div>
 
-              {/* 세로 구분선 */}
-              <div className="timeline-edge-line timeline-edge-left" />
-              <div className="timeline-edge-line timeline-edge-right" />
+              {/* 세로 구분선 - 헤더와 동기화 */}
+              <div className={`timeline-edge-line timeline-edge-left ${visibleSteps > 0 ? 'visible' : ''}`} />
+              <div className={`timeline-edge-line timeline-edge-right ${visibleSteps >= 6 ? 'visible' : ''}`} />
               <div className="timeline-columns">
-                {[1, 2, 3, 4, 5].map((_, index) => (
-                  <div key={index} className="timeline-column-line" />
-                ))}
+                {[1, 2, 3, 4, 5].map((_, colIndex) => {
+                  const colsMap = [0, 1, 2, 3, 3, 4, 5];
+                  const visibleCols = colsMap[Math.min(visibleSteps, 6)];
+                  const isVisible = colIndex < visibleCols;
+
+                  return (
+                    <div
+                      key={colIndex}
+                      className={`timeline-column-line ${isVisible ? 'visible' : ''}`}
+                    />
+                  );
+                })}
               </div>
 
-              {/* 타임라인 스텝들 */}
+              {/* 타임라인 스텝들 - visibleSteps에 따라 표시 */}
               <div className="timeline-steps">
-                {TIMELINE_STEPS.map((step, index) => (
-                  <div
-                    key={index}
-                    className={`timeline-step timeline-step-${index + 1}`}
-                    ref={(el) => { timelineStepRefs.current[index] = el; }}
-                    style={{ gridColumn: `1 / span ${step.cols}` }}
-                  >
-                    <div className="step-header">
-                      <span className="step-number">STEP {step.step}</span>
-                      <span className="step-line">
-                        <span className="line-dot" />
-                        <span className="line-bar" />
-                        <span className="line-arrow" />
-                      </span>
-                      <span className="step-title">{step.title}</span>
-                    </div>
-                    <div className="step-tags">
-                      {step.tags.map((tag, tagIndex) => (
-                        <span
-                          key={tagIndex}
-                          className={`step-tag ${step.highlight && tagIndex === step.tags.length - 1 ? 'highlight' : ''}`}
-                        >
-                          {tag}
+                {TIMELINE_STEPS.map((step, index) => {
+                  const isVisible = index < visibleSteps;
+
+                  return (
+                    <div
+                      key={index}
+                      className={`timeline-step timeline-step-${index + 1} ${isVisible ? 'visible' : ''}`}
+                      style={{ gridColumn: `1 / span ${step.cols}` }}
+                    >
+                      <div className="step-header">
+                        <span className="step-number">STEP {step.step}</span>
+                        <span className="step-line">
+                          <span className="line-dot" />
+                          <span className="line-bar" />
+                          <span className="line-arrow" />
                         </span>
-                      ))}
+                        <span className="step-title">{step.title}</span>
+                      </div>
+                      <div className="step-tags">
+                        {step.tags.map((tag, tagIndex) => (
+                          <span
+                            key={tagIndex}
+                            className={`step-tag ${step.highlight && tag === '하이브리드' ? 'highlight' : ''}`}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SYSTEM SECTION */}
-      <section className="system-section" ref={systemSectionRef}>
+      {/* Section 8: System - highlight 텍스트 + 비디오 + 카드 */}
+      <section ref={systemRef} className="motion-section section-system">
         <div className="system-background" />
 
-        <h2 className="system-text" ref={systemTextRef}>SYSTEM</h2>
+        {/* SYSTEM 대형 텍스트 (화면 바닥에서 올라옴 → 상단으로 이동하며 축소) */}
+        <h2 className="system-text">SYSTEM</h2>
 
-        <h3 className="system-headline" ref={systemHeadlineRef}>
-          가장 짧은 시간에<br className="mobile-br" /> 가장 빠른 속도로<br />
-          본업의 성장과<br className="mobile-br" /> 소득 증대 시스템 구축
-        </h3>
+        <div className="system-main-content">
+          <h3 className="system-headline">
+            가장 짧은 시간에<br className="mobile-br" /> 가장 빠른 속도로<br />
+            본업의 성장과<br className="mobile-br" /> 소득 증대 시스템 구축
+          </h3>
 
-        <p className="system-description" ref={systemDescRef}>
-          {(() => {
-            const line1 = "모두 컨설팅은 전문직 맞춤형 법인 ";
-            const dbText = "DB";
-            const line2 = "와";
-            const line3 = "실전 케이스로 당신의 지식을";
-            const line4 = "바로 실행으로 전환합니다.";
-            const fullText = line1 + dbText + line2 + line3 + line4;
-            const totalChars = fullText.length;
-            const highlightedChars = Math.floor((systemHighlightProgress / 100) * totalChars);
+          <p className="system-description">
+            {(() => {
+              const line1 = "모두 컨설팅은 전문직 맞춤형 법인 ";
+              const dbText = "DB";
+              const line2 = "와 ";
+              const line3 = "실전 케이스로 당신의 지식을 ";
+              const line4 = "바로 실행으로 전환합니다.";
+              const fullText = line1 + dbText + line2 + line3 + line4;
+              const totalChars = fullText.length;
+              const highlightedChars = Math.floor((systemHighlightProgress / 100) * totalChars);
 
-            let charIndex = 0;
-            const renderChars = (text: string, isDB = false) => {
-              return text.split('').map((char) => {
-                const currentIndex = charIndex++;
-                return (
-                  <span key={currentIndex} className={`system-highlight-char ${isDB ? 'db-char ' : ''}${currentIndex < highlightedChars ? 'active' : ''}`}>
-                    {char}
-                  </span>
-                );
-              });
-            };
+              let charIndex = 0;
+              const renderChars = (text: string, isDB = false) => {
+                return text.split('').map((char) => {
+                  const currentIndex = charIndex++;
+                  return (
+                    <span key={currentIndex} className={`system-highlight-char ${isDB ? 'db-char ' : ''}${currentIndex < highlightedChars ? 'active' : ''}`}>
+                      {char}
+                    </span>
+                  );
+                });
+              };
 
-            return (
-              <>
-                {renderChars(line1)}
-                {renderChars(dbText, true)}
-                {renderChars(line2)}
-                <br className="mobile-br" />
-                {renderChars(line3)}
-                <br className="mobile-br" />
-                {renderChars(line4)}
-              </>
-            );
-          })()}
-        </p>
+              return (
+                <>
+                  {renderChars(line1)}
+                  {renderChars(dbText, true)}
+                  {renderChars(line2)}
+                  <br className="mobile-br" />
+                  {renderChars(line3)}
+                  <br className="mobile-br" />
+                  {renderChars(line4)}
+                </>
+              );
+            })()}
+          </p>
+        </div>
 
-        <div className="system-video-container" ref={systemVideoRef}>
+        <div className="system-video-container">
           <div className="system-video-wrapper">
             <video autoPlay muted loop playsInline>
               <source src={systemVideo} type="video/mp4" />
@@ -1078,7 +1741,7 @@ const Home: React.FC = () => {
           </div>
         </div>
 
-        <div className="system-cards" ref={systemCardsRef}>
+        <div className="system-cards">
           <div className="system-card">
             <div className="system-card-image">
               <video autoPlay muted loop playsInline>
@@ -1130,34 +1793,31 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* TEAMWORK SECTION */}
-      <section className="teamwork-section" ref={teamworkSectionRef}>
-        <div className="teamwork-background" ref={teamworkBgRef}>
+      {/* Section 9: Teamwork - 헤드라인 → 배경 이미지 → TEAMWORK 텍스트 */}
+      <section ref={teamworkRef} className="motion-section section-teamwork">
+        <div className="teamwork-background">
           <img src={teamworkImg} alt="Teamwork - People collaborating on ship" />
         </div>
-
-        <h2 className="teamwork-headline" ref={teamworkHeadlineRef}>
-          이제는 전문가들과<br />
-          함께 협업하는<br />
-          팀워크의 시대
-        </h2>
-
-        <h2 className="teamwork-text" ref={teamworkTextRef}>
+        <div className="teamwork-headline">
+          <p>이제는 전문가들과 함께</p>
+          <p>협업하는 팀워크의 시대</p>
+        </div>
+        <h2 className="teamwork-text">
           <span className="teamwork-text-line">TEAM</span>
           <span className="teamwork-text-line">WORK</span>
         </h2>
       </section>
 
-      {/* EXPERTS SECTION */}
-      <section className="experts-section" ref={expertsSectionRef}>
-        <div className="experts-headline" ref={expertsHeadlineRef}>
+      {/* Section 10: Experts - 헤드라인 + 슬라이더 */}
+      <section ref={expertsRef} className="motion-section section-experts">
+        <div className="experts-headline">
           <h2>세무사·회계사·노무사·변호사 등</h2>
           <h2>각 분야의 전문가들과 협업하여</h2>
           <h2>입체적인 재무 설계 솔루션을</h2>
           <h2>제공합니다.</h2>
         </div>
 
-        <div className="experts-desc" ref={expertsDescRef}>
+        <div className="experts-desc">
           <p>
             VIP 고객은 이제 단편적 자문이 아니라<br />
             다각적 전략 컨설팅을 원합니다.<br />
@@ -1166,36 +1826,30 @@ const Home: React.FC = () => {
           </p>
         </div>
 
-        <div className="experts-nav" ref={expertsNavRef}>
+        <div className="experts-nav">
           <button
             className="nav-button"
             disabled={expertsCardIndex === 0}
-            onClick={(e) => {
-              e.stopPropagation();
-              setExpertsCardIndex(Math.max(0, expertsCardIndex - 1));
-            }}
+            onClick={() => setExpertsCardIndex(Math.max(0, expertsCardIndex - 1))}
           >
             <img src={expertsCardIndex === 0 ? btnLeftInactive : btnLeftActive} alt="Previous" />
           </button>
           <button
             className="nav-button"
-            disabled={expertsCardIndex >= EXPERTS_CARDS.length - 1}
-            onClick={(e) => {
-              e.stopPropagation();
-              setExpertsCardIndex(Math.min(EXPERTS_CARDS.length - 1, expertsCardIndex + 1));
-            }}
+            disabled={expertsCardIndex >= expertsCards.length - 1}
+            onClick={() => setExpertsCardIndex(Math.min(expertsCards.length - 1, expertsCardIndex + 1))}
           >
-            <img src={expertsCardIndex >= EXPERTS_CARDS.length - 1 ? btnRightInactive : btnRightActive} alt="Next" />
+            <img src={expertsCardIndex >= expertsCards.length - 1 ? btnRightInactive : btnRightActive} alt="Next" />
           </button>
         </div>
 
-        <div className="experts-cards" ref={expertsCardsRef}>
+        <div className="experts-cards">
           <div
             className="experts-cards-wrapper"
             style={{ transform: `translateX(-${expertsCardIndex * expertsCardSlideWidth}px)` }}
           >
-            {EXPERTS_CARDS.map((expert, index) => (
-              <div className="expert-card" key={index}>
+            {expertsCards.map((expert) => (
+              <div className="expert-card" key={expert.id}>
                 <div className="expert-image">
                   <img src={expert.image} alt={expert.name} />
                 </div>
@@ -1213,8 +1867,8 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* CHAMPAGNE SECTION */}
-      <section className="champagne-section" ref={champagneSectionRef}>
+      {/* Section 11: Champagne - 비디오 배경 + 텍스트 */}
+      <section ref={champagneRef} className="motion-section section-champagne">
         <video
           className="champagne-video"
           autoPlay
@@ -1224,31 +1878,31 @@ const Home: React.FC = () => {
         >
           <source src={champagneVideo} type="video/mp4" />
         </video>
-        <div className="champagne-content" ref={champagneTextRef}>
+        <div className="champagne-content">
           <h2>입증된 전문성,</h2>
           <h2>성과로 이어지는 수익 구조</h2>
         </div>
       </section>
 
-      {/* CRUISE SECTION */}
-      <section className="cruise-section" ref={cruiseSectionRef}>
+      {/* Section 12: Cruise - 배경 이미지 + 좌/우 텍스트 */}
+      <section ref={cruiseRef} className="motion-section section-cruise">
         <div className="cruise-background">
           <img src={cruiseImg} alt="Cruise ship at sunset" />
         </div>
-        <div className="cruise-left-text" ref={cruiseLeftTextRef}>
+        <div className="cruise-left-text">
           <p>모두컨설팅은</p>
           <p>누적된 실적, 데이터,</p>
           <p>네트워크를 기반으로</p>
         </div>
-        <div className="cruise-right-text" ref={cruiseRightTextRef}>
+        <div className="cruise-right-text">
           <p>당신의 브랜드를</p>
           <p>&apos;1등 세무사&apos;로 완성합니다</p>
         </div>
       </section>
 
-      {/* FINAL SECTION */}
-      <section className="final-section" ref={finalSectionRef}>
-        <div className="final-content" ref={finalContentRef}>
+      {/* Section 13: Final - 마지막 CTA 섹션 */}
+      <section ref={finalRef} className="motion-section section-final">
+        <div className="final-content">
           <h2 className="final-title">모두가 함께하고 있습니다.</h2>
           <h2 className="final-subtitle">이제, 당신만 오시면 완성됩니다</h2>
           <button className="final-cta">모두컨설팅과 함께하기 &gt;</button>
@@ -1259,4 +1913,4 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;
+export default TestMotion;

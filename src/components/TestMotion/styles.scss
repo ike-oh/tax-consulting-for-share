@@ -1766,7 +1766,7 @@
 
 .system-main-content {
   position: absolute;
-  top: 100px; // 헤드라인 상단에서 100px
+  top: 150px; // SYSTEM 라벨과 겹치지 않도록 조정
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
@@ -1877,24 +1877,24 @@
 
 .system-video-text {
   font-family: $font-pretendard;
-  font-weight: 700; // semibold
-  font-size: 19px;
-  line-height: 1.5;
-  letter-spacing: -0.095px;
+  font-weight: 700;
+  font-size: 89px;
+  line-height: 130%;
+  letter-spacing: -0.446px;
   color: rgba(255, 255, 255, 0.8);
   text-align: center;
   margin: 0;
 
   @media (max-width: $breakpoint-wide) {
-    font-size: 19px;
+    font-size: 72px;
   }
 
   @media (max-width: $breakpoint-desktop) {
-    font-size: 19px;
+    font-size: 56px;
   }
 
   @media (max-width: $breakpoint-tablet) {
-    font-size: 17px;
+    font-size: 40px;
   }
 }
 
